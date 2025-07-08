@@ -14,13 +14,14 @@ import {
   Edit,
   Download,
   CheckCircle,
-  UserPlus
+  UserPlus,
+  Car
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
 
 export const GuideView: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, translateLocation } = useLanguage();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [guideId, setGuideId] = useState('');
   const [password, setPassword] = useState('');
@@ -47,6 +48,27 @@ export const GuideView: React.FC = () => {
       contact: 'john.smith@email.com',
       nationality: 'United States',
       specialNeeds: 'Vegetarian meals',
+      status: 'pending'
+    }
+  ];
+
+  const mockDriverBookings = [
+    {
+      id: 'DB001',
+      touristName: 'Ahmed Al-Rashid',
+      date: '2024-07-20',
+      time: '09:00',
+      pickupLocation: 'Marriott Hotel AlUla',
+      specialRequest: 'Need child seat for 5-year-old',
+      status: 'pending'
+    },
+    {
+      id: 'DB002',
+      touristName: 'Sarah Johnson',
+      date: '2024-07-21',
+      time: '14:30',
+      pickupLocation: '',
+      specialRequest: 'Airport pickup needed',
       status: 'pending'
     }
   ];
@@ -87,6 +109,13 @@ export const GuideView: React.FC = () => {
     toast({
       title: t('success'),
       description: 'Schedule assigned successfully!'
+    });
+  };
+
+  const assignDriver = (bookingId: string) => {
+    toast({
+      title: t('success'),
+      description: 'Driver assigned successfully!'
     });
   };
 
@@ -173,7 +202,7 @@ export const GuideView: React.FC = () => {
                           <Input value={`${t('day')} ${item.day}`} readOnly />
                           <Input value={item.date} />
                           <Input value={item.activity} />
-                          <Input value={item.location} />
+                          <Input value={translateLocation(item.location)} />
                         </div>
                         <div className="mt-2 flex items-center space-x-2 rtl:space-x-reverse">
                           <Clock className="w-4 h-4" />
@@ -192,6 +221,48 @@ export const GuideView: React.FC = () => {
                 </CardContent>
               </Card>
             )}
+
+            {/* Driver Booking Requests */}
+            <Card className="shadow-desert">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2 rtl:space-x-reverse">
+                  <Car className="w-5 h-5" />
+                  <span>{t('driverBookingRequests')}</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {mockDriverBookings.map((booking) => (
+                    <div key={booking.id} className="p-4 border border-border rounded-lg">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-2">
+                          <h4 className="font-semibold">{booking.touristName}</h4>
+                          <div className="text-sm text-muted-foreground space-y-1">
+                            <p className="flex items-center space-x-2 rtl:space-x-reverse">
+                              <Calendar className="w-3 h-3" />
+                              <span>{booking.date} at {booking.time}</span>
+                            </p>
+                            {booking.pickupLocation && (
+                              <p className="flex items-center space-x-2 rtl:space-x-reverse">
+                                <MapPin className="w-3 h-3" />
+                                <span>{booking.pickupLocation}</span>
+                              </p>
+                            )}
+                            {booking.specialRequest && (
+                              <p className="text-sm">Special request: {booking.specialRequest}</p>
+                            )}
+                          </div>
+                        </div>
+                        <Button size="sm" onClick={() => assignDriver(booking.id)}>
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Assign Driver
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Journey Requests */}
             <Card className="shadow-desert">
@@ -283,6 +354,10 @@ export const GuideView: React.FC = () => {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Pending Requests</span>
+                    <Badge variant="outline">2</Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Driver Bookings</span>
                     <Badge variant="outline">2</Badge>
                   </div>
                   <div className="flex justify-between items-center">

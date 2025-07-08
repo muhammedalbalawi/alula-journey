@@ -6,6 +6,7 @@ interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
   t: (key: string) => string;
+  translateLocation: (location: string) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -75,6 +76,18 @@ const translations = {
     rating: "Rating",
     comment: "Comment",
     submitRating: "Submit Rating",
+    
+    // Driver Booking
+    bookDriver: "Book a Driver",
+    pickupLocation: "Pickup Location (Optional)",
+    specialRequest: "Special request or notes (Optional)",
+    confirmBooking: "Confirm Booking",
+    driverBookingSuccess: "✅ Driver booked successfully. You will be contacted shortly.",
+    driverBookingRequests: "Driver Booking Requests",
+    
+    // Date/Time
+    selectDate: "Select Date",
+    selectTime: "Select Time",
     
     // Common
     close: "Close",
@@ -149,6 +162,18 @@ const translations = {
     comment: "التعليق",
     submitRating: "إرسال التقييم",
     
+    // Driver Booking
+    bookDriver: "حجز سائق",
+    pickupLocation: "موقع الاستلام (اختياري)",
+    specialRequest: "طلب خاص أو ملاحظات (اختياري)",
+    confirmBooking: "تأكيد الحجز",
+    driverBookingSuccess: "✅ تم حجز السائق بنجاح، سيتم التواصل معك قريبًا.",
+    driverBookingRequests: "طلبات حجز السائق",
+    
+    // Date/Time
+    selectDate: "اختر التاريخ",
+    selectTime: "اختر الوقت",
+    
     // Common
     close: "إغلاق",
     save: "حفظ",
@@ -157,6 +182,24 @@ const translations = {
     error: "حدث خطأ",
     success: "نجح"
   }
+};
+
+const locationTranslations = {
+  'Jabal AlFil': 'جبل الفيل',
+  'Elephant Rock': 'جبل الفيل',
+  'Madain Saleh': 'الحجر',
+  'Hegra': 'الحجر',
+  'Hegra Archaeological Site': 'موقع الحجر الأثري',
+  'AlUla Old Town': 'البلدة القديمة',
+  'Old Town': 'البلدة القديمة',
+  'Historical District': 'المنطقة التاريخية',
+  'Dadan Archaeological Site': 'موقع دادان الأثري',
+  'Dadan': 'دادان',
+  'Mirror\'s Edge': 'حافة المرآة',
+  'Sharaan Nature Reserve': 'محمية شرعان الطبيعية',
+  'Sharaan': 'شرعان',
+  'AlUla Arts District': 'حي الفنون في العلا',
+  'AlUla Art District': 'حي الفنون في العلا'
 };
 
 interface LanguageProviderProps {
@@ -178,8 +221,15 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
     return value || key;
   };
 
+  const translateLocation = (location: string): string => {
+    if (language === 'ar' && locationTranslations[location as keyof typeof locationTranslations]) {
+      return locationTranslations[location as keyof typeof locationTranslations];
+    }
+    return location;
+  };
+
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={{ language, setLanguage, t, translateLocation }}>
       <div className={language === 'ar' ? 'rtl' : 'ltr'} dir={language === 'ar' ? 'rtl' : 'ltr'}>
         {children}
       </div>

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,9 +22,10 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
+import { DriverBooking } from '@/components/DriverBooking';
 
 export const TouristView: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, translateLocation } = useLanguage();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [touristId, setTouristId] = useState('');
   const [showRegistration, setShowRegistration] = useState(false);
@@ -208,7 +210,7 @@ export const TouristView: React.FC = () => {
                         <div className="text-sm text-muted-foreground flex items-center space-x-4 rtl:space-x-reverse mt-1">
                           <span className="flex items-center space-x-1 rtl:space-x-reverse">
                             <MapPin className="w-3 h-3" />
-                            <span>{item.location}</span>
+                            <span>{translateLocation(item.location)}</span>
                           </span>
                           <span className="flex items-center space-x-1 rtl:space-x-reverse">
                             <Clock className="w-3 h-3" />
@@ -256,6 +258,9 @@ export const TouristView: React.FC = () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Driver Booking */}
+            <DriverBooking />
+
             {/* Actions */}
             <Card className="shadow-desert">
               <CardContent className="pt-6 space-y-3">
@@ -283,7 +288,7 @@ export const TouristView: React.FC = () => {
                 <div className="space-y-2">
                   {suggestedPlaces.map((place, index) => (
                     <Badge key={index} variant="secondary" className="block text-center py-2">
-                      {place}
+                      {translateLocation(place)}
                     </Badge>
                   ))}
                 </div>
