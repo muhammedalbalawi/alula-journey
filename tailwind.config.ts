@@ -52,6 +52,12 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				// AlUla Custom Colors
+				'desert-gold': 'hsl(var(--desert-gold))',
+				'sunset-orange': 'hsl(var(--sunset-orange))',
+				'stone-brown': 'hsl(var(--stone-brown))',
+				'sand-beige': 'hsl(var(--sand-beige))',
+				'heritage-amber': 'hsl(var(--heritage-amber))',
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
