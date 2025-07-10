@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -45,6 +44,31 @@ export const GuideView: React.FC = () => {
     'T002': false,
     'T003': true
   });
+  const [editingItem, setEditingItem] = useState<string | null>(null);
+  const [itinerary, setItinerary] = useState([
+    {
+      id: 'dest1',
+      day: 1,
+      date: '2024-07-15',
+      activity: 'Elephant Rock & Sunset',
+      location: 'Jabal AlFil',
+      time: '16:00 - 19:00',
+      category: 'attraction',
+      coordinates: { lat: 26.5814, lng: 37.6956 },
+      notes: 'Best sunset viewing from the viewing platform. Bring a camera!'
+    },
+    {
+      id: 'dest2',
+      day: 2,
+      date: '2024-07-16',
+      activity: 'Hegra Archaeological Site',
+      location: 'Madain Saleh',
+      time: '08:00 - 12:00',
+      category: 'heritage',
+      coordinates: { lat: 26.7853, lng: 37.9542 },
+      notes: 'Bring comfortable walking shoes. Photography is allowed in designated areas only.'
+    }
+  ]);
 
   const mockTourists = [
     { id: 'T001', name: 'Ahmed Al-Rashid', status: 'Active' },
@@ -97,32 +121,7 @@ export const GuideView: React.FC = () => {
     { tourist: 'Sarah Johnson', rating: 4, comment: 'Great experience, learned a lot about AlUla history.' }
   ];
 
-  const mockItinerary = [
-    {
-      id: 'dest1',
-      day: 1,
-      date: '2024-07-15',
-      activity: 'Elephant Rock & Sunset',
-      location: 'Jabal AlFil',
-      time: '16:00 - 19:00',
-      category: 'attraction',
-      coordinates: { lat: 26.5814, lng: 37.6956 },
-      notes: 'Best sunset viewing from the viewing platform. Bring a camera!'
-    },
-    {
-      id: 'dest2',
-      day: 2,
-      date: '2024-07-16',
-      activity: 'Hegra Archaeological Site',
-      location: 'Madain Saleh',
-      time: '08:00 - 12:00',
-      category: 'heritage',
-      coordinates: { lat: 26.7853, lng: 37.9542 },
-      notes: 'Bring comfortable walking shoes. Photography is allowed in designated areas only.'
-    }
-  ];
-
-  const allLocations = mockItinerary.map(item => ({
+  const allLocations = itinerary.map(item => ({
     id: item.id,
     name: item.activity,
     category: item.category as 'heritage' | 'attraction' | 'adventure',
@@ -173,17 +172,74 @@ export const GuideView: React.FC = () => {
   };
 
   const saveNotes = () => {
-    toast({
-      title: t('success'),
-      description: 'Notes saved successfully!'
-    });
+    if (selectedDestination) {
+      setItinerary(prev => prev.map(item => 
+        item.id === selectedDestination.id 
+          ? { ...item, notes: destinationNotes }
+          : item
+      ));
+      toast({
+        title: t('success'),
+        description: 'Notes saved successfully!'
+      });
+    }
     setShowNotesDialog(false);
   };
 
   const handleLocationUpdate = (locationId: string, coordinates: { lat: number; lng: number }) => {
+    setItinerary(prev => prev.map(item => 
+      item.id === locationId 
+        ? { ...item, coordinates }
+        : item
+    ));
     toast({
       title: t('success'),
       description: 'Location updated successfully!'
+    });
+  };
+
+  const toggleEdit = (itemId: string) => {
+    setEditingItem(editingItem === itemId ? null : itemId);
+  };
+
+  const updateItineraryItem = (itemId: string, field: string, value: string) => {
+    setItinerary(prev => prev.map(item => 
+      item.id === itemId 
+        ? { ...item, [field]: value }
+        : item
+    ));
+  };
+
+  const saveItineraryItem = (itemId: string) => {
+    setEditingItem(null);
+    toast({
+      title: t('success'),
+      description: 'Itinerary item updated successfully!'
+    });
+  };
+
+  const addNewDay = () => {
+    const nextDay = Math.max(...itinerary.map(item => item.day)) + 1;
+    const newDate = new Date();
+    newDate.setDate(newDate.getDate() + nextDay - 1);
+    
+    const newItem = {
+      id: `dest${Date.now()}`,
+      day: nextDay,
+      date: newDate.toISOString().split('T')[0],
+      activity: 'New Activity',
+      location: 'New Location',
+      time: '09:00 - 12:00',
+      category: 'attraction',
+      coordinates: { lat: 26.6084, lng: 37.8456 },
+      notes: ''
+    };
+
+    setItinerary(prev => [...prev, newItem]);
+    setEditingItem(newItem.id);
+    toast({
+      title: t('success'),
+      description: 'New day added to itinerary!'
     });
   };
 
@@ -325,20 +381,47 @@ export const GuideView: React.FC = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {mockItinerary.map((item) => (
+                    {itinerary.map((item) => (
                       <div key={item.id} className="p-4 border border-border rounded-lg">
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                          <Input value={`${t('day')} ${item.day}`} readOnly />
-                          <Input value={item.date} />
-                          <Input value={item.activity} />
-                          <Input value={translateLocation(item.location)} />
+                          <Input 
+                            value={`${t('day')} ${item.day}`} 
+                            readOnly 
+                          />
+                          <Input 
+                            value={item.date} 
+                            onChange={(e) => updateItineraryItem(item.id, 'date', e.target.value)}
+                            readOnly={editingItem !== item.id}
+                          />
+                          <Input 
+                            value={item.activity} 
+                            onChange={(e) => updateItineraryItem(item.id, 'activity', e.target.value)}
+                            readOnly={editingItem !== item.id}
+                          />
+                          <Input 
+                            value={translateLocation(item.location)} 
+                            onChange={(e) => updateItineraryItem(item.id, 'location', e.target.value)}
+                            readOnly={editingItem !== item.id}
+                          />
                         </div>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2 rtl:space-x-reverse">
                             <Clock className="w-4 h-4" />
-                            <Input value={item.time} className="flex-1" />
-                            <Button size="sm" variant="outline">
+                            <Input 
+                              value={item.time} 
+                              className="flex-1" 
+                              onChange={(e) => updateItineraryItem(item.id, 'time', e.target.value)}
+                              readOnly={editingItem !== item.id}
+                            />
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => editingItem === item.id ? saveItineraryItem(item.id) : toggleEdit(item.id)}
+                            >
                               <Edit className="w-4 h-4" />
+                              <span className="ml-1 rtl:ml-0 rtl:mr-1">
+                                {editingItem === item.id ? t('save') : t('edit')}
+                              </span>
                             </Button>
                           </div>
                           <div className="flex items-center space-x-2 rtl:space-x-reverse">
@@ -359,7 +442,7 @@ export const GuideView: React.FC = () => {
                         </div>
                       </div>
                     ))}
-                    <Button variant="outline" className="w-full">
+                    <Button variant="outline" className="w-full" onClick={addNewDay}>
                       <Calendar className="w-4 h-4 mr-2" />
                       {t('addNewDay')}
                     </Button>
