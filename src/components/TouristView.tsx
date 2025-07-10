@@ -18,7 +18,10 @@ import {
   StickyNote,
   Landmark,
   Camera,
-  Mountain
+  Mountain,
+  Users,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
@@ -33,6 +36,7 @@ export const TouristView: React.FC = () => {
   const [showRegistration, setShowRegistration] = useState(false);
   const [showRating, setShowRating] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
+  const [showExperiences, setShowExperiences] = useState(false);
   const [selectedDestination, setSelectedDestination] = useState<any>(null);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
@@ -165,8 +169,29 @@ export const TouristView: React.FC = () => {
     return (
       <div className="min-h-screen p-4 pt-20">
         <div className="container mx-auto max-w-6xl space-y-8">
-          {/* Tourist Experiences Section */}
-          <TouristExperiences />
+          {/* Tourist Experiences Icon Section */}
+          <div className="flex justify-center">
+            <Button
+              variant="outline"
+              onClick={() => setShowExperiences(!showExperiences)}
+              className="flex items-center space-x-2 rtl:space-x-reverse shadow-desert"
+            >
+              <Users className="w-5 h-5 text-primary" />
+              <span className="text-lg font-semibold">{t('touristExperiences')}</span>
+              {showExperiences ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
+            </Button>
+          </div>
+
+          {/* Collapsible Tourist Experiences Section */}
+          {showExperiences && (
+            <div className="animate-fade-in">
+              <TouristExperiences />
+            </div>
+          )}
 
           {/* Login Section */}
           <div className="flex justify-center">
