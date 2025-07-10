@@ -1,10 +1,11 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { 
   Users, 
   Calendar, 
@@ -15,7 +16,12 @@ import {
   Download,
   CheckCircle,
   UserPlus,
-  Car
+  Car,
+  Shield,
+  Droplets,
+  Sun,
+  Heart,
+  Package
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
@@ -26,6 +32,11 @@ export const GuideView: React.FC = () => {
   const [guideId, setGuideId] = useState('');
   const [password, setPassword] = useState('');
   const [selectedTourist, setSelectedTourist] = useState('');
+  const [packageStates, setPackageStates] = useState<{[key: string]: boolean}>({
+    'T001': true,
+    'T002': false,
+    'T003': true
+  });
 
   const mockTourists = [
     { id: 'T001', name: 'Ahmed Al-Rashid', status: 'Active' },
@@ -100,7 +111,7 @@ export const GuideView: React.FC = () => {
       setIsLoggedIn(true);
       toast({
         title: t('success'),
-        description: 'Welcome back, Tour Guide!'
+        description: t('welcomeGuide')
       });
     }
   };
@@ -116,6 +127,17 @@ export const GuideView: React.FC = () => {
     toast({
       title: t('success'),
       description: 'Driver assigned successfully!'
+    });
+  };
+
+  const togglePackage = (touristId: string) => {
+    setPackageStates(prev => ({
+      ...prev,
+      [touristId]: !prev[touristId]
+    }));
+    toast({
+      title: t('success'),
+      description: packageStates[touristId] ? t('packageDisabled') : t('packageEnabled')
     });
   };
 
@@ -153,8 +175,8 @@ export const GuideView: React.FC = () => {
         {/* Welcome Header */}
         <Card className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
           <CardContent className="pt-6">
-            <h2 className="text-2xl font-bold text-primary mb-2">Welcome, Tour Guide</h2>
-            <p className="text-muted-foreground">Guide ID: {guideId}</p>
+            <h2 className="text-2xl font-bold text-primary mb-2">{t('welcomeGuide')}</h2>
+            <p className="text-muted-foreground">{t('guideId')}: {guideId}</p>
           </CardContent>
         </Card>
 
@@ -182,6 +204,58 @@ export const GuideView: React.FC = () => {
                     ))}
                   </SelectContent>
                 </Select>
+              </CardContent>
+            </Card>
+
+            {/* Package Management */}
+            <Card className="shadow-desert">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2 rtl:space-x-reverse">
+                  <Package className="w-5 h-5" />
+                  <span>{t('managePackages')}</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {mockTourists.map((tourist) => (
+                    <div key={tourist.id} className="p-4 border border-border rounded-lg">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h4 className="font-semibold">{tourist.name}</h4>
+                          <p className="text-sm text-muted-foreground">{tourist.id}</p>
+                        </div>
+                        <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                          <span className="text-sm">{packageStates[tourist.id] ? t('packageEnabled') : t('packageDisabled')}</span>
+                          <Switch
+                            checked={packageStates[tourist.id] || false}
+                            onCheckedChange={() => togglePackage(tourist.id)}
+                          />
+                        </div>
+                      </div>
+                      
+                      {packageStates[tourist.id] && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div className="flex items-center space-x-3 rtl:space-x-reverse p-3 bg-secondary/30 rounded-lg">
+                            <Droplets className="w-4 h-4 text-accent" />
+                            <span className="text-sm">{t('packageItems.refreshments')}</span>
+                          </div>
+                          <div className="flex items-center space-x-3 rtl:space-x-reverse p-3 bg-secondary/30 rounded-lg">
+                            <Sun className="w-4 h-4 text-accent" />
+                            <span className="text-sm">{t('packageItems.sunshade')}</span>
+                          </div>
+                          <div className="flex items-center space-x-3 rtl:space-x-reverse p-3 bg-secondary/30 rounded-lg">
+                            <Heart className="w-4 h-4 text-accent" />
+                            <span className="text-sm">{t('packageItems.medical')}</span>
+                          </div>
+                          <div className="flex items-center space-x-3 rtl:space-x-reverse p-3 bg-secondary/30 rounded-lg">
+                            <Shield className="w-4 h-4 text-accent" />
+                            <span className="text-sm">{t('packageItems.special')}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
 
@@ -215,7 +289,7 @@ export const GuideView: React.FC = () => {
                     ))}
                     <Button variant="outline" className="w-full">
                       <Calendar className="w-4 h-4 mr-2" />
-                      Add New Day
+                      {t('addNewDay')}
                     </Button>
                   </div>
                 </CardContent>
@@ -255,7 +329,7 @@ export const GuideView: React.FC = () => {
                         </div>
                         <Button size="sm" onClick={() => assignDriver(booking.id)}>
                           <CheckCircle className="w-4 h-4 mr-2" />
-                          Assign Driver
+                          {t('assignDriver')}
                         </Button>
                       </div>
                     </div>
@@ -344,24 +418,24 @@ export const GuideView: React.FC = () => {
             {/* Tourist Stats */}
             <Card className="shadow-desert">
               <CardHeader>
-                <CardTitle className="text-lg">Statistics</CardTitle>
+                <CardTitle className="text-lg">{t('statistics')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm">Active Tourists</span>
+                    <span className="text-sm">{t('activeTourists')}</span>
                     <Badge variant="secondary">2</Badge>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm">Pending Requests</span>
+                    <span className="text-sm">{t('pendingRequests')}</span>
                     <Badge variant="outline">2</Badge>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm">Driver Bookings</span>
+                    <span className="text-sm">{t('driverBookings')}</span>
                     <Badge variant="outline">2</Badge>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm">Average Rating</span>
+                    <span className="text-sm">{t('averageRating')}</span>
                     <Badge variant="secondary">4.5 ⭐</Badge>
                   </div>
                 </div>

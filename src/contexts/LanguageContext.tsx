@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 export type Language = 'en' | 'ar';
@@ -29,13 +30,6 @@ const translations = {
     viewMap: "View Trip Locations",
     suggestedPlaces: "Suggested Places to Visit",
     rateGuide: "Rate Your Guide",
-    touristPackage: "Tourist Package",
-    packageItems: {
-      refreshments: "Refreshments during trips (water, juice, light snacks)",
-      sunshade: "Sunshade provided for heat protection",
-      medical: "Medical assistance available if needed",
-      special: "Special accommodations for health conditions"
-    },
     registerJourney: "Register a New Journey",
     
     // Registration Form
@@ -55,6 +49,22 @@ const translations = {
     viewRatings: "View Ratings",
     journeyRequests: "New Journey Requests",
     assignSchedule: "Assign Schedule",
+    packageManagement: "Package Management",
+    managePackages: "Manage Tourist Packages",
+    
+    // Package Management (moved to guide view)
+    touristPackage: "Tourist Package",
+    packageItems: {
+      refreshments: "Refreshments during trips (water, juice, light snacks)",
+      sunshade: "Sunshade provided for heat protection",
+      medical: "Medical assistance available if needed",
+      special: "Special accommodations for health conditions"
+    },
+    enablePackage: "Enable Package",
+    disablePackage: "Disable Package",
+    packageEnabled: "Package Enabled",
+    packageDisabled: "Package Disabled",
+    customizePackage: "Customize Package",
     
     // About
     about: "About AlUla Journey",
@@ -76,6 +86,14 @@ const translations = {
     rating: "Rating",
     comment: "Comment",
     submitRating: "Submit Rating",
+    welcomeGuide: "Welcome, Tour Guide",
+    statistics: "Statistics",
+    activeTourists: "Active Tourists",
+    pendingRequests: "Pending Requests",
+    driverBookings: "Driver Bookings",
+    averageRating: "Average Rating",
+    addNewDay: "Add New Day",
+    assignDriver: "Assign Driver",
     
     // Driver Booking
     bookDriver: "Book a Driver",
@@ -95,7 +113,11 @@ const translations = {
     cancel: "Cancel",
     loading: "Loading...",
     error: "Error occurred",
-    success: "Success"
+    success: "Success",
+    edit: "Edit",
+    delete: "Delete",
+    confirm: "Confirm",
+    back: "Back"
   },
   ar: {
     // Navigation
@@ -114,13 +136,6 @@ const translations = {
     viewMap: "عرض مواقع الرحلة",
     suggestedPlaces: "أماكن مقترحة للزيارة",
     rateGuide: "قيّم مرشدك",
-    touristPackage: "حزمة السائح",
-    packageItems: {
-      refreshments: "المرطبات أثناء الرحلات (ماء، عصير، وجبات خفيفة)",
-      sunshade: "توفير الظلال للحماية من الحر",
-      medical: "المساعدة الطبية متوفرة عند الحاجة",
-      special: "ترتيبات خاصة للحالات الصحية"
-    },
     registerJourney: "تسجيل رحلة جديدة",
     
     // Registration Form
@@ -140,6 +155,22 @@ const translations = {
     viewRatings: "عرض التقييمات",
     journeyRequests: "طلبات الرحلات الجديدة",
     assignSchedule: "تعيين الجدولة",
+    packageManagement: "إدارة الحزم",
+    managePackages: "إدارة حزم السياح",
+    
+    // Package Management (moved to guide view)
+    touristPackage: "حزمة السائح",
+    packageItems: {
+      refreshments: "المرطبات أثناء الرحلات (ماء، عصير، وجبات خفيفة)",
+      sunshade: "توفير الظلال للحماية من الحر",
+      medical: "المساعدة الطبية متوفرة عند الحاجة",
+      special: "ترتيبات خاصة للحالات الصحية"
+    },
+    enablePackage: "تفعيل الحزمة",
+    disablePackage: "إيقاف الحزمة",
+    packageEnabled: "تم تفعيل الحزمة",
+    packageDisabled: "تم إيقاف الحزمة",
+    customizePackage: "تخصيص الحزمة",
     
     // About
     about: "حول رحلة العُلا",
@@ -161,6 +192,14 @@ const translations = {
     rating: "التقييم",
     comment: "التعليق",
     submitRating: "إرسال التقييم",
+    welcomeGuide: "مرحباً، أيها المرشد السياحي",
+    statistics: "الإحصائيات",
+    activeTourists: "السياح النشطون",
+    pendingRequests: "الطلبات المعلقة",
+    driverBookings: "حجوزات السائق",
+    averageRating: "متوسط التقييم",
+    addNewDay: "إضافة يوم جديد",
+    assignDriver: "تعيين سائق",
     
     // Driver Booking
     bookDriver: "حجز سائق",
@@ -180,7 +219,11 @@ const translations = {
     cancel: "إلغاء",
     loading: "جاري التحميل...",
     error: "حدث خطأ",
-    success: "نجح"
+    success: "نجح",
+    edit: "تعديل",
+    delete: "حذف",
+    confirm: "تأكيد",
+    back: "رجوع"
   }
 };
 

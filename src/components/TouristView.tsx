@@ -10,11 +10,7 @@ import {
   MapPin, 
   MessageCircle, 
   Download, 
-  Star, 
-  Shield, 
-  Droplets, 
-  Sun, 
-  Heart,
+  Star,
   Plus,
   Calendar,
   Clock,
@@ -186,7 +182,7 @@ export const TouristView: React.FC = () => {
         <Card className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
           <CardContent className="pt-6">
             <h2 className="text-2xl font-bold text-primary mb-2">{t('welcomeTourist')}</h2>
-            <p className="text-muted-foreground">Tourist ID: {touristId}</p>
+            <p className="text-muted-foreground">{t('touristId')}: {touristId}</p>
           </CardContent>
         </Card>
 
@@ -221,36 +217,6 @@ export const TouristView: React.FC = () => {
                       <Badge variant="outline">{item.date}</Badge>
                     </div>
                   ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Tourist Package */}
-            <Card className="shadow-desert">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 rtl:space-x-reverse">
-                  <Shield className="w-5 h-5" />
-                  <span>{t('touristPackage')}</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-center space-x-3 rtl:space-x-reverse p-3 bg-secondary/30 rounded-lg">
-                    <Droplets className="w-5 h-5 text-accent" />
-                    <span className="text-sm">{t('packageItems.refreshments')}</span>
-                  </div>
-                  <div className="flex items-center space-x-3 rtl:space-x-reverse p-3 bg-secondary/30 rounded-lg">
-                    <Sun className="w-5 h-5 text-accent" />
-                    <span className="text-sm">{t('packageItems.sunshade')}</span>
-                  </div>
-                  <div className="flex items-center space-x-3 rtl:space-x-reverse p-3 bg-secondary/30 rounded-lg">
-                    <Heart className="w-5 h-5 text-accent" />
-                    <span className="text-sm">{t('packageItems.medical')}</span>
-                  </div>
-                  <div className="flex items-center space-x-3 rtl:space-x-reverse p-3 bg-secondary/30 rounded-lg">
-                    <Shield className="w-5 h-5 text-accent" />
-                    <span className="text-sm">{t('packageItems.special')}</span>
-                  </div>
                 </div>
               </CardContent>
             </Card>
