@@ -7,9 +7,13 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { TimePicker } from '@/components/ui/time-picker';
+import { format } from 'date-fns';
 import { 
   Users, 
-  Calendar, 
+  Calendar as CalendarIcon, 
   Star, 
   MapPin, 
   Clock,
@@ -24,11 +28,15 @@ import {
   Heart,
   Package,
   StickyNote,
-  Navigation
+  Navigation,
+  Mountain,
+  Castle,
+  Zap
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
 import { GoogleMaps } from '@/components/GoogleMaps';
+import { cn } from '@/lib/utils';
 
 export const GuideView: React.FC = () => {
   const { t, translateLocation } = useLanguage();
@@ -67,6 +75,17 @@ export const GuideView: React.FC = () => {
       category: 'heritage',
       coordinates: { lat: 26.7853, lng: 37.9542 },
       notes: 'Bring comfortable walking shoes. Photography is allowed in designated areas only.'
+    },
+    {
+      id: 'dest3',
+      day: 3,
+      date: '2024-07-17',
+      activity: 'Zip Line Adventure',
+      location: 'Adventure Park',
+      time: '10:00 - 13:00',
+      category: 'adventure',
+      coordinates: { lat: 26.6084, lng: 37.8456 },
+      notes: 'Wear comfortable clothes and closed-toe shoes. Weight limit applies.'
     }
   ]);
 
@@ -129,6 +148,12 @@ export const GuideView: React.FC = () => {
     description: item.activity,
     notes: item.notes
   }));
+
+  const categorizedItinerary = {
+    heritage: itinerary.filter(item => item.category === 'heritage'),
+    attraction: itinerary.filter(item => item.category === 'attraction'),
+    adventure: itinerary.filter(item => item.category === 'adventure')
+  };
 
   const handleLogin = () => {
     if (guideId.trim() && password.trim()) {
@@ -241,6 +266,168 @@ export const GuideView: React.FC = () => {
       title: t('success'),
       description: 'New day added to itinerary!'
     });
+  };
+
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case 'heritage': return Castle;
+      case 'attraction': return Mountain;
+      case 'adventure': return Zap;
+      default: return MapPin;
+    }
+  };
+
+  const getCategoryTitle = (category: string) => {
+    switch (category) {
+      case 'heritage': return t('heritageSites') || 'Heritage Sites';
+      case 'attraction': return t('attractionPlaces') || 'Attraction Places';
+      case 'adventure': return t('adventurousExperiences') || 'Adventurous Experiences';
+      default: return 'Activities';
+    }
+  };
+
+  const renderCategorySection = (category: string, items: any[]) => {
+    const CategoryIcon = getCategoryIcon(category);
+    
+    return (
+      <Card key={category} className="shadow-desert">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2 rtl:space-x-reverse">
+            <CategoryIcon className="w-5 h-5" />
+            <span>{getCategoryTitle(category)}</span>
+            <Badge variant="secondary">{items.length}</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {items.map((item) => (
+              <div key={item.id} className="p-4 border border-border rounded-lg">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                  <Input 
+                    value={`${t('day')} ${item.day}`} 
+                    readOnly 
+                  />
+                  
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "justify-start text-left font-normal",
+                          editingItem !== item.id && "cursor-default"
+                        )}
+                        disabled={editingItem !== item.id}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {item.date ? format(new Date(item.date), "PPP") : <span>Pick a date</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={new Date(item.date)}
+                        onSelect={(date) => {
+                          if (date) {
+                            updateItineraryItem(item.id, 'date', date.toISOString().split('T')[0]);
+                          }
+                        }}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  
+                  <Input 
+                    value={item.activity} 
+                    onChange={(e) => updateItineraryItem(item.id, 'activity', e.target.value)}
+                    readOnly={editingItem !== item.id}
+                  />
+                  <Input 
+                    value={translateLocation(item.location)} 
+                    onChange={(e) => updateItineraryItem(item.id, 'location', e.target.value)}
+                    readOnly={editingItem !== item.id}
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <Select
+                    value={item.category}
+                    onValueChange={(value) => updateItineraryItem(item.id, 'category', value)}
+                    disabled={editingItem !== item.id}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="heritage">
+                        <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                          <Castle className="w-4 h-4" />
+                          <span>{t('heritageSites') || 'Heritage Sites'}</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="attraction">
+                        <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                          <Mountain className="w-4 h-4" />
+                          <span>{t('attractionPlaces') || 'Attraction Places'}</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="adventure">
+                        <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                          <Zap className="w-4 h-4" />
+                          <span>{t('adventurousExperiences') || 'Adventurous Experiences'}</span>
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                    <Clock className="w-4 h-4" />
+                    {editingItem === item.id ? (
+                      <TimePicker
+                        value={item.time}
+                        onChange={(time) => updateItineraryItem(item.id, 'time', time)}
+                      />
+                    ) : (
+                      <Input value={item.time} readOnly />
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => editingItem === item.id ? saveItineraryItem(item.id) : toggleEdit(item.id)}
+                    >
+                      <Edit className="w-4 h-4" />
+                      <span className="ml-1 rtl:ml-0 rtl:mr-1">
+                        {editingItem === item.id ? t('save') : t('edit')}
+                      </span>
+                    </Button>
+                  </div>
+                  <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => openNotesDialog(item)}
+                      className="flex items-center space-x-1 rtl:space-x-reverse"
+                    >
+                      <StickyNote className="w-4 h-4" />
+                      <span>{t('addNotes')}</span>
+                    </Button>
+                    <Button size="sm" variant="outline">
+                      <Navigation className="w-4 h-4" />
+                      <span className="ml-1 rtl:ml-0 rtl:mr-1">{t('setLocation')}</span>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
   };
 
   if (!isLoggedIn) {
@@ -370,85 +557,18 @@ export const GuideView: React.FC = () => {
               </CardContent>
             </Card>
 
-            {/* Itinerary Management with Notes */}
+            {/* Categorized Itinerary Management */}
             {selectedTourist && (
-              <Card className="shadow-desert">
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2 rtl:space-x-reverse">
-                    <Calendar className="w-5 h-5" />
-                    <span>{t('editItinerary')}</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {itinerary.map((item) => (
-                      <div key={item.id} className="p-4 border border-border rounded-lg">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                          <Input 
-                            value={`${t('day')} ${item.day}`} 
-                            readOnly 
-                          />
-                          <Input 
-                            value={item.date} 
-                            onChange={(e) => updateItineraryItem(item.id, 'date', e.target.value)}
-                            readOnly={editingItem !== item.id}
-                          />
-                          <Input 
-                            value={item.activity} 
-                            onChange={(e) => updateItineraryItem(item.id, 'activity', e.target.value)}
-                            readOnly={editingItem !== item.id}
-                          />
-                          <Input 
-                            value={translateLocation(item.location)} 
-                            onChange={(e) => updateItineraryItem(item.id, 'location', e.target.value)}
-                            readOnly={editingItem !== item.id}
-                          />
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                            <Clock className="w-4 h-4" />
-                            <Input 
-                              value={item.time} 
-                              className="flex-1" 
-                              onChange={(e) => updateItineraryItem(item.id, 'time', e.target.value)}
-                              readOnly={editingItem !== item.id}
-                            />
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => editingItem === item.id ? saveItineraryItem(item.id) : toggleEdit(item.id)}
-                            >
-                              <Edit className="w-4 h-4" />
-                              <span className="ml-1 rtl:ml-0 rtl:mr-1">
-                                {editingItem === item.id ? t('save') : t('edit')}
-                              </span>
-                            </Button>
-                          </div>
-                          <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => openNotesDialog(item)}
-                              className="flex items-center space-x-1 rtl:space-x-reverse"
-                            >
-                              <StickyNote className="w-4 h-4" />
-                              <span>{t('addNotes')}</span>
-                            </Button>
-                            <Button size="sm" variant="outline">
-                              <Navigation className="w-4 h-4" />
-                              <span className="ml-1 rtl:ml-0 rtl:mr-1">{t('setLocation')}</span>
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    <Button variant="outline" className="w-full" onClick={addNewDay}>
-                      <Calendar className="w-4 h-4 mr-2" />
-                      {t('addNewDay')}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="space-y-6">
+                {Object.entries(categorizedItinerary).map(([category, items]) => 
+                  items.length > 0 && renderCategorySection(category, items)
+                )}
+                
+                <Button variant="outline" className="w-full" onClick={addNewDay}>
+                  <CalendarIcon className="w-4 h-4 mr-2" />
+                  {t('addNewDay')}
+                </Button>
+              </div>
             )}
 
             {/* Driver Booking Requests */}
@@ -468,7 +588,7 @@ export const GuideView: React.FC = () => {
                           <h4 className="font-semibold">{booking.touristName}</h4>
                           <div className="text-sm text-muted-foreground space-y-1">
                             <p className="flex items-center space-x-2 rtl:space-x-reverse">
-                              <Calendar className="w-3 h-3" />
+                              <CalendarIcon className="w-3 h-3" />
                               <span>{booking.date} at {booking.time}</span>
                             </p>
                             {booking.pickupLocation && (
