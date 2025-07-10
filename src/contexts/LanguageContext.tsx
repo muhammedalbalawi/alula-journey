@@ -32,6 +32,12 @@ const translations = {
     rateGuide: "Rate Your Guide",
     registerJourney: "Register a New Journey",
     
+    // Tourist Experiences
+    touristExperiences: "Tourist Experiences",
+    previousTourists: "What Our Tourists Say",
+    experienceGallery: "Experience Gallery",
+    readMore: "Read More",
+    
     // Registration Form
     fullName: "Full Name",
     contactInfo: "Phone Number or Email (choose one)",
@@ -51,6 +57,9 @@ const translations = {
     assignSchedule: "Assign Schedule",
     packageManagement: "Package Management",
     managePackages: "Manage Tourist Packages",
+    guideNotes: "Guide Notes",
+    addNotes: "Add Notes",
+    setLocation: "Set Location",
     
     // Package Management (moved to guide view)
     touristPackage: "Tourist Package",
@@ -66,6 +75,27 @@ const translations = {
     packageDisabled: "Package Disabled",
     customizePackage: "Customize Package",
     
+    // Destination Categories
+    heritageSites: "Heritage Sites",
+    attractionPlaces: "Attraction Places",
+    adventurousExperiences: "Adventurous Experiences",
+    
+    // Categories examples
+    categories: {
+      heritage: {
+        name: "Heritage Sites",
+        examples: ["Hegra Archaeological Site", "Dadan Archaeological Site", "AlUla Old Town"]
+      },
+      attraction: {
+        name: "Attraction Places",
+        examples: ["Elephant Rock", "Mirror's Edge", "AlUla Arts District"]
+      },
+      adventure: {
+        name: "Adventurous Experiences", 
+        examples: ["Desert Safari", "Rock Climbing", "Hot Air Balloon"]
+      }
+    },
+    
     // About
     about: "About AlUla Journey",
     aboutContent: {
@@ -80,6 +110,8 @@ const translations = {
     activity: "Activity",
     location: "Location",
     time: "Time",
+    notes: "Notes",
+    viewNotes: "View Notes",
     
     // Messages
     noItinerary: "No itinerary assigned yet. Please wait for your guide to contact you.",
@@ -138,6 +170,12 @@ const translations = {
     rateGuide: "قيّم مرشدك",
     registerJourney: "تسجيل رحلة جديدة",
     
+    // Tourist Experiences
+    touristExperiences: "تجارب السياح",
+    previousTourists: "ماذا يقول سياحنا",
+    experienceGallery: "معرض التجارب",
+    readMore: "اقرأ المزيد",
+    
     // Registration Form
     fullName: "الاسم الكامل",
     contactInfo: "رقم الجوال أو البريد الإلكتروني (اختر أحدهما)",
@@ -157,6 +195,9 @@ const translations = {
     assignSchedule: "تعيين الجدولة",
     packageManagement: "إدارة الحزم",
     managePackages: "إدارة حزم السياح",
+    guideNotes: "ملاحظات المرشد",
+    addNotes: "إضافة ملاحظات",
+    setLocation: "تحديد الموقع",
     
     // Package Management (moved to guide view)
     touristPackage: "حزمة السائح",
@@ -172,6 +213,27 @@ const translations = {
     packageDisabled: "تم إيقاف الحزمة",
     customizePackage: "تخصيص الحزمة",
     
+    // Destination Categories
+    heritageSites: "المواقع التراثية",
+    attractionPlaces: "أماكن الجذب",
+    adventurousExperiences: "التجارب المغامرة",
+    
+    // Categories examples
+    categories: {
+      heritage: {
+        name: "المواقع التراثية",
+        examples: ["موقع الحجر الأثري", "موقع دادان الأثري", "البلدة القديمة"]
+      },
+      attraction: {
+        name: "أماكن الجذب",
+        examples: ["جبل الفيل", "حافة المرآة", "حي الفنون في العلا"]
+      },
+      adventure: {
+        name: "التجارب المغامرة",
+        examples: ["رحلة صحراوية", "تسلق الصخور", "منطاد الهواء الساخن"]
+      }
+    },
+    
     // About
     about: "حول رحلة العُلا",
     aboutContent: {
@@ -186,6 +248,8 @@ const translations = {
     activity: "النشاط",
     location: "الموقع",
     time: "الوقت",
+    notes: "الملاحظات",
+    viewNotes: "عرض الملاحظات",
     
     // Messages
     noItinerary: "لم يتم تعيين برنامج بعد. يرجى انتظار تواصل المرشد معك.",

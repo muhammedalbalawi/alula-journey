@@ -14,11 +14,17 @@ import {
   Plus,
   Calendar,
   Clock,
-  Navigation
+  Navigation,
+  StickyNote,
+  Landmark,
+  Camera,
+  Mountain
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
 import { DriverBooking } from '@/components/DriverBooking';
+import { TouristExperiences } from '@/components/TouristExperiences';
+import { GoogleMaps } from '@/components/GoogleMaps';
 
 export const TouristView: React.FC = () => {
   const { t, translateLocation } = useLanguage();
@@ -26,6 +32,8 @@ export const TouristView: React.FC = () => {
   const [touristId, setTouristId] = useState('');
   const [showRegistration, setShowRegistration] = useState(false);
   const [showRating, setShowRating] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
+  const [selectedDestination, setSelectedDestination] = useState<any>(null);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [registrationData, setRegistrationData] = useState({
@@ -35,35 +43,70 @@ export const TouristView: React.FC = () => {
     specialNeeds: ''
   });
 
-  const mockItinerary = [
-    {
-      day: 1,
-      date: '2024-07-15',
-      activity: 'Elephant Rock & Sunset',
-      location: 'Jabal AlFil',
-      time: '16:00 - 19:00'
-    },
-    {
-      day: 2,
-      date: '2024-07-16',
-      activity: 'Hegra Archaeological Site',
-      location: 'Madain Saleh',
-      time: '08:00 - 12:00'
-    },
-    {
-      day: 3,
-      date: '2024-07-17',
-      activity: 'AlUla Old Town',
-      location: 'Historical District',
-      time: '09:00 - 13:00'
-    }
-  ];
+  // Categorized destinations
+  const destinations = {
+    heritage: [
+      {
+        id: 'h1',
+        name: 'Hegra Archaeological Site',
+        location: 'Madain Saleh',
+        time: '08:00 - 12:00',
+        date: '2024-07-16',
+        description: 'Explore the ancient Nabatean tombs and archaeological wonders',
+        notes: 'Bring comfortable walking shoes. Photography is allowed in designated areas only.',
+        coordinates: { lat: 26.7853, lng: 37.9542 }
+      },
+      {
+        id: 'h2',
+        name: 'Dadan Archaeological Site',
+        location: 'Dadan',
+        time: '09:00 - 11:00',
+        date: '2024-07-17',
+        description: 'Ancient capital of the Dadanite and Lihyanite kingdoms',
+        notes: 'Early morning visit recommended for better lighting.',
+        coordinates: { lat: 26.6469, lng: 37.9278 }
+      }
+    ],
+    attraction: [
+      {
+        id: 'a1',
+        name: 'Elephant Rock',
+        location: 'Jabal AlFil',
+        time: '16:00 - 19:00',
+        date: '2024-07-15',
+        description: 'Witness the spectacular sunset at the iconic elephant-shaped rock formation',
+        notes: 'Best sunset viewing from the viewing platform. Bring a camera!',
+        coordinates: { lat: 26.5814, lng: 37.6956 }
+      },
+      {
+        id: 'a2',
+        name: 'AlUla Old Town',
+        location: 'Historical District',
+        time: '09:00 - 13:00',
+        date: '2024-07-17',
+        description: 'Walk through the historic mudbrick buildings and traditional architecture',
+        notes: 'Traditional coffee will be served during the visit.',
+        coordinates: { lat: 26.6085, lng: 37.9218 }
+      }
+    ],
+    adventure: [
+      {
+        id: 'ad1',
+        name: 'Desert Safari',
+        location: 'Sharaan Nature Reserve',
+        time: '14:00 - 18:00',
+        date: '2024-07-18',
+        description: 'Thrilling desert adventure with wildlife spotting',
+        notes: 'All safety equipment provided. Minimum age requirement: 12 years.',
+        coordinates: { lat: 26.5289, lng: 37.8742 }
+      }
+    ]
+  };
 
-  const suggestedPlaces = [
-    'Dadan Archaeological Site',
-    'Mirror\'s Edge',
-    'Sharaan Nature Reserve',
-    'AlUla Arts District'
+  const allLocations = [
+    ...destinations.heritage.map(d => ({ ...d, category: 'heritage' as const })),
+    ...destinations.attraction.map(d => ({ ...d, category: 'attraction' as const })),
+    ...destinations.adventure.map(d => ({ ...d, category: 'adventure' as const }))
   ];
 
   const handleLogin = () => {
@@ -101,75 +144,97 @@ export const TouristView: React.FC = () => {
   };
 
   const openWhatsApp = () => {
-    window.open('https://wa.me/966501234567', '_blank');
+    window.open('https://wa.me/966581828132', '_blank');
+  };
+
+  const showDestinationNotes = (destination: any) => {
+    setSelectedDestination(destination);
+    setShowNotes(true);
+  };
+
+  const getCategoryIcon = (category: string) => {
+    const icons = {
+      heritage: Landmark,
+      attraction: Camera,
+      adventure: Mountain
+    };
+    return icons[category as keyof typeof icons] || Camera;
   };
 
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="w-full max-w-md space-y-6">
-          {/* Login Card */}
-          <Card className="shadow-desert">
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl text-primary">{t('touristLogin')}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Input
-                placeholder={t('touristId')}
-                value={touristId}
-                onChange={(e) => setTouristId(e.target.value)}
-                className="text-center"
-              />
-              <Button onClick={handleLogin} className="w-full">
-                {t('login')}
-              </Button>
-            </CardContent>
-          </Card>
+      <div className="min-h-screen p-4 pt-20">
+        <div className="container mx-auto max-w-6xl space-y-8">
+          {/* Tourist Experiences Section */}
+          <TouristExperiences />
 
-          {/* Registration Button */}
-          <Card className="shadow-desert">
-            <CardContent className="pt-6">
-              <Dialog open={showRegistration} onOpenChange={setShowRegistration}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" className="w-full flex items-center space-x-2 rtl:space-x-reverse">
-                    <Plus className="w-4 h-4" />
-                    <span>{t('registerJourney')}</span>
+          {/* Login Section */}
+          <div className="flex justify-center">
+            <div className="w-full max-w-md space-y-6">
+              {/* Login Card */}
+              <Card className="shadow-desert">
+                <CardHeader className="text-center">
+                  <CardTitle className="text-2xl text-primary">{t('touristLogin')}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Input
+                    placeholder={t('touristId')}
+                    value={touristId}
+                    onChange={(e) => setTouristId(e.target.value)}
+                    className="text-center"
+                  />
+                  <Button onClick={handleLogin} className="w-full">
+                    {t('login')}
                   </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>{t('registerJourney')}</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 pt-4">
-                    <Input
-                      placeholder={t('fullName')}
-                      value={registrationData.fullName}
-                      onChange={(e) => setRegistrationData({...registrationData, fullName: e.target.value})}
-                    />
-                    <Input
-                      placeholder={t('contactInfo')}
-                      value={registrationData.contact}
-                      onChange={(e) => setRegistrationData({...registrationData, contact: e.target.value})}
-                    />
-                    <Input
-                      placeholder={t('nationality')}
-                      value={registrationData.nationality}
-                      onChange={(e) => setRegistrationData({...registrationData, nationality: e.target.value})}
-                    />
-                    <Textarea
-                      placeholder={t('specialNeeds')}
-                      value={registrationData.specialNeeds}
-                      onChange={(e) => setRegistrationData({...registrationData, specialNeeds: e.target.value})}
-                      className="min-h-[80px]"
-                    />
-                    <Button onClick={handleRegistration} className="w-full">
-                      {t('submit')}
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+
+              {/* Registration Button */}
+              <Card className="shadow-desert">
+                <CardContent className="pt-6">
+                  <Dialog open={showRegistration} onOpenChange={setShowRegistration}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="w-full flex items-center space-x-2 rtl:space-x-reverse">
+                        <Plus className="w-4 h-4" />
+                        <span>{t('registerJourney')}</span>
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>{t('registerJourney')}</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4 pt-4">
+                        <Input
+                          placeholder={t('fullName')}
+                          value={registrationData.fullName}
+                          onChange={(e) => setRegistrationData({...registrationData, fullName: e.target.value})}
+                        />
+                        <Input
+                          placeholder={t('contactInfo')}
+                          value={registrationData.contact}
+                          onChange={(e) => setRegistrationData({...registrationData, contact: e.target.value})}
+                        />
+                        <Input
+                          placeholder={t('nationality')}
+                          value={registrationData.nationality}
+                          onChange={(e) => setRegistrationData({...registrationData, nationality: e.target.value})}
+                        />
+                        <Textarea
+                          placeholder={t('specialNeeds')}
+                          value={registrationData.specialNeeds}
+                          onChange={(e) => setRegistrationData({...registrationData, specialNeeds: e.target.value})}
+                          className="min-h-[80px]"
+                        />
+                        <Button onClick={handleRegistration} className="w-full">
+                          {t('submit')}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -189,37 +254,63 @@ export const TouristView: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Itinerary */}
-            <Card className="shadow-desert">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 rtl:space-x-reverse">
-                  <Calendar className="w-5 h-5" />
-                  <span>{t('itinerary')}</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {mockItinerary.map((item) => (
-                    <div key={item.day} className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">
-                      <div>
-                        <div className="font-semibold">{t('day')} {item.day} - {item.activity}</div>
-                        <div className="text-sm text-muted-foreground flex items-center space-x-4 rtl:space-x-reverse mt-1">
-                          <span className="flex items-center space-x-1 rtl:space-x-reverse">
-                            <MapPin className="w-3 h-3" />
-                            <span>{translateLocation(item.location)}</span>
-                          </span>
-                          <span className="flex items-center space-x-1 rtl:space-x-reverse">
-                            <Clock className="w-3 h-3" />
-                            <span>{item.time}</span>
-                          </span>
+            {/* Google Maps */}
+            <GoogleMaps locations={allLocations} />
+
+            {/* Categorized Destinations */}
+            {Object.entries(destinations).map(([category, items]) => {
+              const IconComponent = getCategoryIcon(category);
+              return (
+                <Card key={category} className="shadow-desert">
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2 rtl:space-x-reverse">
+                      <IconComponent className="w-5 h-5" />
+                      <span>{t(`categories.${category}.name`)}</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {items.map((item) => (
+                        <div key={item.id} className="p-4 bg-secondary/50 rounded-lg">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="font-semibold">{translateLocation(item.name)}</div>
+                              <div className="text-sm text-muted-foreground space-y-1 mt-2">
+                                <div className="flex items-center space-x-4 rtl:space-x-reverse">
+                                  <span className="flex items-center space-x-1 rtl:space-x-reverse">
+                                    <MapPin className="w-3 h-3" />
+                                    <span>{translateLocation(item.location)}</span>
+                                  </span>
+                                  <span className="flex items-center space-x-1 rtl:space-x-reverse">
+                                    <Clock className="w-3 h-3" />
+                                    <span>{item.time}</span>
+                                  </span>
+                                </div>
+                                <p className="text-xs">{item.description}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2 rtl:space-x-reverse ml-4 rtl:ml-0 rtl:mr-4">
+                              <Badge variant="outline">{item.date}</Badge>
+                              {item.notes && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => showDestinationNotes(item)}
+                                  className="flex items-center space-x-1 rtl:space-x-reverse"
+                                >
+                                  <StickyNote className="w-3 h-3" />
+                                  <span className="text-xs">{t('viewNotes')}</span>
+                                </Button>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                      <Badge variant="outline">{item.date}</Badge>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
 
           {/* Sidebar */}
@@ -242,22 +333,6 @@ export const TouristView: React.FC = () => {
                   <Navigation className="w-4 h-4" />
                   <span>{t('viewMap')}</span>
                 </Button>
-              </CardContent>
-            </Card>
-
-            {/* Suggested Places */}
-            <Card className="shadow-desert">
-              <CardHeader>
-                <CardTitle className="text-lg">{t('suggestedPlaces')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {suggestedPlaces.map((place, index) => (
-                    <Badge key={index} variant="secondary" className="block text-center py-2">
-                      {translateLocation(place)}
-                    </Badge>
-                  ))}
-                </div>
               </CardContent>
             </Card>
 
@@ -303,6 +378,18 @@ export const TouristView: React.FC = () => {
             </Card>
           </div>
         </div>
+
+        {/* Notes Dialog */}
+        <Dialog open={showNotes} onOpenChange={setShowNotes}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>{t('notes')} - {selectedDestination && translateLocation(selectedDestination.name)}</DialogTitle>
+            </DialogHeader>
+            <div className="pt-4">
+              <p className="text-sm text-muted-foreground">{selectedDestination?.notes}</p>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

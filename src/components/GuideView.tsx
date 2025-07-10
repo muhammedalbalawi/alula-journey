@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { 
   Users, 
   Calendar, 
@@ -21,10 +23,13 @@ import {
   Droplets,
   Sun,
   Heart,
-  Package
+  Package,
+  StickyNote,
+  Navigation
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
+import { GoogleMaps } from '@/components/GoogleMaps';
 
 export const GuideView: React.FC = () => {
   const { t, translateLocation } = useLanguage();
@@ -32,6 +37,9 @@ export const GuideView: React.FC = () => {
   const [guideId, setGuideId] = useState('');
   const [password, setPassword] = useState('');
   const [selectedTourist, setSelectedTourist] = useState('');
+  const [showNotesDialog, setShowNotesDialog] = useState(false);
+  const [selectedDestination, setSelectedDestination] = useState<any>(null);
+  const [destinationNotes, setDestinationNotes] = useState('');
   const [packageStates, setPackageStates] = useState<{[key: string]: boolean}>({
     'T001': true,
     'T002': false,
@@ -48,7 +56,7 @@ export const GuideView: React.FC = () => {
     {
       id: 'R001',
       fullName: 'Fatima Al-Zahra',
-      contact: '+966501234567',
+      contact: '+966581828132',
       nationality: 'Saudi Arabia',
       specialNeeds: 'Wheelchair accessible locations preferred',
       status: 'pending'
@@ -91,20 +99,37 @@ export const GuideView: React.FC = () => {
 
   const mockItinerary = [
     {
+      id: 'dest1',
       day: 1,
       date: '2024-07-15',
       activity: 'Elephant Rock & Sunset',
       location: 'Jabal AlFil',
-      time: '16:00 - 19:00'
+      time: '16:00 - 19:00',
+      category: 'attraction',
+      coordinates: { lat: 26.5814, lng: 37.6956 },
+      notes: 'Best sunset viewing from the viewing platform. Bring a camera!'
     },
     {
+      id: 'dest2',
       day: 2,
       date: '2024-07-16',
       activity: 'Hegra Archaeological Site',
       location: 'Madain Saleh',
-      time: '08:00 - 12:00'
+      time: '08:00 - 12:00',
+      category: 'heritage',
+      coordinates: { lat: 26.7853, lng: 37.9542 },
+      notes: 'Bring comfortable walking shoes. Photography is allowed in designated areas only.'
     }
   ];
+
+  const allLocations = mockItinerary.map(item => ({
+    id: item.id,
+    name: item.activity,
+    category: item.category as 'heritage' | 'attraction' | 'adventure',
+    coordinates: item.coordinates,
+    description: item.activity,
+    notes: item.notes
+  }));
 
   const handleLogin = () => {
     if (guideId.trim() && password.trim()) {
@@ -138,6 +163,27 @@ export const GuideView: React.FC = () => {
     toast({
       title: t('success'),
       description: packageStates[touristId] ? t('packageDisabled') : t('packageEnabled')
+    });
+  };
+
+  const openNotesDialog = (destination: any) => {
+    setSelectedDestination(destination);
+    setDestinationNotes(destination.notes || '');
+    setShowNotesDialog(true);
+  };
+
+  const saveNotes = () => {
+    toast({
+      title: t('success'),
+      description: 'Notes saved successfully!'
+    });
+    setShowNotesDialog(false);
+  };
+
+  const handleLocationUpdate = (locationId: string, coordinates: { lat: number; lng: number }) => {
+    toast({
+      title: t('success'),
+      description: 'Location updated successfully!'
     });
   };
 
@@ -207,6 +253,15 @@ export const GuideView: React.FC = () => {
               </CardContent>
             </Card>
 
+            {/* Google Maps for Guides */}
+            {selectedTourist && (
+              <GoogleMaps 
+                locations={allLocations} 
+                isGuideView={true}
+                onLocationUpdate={handleLocationUpdate}
+              />
+            )}
+
             {/* Package Management */}
             <Card className="shadow-desert">
               <CardHeader>
@@ -259,7 +314,7 @@ export const GuideView: React.FC = () => {
               </CardContent>
             </Card>
 
-            {/* Itinerary Management */}
+            {/* Itinerary Management with Notes */}
             {selectedTourist && (
               <Card className="shadow-desert">
                 <CardHeader>
@@ -271,19 +326,36 @@ export const GuideView: React.FC = () => {
                 <CardContent>
                   <div className="space-y-4">
                     {mockItinerary.map((item) => (
-                      <div key={item.day} className="p-4 border border-border rounded-lg">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div key={item.id} className="p-4 border border-border rounded-lg">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                           <Input value={`${t('day')} ${item.day}`} readOnly />
                           <Input value={item.date} />
                           <Input value={item.activity} />
                           <Input value={translateLocation(item.location)} />
                         </div>
-                        <div className="mt-2 flex items-center space-x-2 rtl:space-x-reverse">
-                          <Clock className="w-4 h-4" />
-                          <Input value={item.time} className="flex-1" />
-                          <Button size="sm" variant="outline">
-                            <Edit className="w-4 h-4" />
-                          </Button>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                            <Clock className="w-4 h-4" />
+                            <Input value={item.time} className="flex-1" />
+                            <Button size="sm" variant="outline">
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => openNotesDialog(item)}
+                              className="flex items-center space-x-1 rtl:space-x-reverse"
+                            >
+                              <StickyNote className="w-4 h-4" />
+                              <span>{t('addNotes')}</span>
+                            </Button>
+                            <Button size="sm" variant="outline">
+                              <Navigation className="w-4 h-4" />
+                              <span className="ml-1 rtl:ml-0 rtl:mr-1">{t('setLocation')}</span>
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -443,6 +515,28 @@ export const GuideView: React.FC = () => {
             </Card>
           </div>
         </div>
+
+        {/* Notes Dialog */}
+        <Dialog open={showNotesDialog} onOpenChange={setShowNotesDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>
+                {t('guideNotes')} - {selectedDestination && translateLocation(selectedDestination.activity)}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 pt-4">
+              <Textarea
+                placeholder={t('addNotes')}
+                value={destinationNotes}
+                onChange={(e) => setDestinationNotes(e.target.value)}
+                className="min-h-[120px]"
+              />
+              <Button onClick={saveNotes} className="w-full">
+                {t('save')}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
