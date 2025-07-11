@@ -53,7 +53,7 @@ export const TouristView: React.FC = () => {
       {
         id: 'h1',
         name: 'Hegra Archaeological Site',
-        location: 'Madain Saleh',
+        location: 'Hegra',
         time: '08:00 - 12:00',
         date: '2024-07-16',
         description: 'Explore the ancient Nabatean tombs and archaeological wonders',
