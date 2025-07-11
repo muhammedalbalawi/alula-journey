@@ -1,0 +1,132 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* AlUla Journey Design System - Desert & Heritage Inspired
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Desert Sand & Stone Base Colors */
+    --background: 35 35% 96%;
+    --foreground: 25 40% 15%;
+
+    --card: 35 20% 98%;
+    --card-foreground: 25 40% 15%;
+
+    --popover: 35 20% 98%;
+    --popover-foreground: 25 40% 15%;
+
+    /* AlUla Stone & Heritage Colors */
+    --primary: 25 85% 45%;
+    --primary-foreground: 35 35% 96%;
+
+    --secondary: 35 25% 88%;
+    --secondary-foreground: 25 40% 15%;
+
+    --muted: 35 20% 92%;
+    --muted-foreground: 25 20% 45%;
+
+    --accent: 45 60% 70%;
+    --accent-foreground: 25 40% 15%;
+
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 35 35% 96%;
+
+    --border: 35 20% 85%;
+    --input: 35 20% 90%;
+    --ring: 25 85% 45%;
+
+    /* AlUla Custom Colors */
+    --desert-gold: 45 85% 60%;
+    --sunset-orange: 25 90% 65%;
+    --stone-brown: 20 30% 35%;
+    --sand-beige: 40 35% 85%;
+    --heritage-amber: 35 75% 55%;
+
+    /* Gradients */
+    --gradient-desert: linear-gradient(135deg, hsl(var(--desert-gold)) 0%, hsl(var(--sunset-orange)) 50%, hsl(var(--heritage-amber)) 100%);
+    --gradient-stone: linear-gradient(180deg, hsl(var(--sand-beige)) 0%, hsl(var(--muted)) 100%);
+    --gradient-overlay: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.3));
+
+    /* Shadows & Effects */
+    --shadow-desert: 0 8px 32px hsla(25, 85%, 45%, 0.15);
+    --shadow-card: 0 4px 20px hsla(25, 40%, 15%, 0.08);
+    --shadow-float: 0 12px 40px hsla(25, 85%, 45%, 0.2);
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    /* Dark Desert Night Theme */
+    --background: 25 25% 8%;
+    --foreground: 35 35% 96%;
+
+    --card: 25 20% 12%;
+    --card-foreground: 35 35% 96%;
+
+    --popover: 25 20% 12%;
+    --popover-foreground: 35 35% 96%;
+
+    --primary: 45 85% 60%;
+    --primary-foreground: 25 25% 8%;
+
+    --secondary: 25 15% 20%;
+    --secondary-foreground: 35 35% 96%;
+
+    --muted: 25 15% 18%;
+    --muted-foreground: 35 20% 65%;
+
+    --accent: 25 90% 65%;
+    --accent-foreground: 25 25% 8%;
+
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 35 35% 96%;
+
+    --border: 25 15% 22%;
+    --input: 25 15% 20%;
+    --ring: 45 85% 60%;
+
+    /* Dark Mode Custom Colors */
+    --desert-gold: 45 85% 60%;
+    --sunset-orange: 25 90% 65%;
+    --stone-brown: 20 30% 25%;
+    --sand-beige: 40 20% 25%;
+    --heritage-amber: 35 75% 55%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
