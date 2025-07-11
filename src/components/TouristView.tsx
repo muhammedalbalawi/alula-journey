@@ -6,13 +6,17 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { TimePicker } from '@/components/ui/time-picker';
+import { format } from 'date-fns';
 import { 
   MapPin, 
   MessageCircle, 
   Download, 
   Star,
   Plus,
-  Calendar,
+  Calendar as CalendarIcon,
   Clock,
   Navigation,
   StickyNote,
@@ -21,7 +25,8 @@ import {
   Mountain,
   Users,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  RotateCcw
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
@@ -37,9 +42,15 @@ export const TouristView: React.FC = () => {
   const [showRating, setShowRating] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [showExperiences, setShowExperiences] = useState(false);
+  const [showReschedule, setShowReschedule] = useState(false);
   const [selectedDestination, setSelectedDestination] = useState<any>(null);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
+  const [rescheduleData, setRescheduleData] = useState({
+    date: undefined as Date | undefined,
+    time: '',
+    notes: ''
+  });
   const [registrationData, setRegistrationData] = useState({
     fullName: '',
     contact: '',
@@ -145,6 +156,24 @@ export const TouristView: React.FC = () => {
     });
     setRating(0);
     setComment('');
+  };
+
+  const handleReschedule = () => {
+    setShowReschedule(false);
+    toast({
+      title: t('success'),
+      description: t('rescheduleSuccess')
+    });
+    setRescheduleData({
+      date: undefined,
+      time: '',
+      notes: ''
+    });
+  };
+
+  const openRescheduleDialog = (destination: any) => {
+    setSelectedDestination(destination);
+    setShowReschedule(true);
   };
 
   const openWhatsApp = () => {
@@ -316,6 +345,15 @@ export const TouristView: React.FC = () => {
                             </div>
                             <div className="flex items-center space-x-2 rtl:space-x-reverse ml-4 rtl:ml-0 rtl:mr-4">
                               <Badge variant="outline">{item.date}</Badge>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openRescheduleDialog(item)}
+                                className="flex items-center space-x-1 rtl:space-x-reverse"
+                              >
+                                <RotateCcw className="w-3 h-3" />
+                                <span className="text-xs">{t('reschedule')}</span>
+                              </Button>
                               {item.notes && (
                                 <Button
                                   size="sm"
@@ -456,6 +494,65 @@ export const TouristView: React.FC = () => {
             </DialogHeader>
             <div className="pt-4">
               <p className="text-sm text-muted-foreground">{selectedDestination?.notes}</p>
+            </div>
+          </DialogContent>
+        </Dialog>
+        {/* Reschedule Dialog */}
+        <Dialog open={showReschedule} onOpenChange={setShowReschedule}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>{t('reschedule')} - {selectedDestination && translateLocation(selectedDestination.name)}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 pt-4">
+              {/* Date Picker */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">{t('selectDate')}</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {rescheduleData.date ? format(rescheduleData.date, "PPP") : <span>{t('selectDate')}</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={rescheduleData.date}
+                      onSelect={(date) => setRescheduleData({...rescheduleData, date})}
+                      disabled={(date) => date < new Date()}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Time Picker */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">{t('selectTime')}</label>
+                <TimePicker
+                  value={rescheduleData.time}
+                  onChange={(time) => setRescheduleData({...rescheduleData, time})}
+                />
+              </div>
+
+              {/* Notes */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">{t('notes')}</label>
+                <Textarea
+                  placeholder={t('rescheduleNotes')}
+                  value={rescheduleData.notes}
+                  onChange={(e) => setRescheduleData({...rescheduleData, notes: e.target.value})}
+                  className="min-h-[80px]"
+                />
+              </div>
+
+              <Button onClick={handleReschedule} className="w-full">
+                {t('submitReschedule')}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>

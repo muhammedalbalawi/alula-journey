@@ -155,7 +155,13 @@ const translations = {
     captureYourMoment: "Capture Your Moment",
     captureDescription: "Keep your memories alive – upload or snap a photo from your trip!",
     uploadOrTakePhoto: "Upload or Take a Photo",
-    photoUploaded: "Photo uploaded successfully!"
+    photoUploaded: "Photo uploaded successfully!",
+    
+    // Reschedule
+    reschedule: "Reschedule",
+    rescheduleNotes: "Reason for rescheduling or additional notes",
+    submitReschedule: "Submit Reschedule Request",
+    rescheduleSuccess: "Reschedule request submitted successfully!"
   },
   ar: {
     // Navigation
@@ -299,7 +305,13 @@ const translations = {
     captureYourMoment: "اِلْتَقِط لَحْظَتَك",
     captureDescription: "أبق ذكرياتك حية – ارفع أو التقط صورة من رحلتك!",
     uploadOrTakePhoto: "ارفع أو التقط صورة",
-    photoUploaded: "تم رفع الصورة بنجاح!"
+    photoUploaded: "تم رفع الصورة بنجاح!",
+    
+    // Reschedule
+    reschedule: "إعادة جدولة",
+    rescheduleNotes: "سبب إعادة الجدولة أو ملاحظات إضافية",
+    submitReschedule: "إرسال طلب إعادة الجدولة",
+    rescheduleSuccess: "تم إرسال طلب إعادة الجدولة بنجاح!"
   }
 };
 
