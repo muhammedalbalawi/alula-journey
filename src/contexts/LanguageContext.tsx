@@ -149,7 +149,13 @@ const translations = {
     edit: "Edit",
     delete: "Delete",
     confirm: "Confirm",
-    back: "Back"
+    back: "Back",
+    
+    // Capture Your Moment
+    captureYourMoment: "Capture Your Moment",
+    captureDescription: "Keep your memories alive – upload or snap a photo from your trip!",
+    uploadOrTakePhoto: "Upload or Take a Photo",
+    photoUploaded: "Photo uploaded successfully!"
   },
   ar: {
     // Navigation
@@ -287,7 +293,13 @@ const translations = {
     edit: "تعديل",
     delete: "حذف",
     confirm: "تأكيد",
-    back: "رجوع"
+    back: "رجوع",
+    
+    // Capture Your Moment
+    captureYourMoment: "اِلْتَقِط لَحْظَتَك",
+    captureDescription: "أبق ذكرياتك حية – ارفع أو التقط صورة من رحلتك!",
+    uploadOrTakePhoto: "ارفع أو التقط صورة",
+    photoUploaded: "تم رفع الصورة بنجاح!"
   }
 };
 
