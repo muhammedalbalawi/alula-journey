@@ -5,7 +5,8 @@ import { TouristView } from '@/components/TouristView';
 import { GuideView } from '@/components/GuideView';
 import { AboutSection } from '@/components/AboutSection';
 import { Button } from '@/components/ui/button';
-import { Info } from 'lucide-react';
+import { Info, Settings } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import alulaBackground from '@/assets/alula-background.jpg';
 
 type ViewType = 'tourist' | 'guide' | 'about';
@@ -49,8 +50,18 @@ const Index = () => {
             onViewChange={(view) => setCurrentView(view)}
           />
           
-          {/* About Button */}
-          <div className="fixed bottom-6 right-6 z-50">
+          {/* Fixed Action Buttons */}
+          <div className="fixed bottom-6 right-6 z-50 flex flex-col space-y-2">
+            <Link to="/guide">
+              <Button
+                variant="outline"
+                size="sm"
+                className="shadow-float"
+                title="Tour Guide Dashboard"
+              >
+                <Settings className="w-4 h-4" />
+              </Button>
+            </Link>
             <Button
               variant={currentView === 'about' ? 'default' : 'outline'}
               size="sm"

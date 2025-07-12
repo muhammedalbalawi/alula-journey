@@ -33,6 +33,7 @@ import { toast } from '@/hooks/use-toast';
 import { DriverBooking } from '@/components/DriverBooking';
 import { TouristExperiences } from '@/components/TouristExperiences';
 import { GoogleMaps } from '@/components/GoogleMaps';
+import { PhotoCaptureModal } from '@/components/PhotoCaptureModal';
 
 export const TouristView: React.FC = () => {
   const { t, translateLocation } = useLanguage();
@@ -390,34 +391,16 @@ export const TouristView: React.FC = () => {
                   <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
                     {t('captureDescription')}
                   </p>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    className="hidden"
-                    id="photo-capture"
-                    onChange={(e) => {
-                      if (e.target.files?.[0]) {
-                        toast({
-                          title: t('success'),
-                          description: t('photoUploaded')
-                        });
-                      }
-                    }}
-                  />
-                  <label htmlFor="photo-capture">
+                  <PhotoCaptureModal>
                     <Button 
                       variant="desert" 
                       size="lg" 
-                      className="w-full flex items-center space-x-2 rtl:space-x-reverse cursor-pointer"
-                      asChild
+                      className="w-full flex items-center space-x-2 rtl:space-x-reverse"
                     >
-                      <span>
-                        <Camera className="w-5 h-5" />
-                        <span className="font-medium">{t('uploadOrTakePhoto')}</span>
-                      </span>
+                      <Camera className="w-5 h-5" />
+                      <span className="font-medium">{t('capturePhoto')}</span>
                     </Button>
-                  </label>
+                  </PhotoCaptureModal>
                 </CardContent>
               </div>
             </Card>

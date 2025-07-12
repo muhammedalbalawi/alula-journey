@@ -154,6 +154,7 @@ const translations = {
     // Capture Your Moment
     captureYourMoment: "Capture Your Moment",
     captureDescription: "Keep your memories alive – upload or snap a photo from your trip!",
+    capturePhoto: "Capture Your Moment",
     uploadOrTakePhoto: "Upload or Take a Photo",
     photoUploaded: "Photo uploaded successfully!",
     
@@ -304,6 +305,7 @@ const translations = {
     // Capture Your Moment
     captureYourMoment: "اِلْتَقِط لَحْظَتَك",
     captureDescription: "أبق ذكرياتك حية – ارفع أو التقط صورة من رحلتك!",
+    capturePhoto: "التقط لحظتك",
     uploadOrTakePhoto: "ارفع أو التقط صورة",
     photoUploaded: "تم رفع الصورة بنجاح!",
     
