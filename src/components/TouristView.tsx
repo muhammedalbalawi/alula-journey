@@ -161,6 +161,19 @@ export const TouristView: React.FC = () => {
 
   const handleReschedule = () => {
     setShowReschedule(false);
+    
+    // Simulate sending reschedule request to guide's notification system
+    console.log('Reschedule request sent to guide:', {
+      touristName: 'Current Tourist',
+      originalDestination: selectedDestination?.name,
+      originalDate: selectedDestination?.date,
+      originalTime: selectedDestination?.time,
+      requestedDate: rescheduleData.date,
+      requestedTime: rescheduleData.time,
+      reason: rescheduleData.notes,
+      timestamp: new Date().toISOString()
+    });
+    
     toast({
       title: t('success'),
       description: t('rescheduleSuccess')
