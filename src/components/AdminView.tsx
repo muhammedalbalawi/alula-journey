@@ -17,8 +17,11 @@ import {
   Save,
   X,
   MessageSquare,
-  UserPlus
+  UserPlus,
+  Car
 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { DriverRegistration } from './DriverRegistration';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -104,6 +107,8 @@ export const AdminView: React.FC = () => {
 
   const [guides, setGuides] = useState<Guide[]>([]);
   const [guideRequests, setGuideRequests] = useState<GuideRequestAdmin[]>([]);
+  const [drivers, setDrivers] = useState<any[]>([]);
+  const [isDriverDialogOpen, setIsDriverDialogOpen] = useState(false);
 
   const [assignments, setAssignments] = useState<Assignment[]>([]);
 
@@ -133,6 +138,7 @@ export const AdminView: React.FC = () => {
       fetchGuides();
       fetchGuideRequests();
       fetchAssignments();
+      fetchDrivers();
       setupRealtimeUpdates();
     }
   }, [isLoggedIn]);
@@ -272,6 +278,25 @@ export const AdminView: React.FC = () => {
       toast({
         title: 'Error',
         description: 'Failed to fetch guide requests',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const fetchDrivers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('drivers')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setDrivers(data || []);
+    } catch (error: any) {
+      console.error('Error fetching drivers:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch drivers',
         variant: 'destructive'
       });
     }
@@ -982,6 +1007,66 @@ export const AdminView: React.FC = () => {
                   )}
                 </div>
               ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Driver Management */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center space-x-2">
+              <Car className="w-5 h-5" />
+              <span>Driver Management</span>
+            </CardTitle>
+            <Dialog open={isDriverDialogOpen} onOpenChange={setIsDriverDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="flex items-center gap-2">
+                  <UserPlus className="w-4 h-4" />
+                  Register Driver
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Register New Driver</DialogTitle>
+                </DialogHeader>
+                <DriverRegistration onClose={() => {
+                  setIsDriverDialogOpen(false);
+                  fetchDrivers();
+                }} />
+              </DialogContent>
+            </Dialog>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {drivers.map((driver) => (
+                <div key={driver.id} className="border rounded-lg p-4">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h3 className="font-semibold">{driver.name}</h3>
+                      <p className="text-sm text-muted-foreground">ID: {driver.driver_id}</p>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2 text-sm">
+                        <div><strong>Email:</strong> {driver.email}</div>
+                        <div><strong>Phone:</strong> {driver.phone}</div>
+                        <div><strong>License:</strong> {driver.license_number}</div>
+                        <div><strong>Car:</strong> {driver.car_model}</div>
+                        <div><strong>Color:</strong> {driver.car_color}</div>
+                        <div><strong>Plate:</strong> {driver.plate_number}</div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Badge variant={driver.status === 'available' ? 'default' : 'secondary'}>
+                        {driver.status}
+                      </Badge>
+                      <div className="text-sm">Rating: {driver.rating}/5</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {drivers.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  No drivers registered yet
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

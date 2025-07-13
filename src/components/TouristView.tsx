@@ -85,6 +85,7 @@ export const TouristView: React.FC = () => {
   const [editingActivity, setEditingActivity] = useState<any>(null);
   const [countries, setCountries] = useState<any[]>([]);
   const [selectedCountry, setSelectedCountry] = useState<any>(null);
+  const [packages, setPackages] = useState<any[]>([]);
 
   // Dynamic tour activities from database
   const allLocations = tourActivities.map(activity => ({
@@ -162,11 +163,12 @@ export const TouristView: React.FC = () => {
   // Fetch guide request when user session changes and set up real-time updates
   useEffect(() => {
     if (userSession?.user?.id) {
-      fetchGuideRequest();
-      fetchTourActivities();
-      fetchCountries();
-      const cleanup = setupRealtimeUpdates();
-      return cleanup;
+    fetchGuideRequest();
+    fetchTourActivities();
+    fetchCountries();
+    fetchPackages();
+    const cleanup = setupRealtimeUpdates();
+    return cleanup;
     }
   }, [userSession]);
 
@@ -298,6 +300,21 @@ export const TouristView: React.FC = () => {
       setCountries(data || []);
     } catch (error: any) {
       console.error('Error fetching countries:', error);
+    }
+  };
+
+  const fetchPackages = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('packages')
+        .select('*')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setPackages(data || []);
+    } catch (error: any) {
+      console.error('Error fetching packages:', error);
     }
   };
 
@@ -751,6 +768,59 @@ export const TouristView: React.FC = () => {
                 </div>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Packages Section */}
+        <Card className="glass-card hover:shadow-float transition-all duration-300 animate-fade-in">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <FileText className="w-5 h-5 text-primary" />
+              </div>
+              <span className="bg-gradient-to-r from-primary to-heritage-amber bg-clip-text text-transparent">
+                Available Tour Packages
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4">
+              {packages.map((pkg) => (
+                <div key={pkg.id} className="border rounded-lg p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-xl font-semibold">{pkg.package_name}</h3>
+                      <p className="text-muted-foreground">{pkg.description}</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-primary">{pkg.price} SAR</div>
+                      <div className="text-sm text-muted-foreground">{pkg.duration_hours} hours</div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm mb-4">
+                    <div><span className="font-medium">Max Participants:</span> {pkg.max_participants}</div>
+                    <div><span className="font-medium">Difficulty:</span> {pkg.difficulty_level}</div>
+                    <div><Badge variant="outline">{pkg.status}</Badge></div>
+                  </div>
+                  {pkg.included_activities && pkg.included_activities.length > 0 && (
+                    <div className="mb-4">
+                      <span className="font-medium text-sm">Included Activities:</span>
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {pkg.included_activities.map((activity: string, index: number) => (
+                          <Badge key={index} variant="secondary" className="text-xs">{activity}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <Button className="w-full">Book This Package</Button>
+                </div>
+              ))}
+              {packages.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  No packages available at the moment
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
 

@@ -157,6 +157,57 @@ export type Database = {
         }
         Relationships: []
       }
+      drivers: {
+        Row: {
+          car_color: string | null
+          car_model: string
+          created_at: string
+          created_by: string | null
+          driver_id: string
+          email: string
+          id: string
+          license_number: string
+          name: string
+          phone: string
+          plate_number: string
+          rating: number | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          car_color?: string | null
+          car_model: string
+          created_at?: string
+          created_by?: string | null
+          driver_id: string
+          email: string
+          id?: string
+          license_number: string
+          name: string
+          phone: string
+          plate_number: string
+          rating?: number | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          car_color?: string | null
+          car_model?: string
+          created_at?: string
+          created_by?: string | null
+          driver_id?: string
+          email?: string
+          id?: string
+          license_number?: string
+          name?: string
+          phone?: string
+          plate_number?: string
+          rating?: number | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       guide_requests: {
         Row: {
           admin_response: string | null
@@ -345,6 +396,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      packages: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          difficulty_level: string | null
+          duration_hours: number | null
+          id: string
+          included_activities: string[] | null
+          max_participants: number | null
+          package_name: string
+          price: number | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          difficulty_level?: string | null
+          duration_hours?: number | null
+          id?: string
+          included_activities?: string[] | null
+          max_participants?: number | null
+          package_name: string
+          price?: number | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          difficulty_level?: string | null
+          duration_hours?: number | null
+          id?: string
+          included_activities?: string[] | null
+          max_participants?: number | null
+          package_name?: string
+          price?: number | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       photo_comments: {
         Row: {

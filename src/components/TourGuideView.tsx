@@ -17,8 +17,10 @@ import {
   Phone,
   Mail,
   Plus,
-  CalendarIcon
+  CalendarIcon,
+  Package
 } from 'lucide-react';
+import { PackageManagement } from './PackageManagement';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -740,6 +742,19 @@ export function TourGuideView() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Package Management Tab */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Package className="w-5 h-5" />
+              <span>Tour Packages Management</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PackageManagement />
+          </CardContent>
+        </Card>
 
         {/* Add Activity Dialog */}
         <Dialog open={showAddActivity} onOpenChange={setShowAddActivity}>
