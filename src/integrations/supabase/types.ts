@@ -14,7 +14,368 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      messages: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message_text: string
+          message_type: string | null
+          metadata: Json | null
+          recipient_id: string | null
+          sender_id: string | null
+          tour_assignment_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message_text: string
+          message_type?: string | null
+          metadata?: Json | null
+          recipient_id?: string | null
+          sender_id?: string | null
+          tour_assignment_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message_text?: string
+          message_type?: string | null
+          metadata?: Json | null
+          recipient_id?: string | null
+          sender_id?: string | null
+          tour_assignment_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_tour_assignment_id_fkey"
+            columns: ["tour_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "tour_assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          notification_type: string
+          related_id: string | null
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          notification_type: string
+          related_id?: string | null
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          notification_type?: string
+          related_id?: string | null
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          contact_info: string | null
+          created_at: string | null
+          full_name: string | null
+          id: string
+          is_active: boolean | null
+          nationality: string | null
+          special_needs: string | null
+          updated_at: string | null
+          user_type: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          contact_info?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id: string
+          is_active?: boolean | null
+          nationality?: string | null
+          special_needs?: string | null
+          updated_at?: string | null
+          user_type: string
+        }
+        Update: {
+          avatar_url?: string | null
+          contact_info?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          nationality?: string | null
+          special_needs?: string | null
+          updated_at?: string | null
+          user_type?: string
+        }
+        Relationships: []
+      }
+      reschedule_requests: {
+        Row: {
+          created_at: string | null
+          guide_id: string | null
+          id: string
+          location_name: string | null
+          original_date: string
+          original_time: string
+          reason: string | null
+          requested_date: string
+          requested_time: string
+          response_message: string | null
+          status: string | null
+          tour_assignment_id: string | null
+          tourist_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          guide_id?: string | null
+          id?: string
+          location_name?: string | null
+          original_date: string
+          original_time: string
+          reason?: string | null
+          requested_date: string
+          requested_time: string
+          response_message?: string | null
+          status?: string | null
+          tour_assignment_id?: string | null
+          tourist_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          guide_id?: string | null
+          id?: string
+          location_name?: string | null
+          original_date?: string
+          original_time?: string
+          reason?: string | null
+          requested_date?: string
+          requested_time?: string
+          response_message?: string | null
+          status?: string | null
+          tour_assignment_id?: string | null
+          tourist_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reschedule_requests_guide_id_fkey"
+            columns: ["guide_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reschedule_requests_tour_assignment_id_fkey"
+            columns: ["tour_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "tour_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reschedule_requests_tourist_id_fkey"
+            columns: ["tourist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tour_activities: {
+        Row: {
+          activity_name: string
+          category: string | null
+          created_at: string | null
+          description: string | null
+          duration_minutes: number | null
+          id: string
+          latitude: number | null
+          location_name: string
+          longitude: number | null
+          notes: string | null
+          scheduled_date: string
+          scheduled_time: string
+          status: string | null
+          tour_assignment_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          activity_name: string
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          latitude?: number | null
+          location_name: string
+          longitude?: number | null
+          notes?: string | null
+          scheduled_date: string
+          scheduled_time: string
+          status?: string | null
+          tour_assignment_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          activity_name?: string
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          latitude?: number | null
+          location_name?: string
+          longitude?: number | null
+          notes?: string | null
+          scheduled_date?: string
+          scheduled_time?: string
+          status?: string | null
+          tour_assignment_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tour_activities_tour_assignment_id_fkey"
+            columns: ["tour_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "tour_assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tour_assignments: {
+        Row: {
+          created_at: string | null
+          end_date: string | null
+          guide_id: string | null
+          id: string
+          start_date: string | null
+          status: string | null
+          tour_name: string
+          tourist_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          end_date?: string | null
+          guide_id?: string | null
+          id?: string
+          start_date?: string | null
+          status?: string | null
+          tour_name: string
+          tourist_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          end_date?: string | null
+          guide_id?: string | null
+          id?: string
+          start_date?: string | null
+          status?: string | null
+          tour_name?: string
+          tourist_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tour_assignments_guide_id_fkey"
+            columns: ["guide_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tour_assignments_tourist_id_fkey"
+            columns: ["tourist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_locations: {
+        Row: {
+          accuracy: number | null
+          id: string
+          is_current: boolean | null
+          latitude: number
+          longitude: number
+          timestamp: string | null
+          user_id: string | null
+        }
+        Insert: {
+          accuracy?: number | null
+          id?: string
+          is_current?: boolean | null
+          latitude: number
+          longitude: number
+          timestamp?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          accuracy?: number | null
+          id?: string
+          is_current?: boolean | null
+          latitude?: number
+          longitude?: number
+          timestamp?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_locations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

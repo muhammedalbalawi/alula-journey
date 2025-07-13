@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -34,11 +34,14 @@ import { DriverBooking } from '@/components/DriverBooking';
 import { TouristExperiences } from '@/components/TouristExperiences';
 import { GoogleMaps } from '@/components/GoogleMaps';
 import { PhotoCaptureModal } from '@/components/PhotoCaptureModal';
+import { TouristOTPLogin } from '@/components/TouristOTPLogin';
+import { supabase } from '@/integrations/supabase/client';
 
 export const TouristView: React.FC = () => {
   const { t, translateLocation } = useLanguage();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [touristId, setTouristId] = useState('');
+  const [userSession, setUserSession] = useState<any>(null);
   const [showRegistration, setShowRegistration] = useState(false);
   const [showRating, setShowRating] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
@@ -125,15 +128,58 @@ export const TouristView: React.FC = () => {
     ...destinations.adventure.map(d => ({ ...d, category: 'adventure' as const }))
   ];
 
-  const handleLogin = () => {
-    if (touristId.trim()) {
-      setIsLoggedIn(true);
+  const handleOTPLoginSuccess = (userId: string, session: any) => {
+    setTouristId(userId);
+    setUserSession(session);
+    setIsLoggedIn(true);
+    toast({
+      title: t('success'),
+      description: t('welcomeTourist')
+    });
+  };
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setIsLoggedIn(false);
+      setTouristId('');
+      setUserSession(null);
       toast({
-        title: t('success'),
-        description: t('welcomeTourist')
+        title: 'Logged Out',
+        description: 'You have been successfully logged out.',
       });
+    } catch (error) {
+      console.error('Error logging out:', error);
     }
   };
+
+  // Check for existing session on component mount
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session && session.user) {
+        setUserSession(session);
+        setTouristId(session.user.id);
+        setIsLoggedIn(true);
+      }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          setUserSession(session);
+          setTouristId(session.user.id);
+          setIsLoggedIn(true);
+        } else if (event === 'SIGNED_OUT') {
+          setIsLoggedIn(false);
+          setTouristId('');
+          setUserSession(null);
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleRegistration = () => {
     setShowRegistration(false);
@@ -236,28 +282,10 @@ export const TouristView: React.FC = () => {
             </div>
           )}
 
-          {/* Login Section */}
+          {/* OTP Login Section */}
           <div className="flex justify-center">
             <div className="w-full max-w-md space-y-6 animate-slide-up">
-              {/* Login Card */}
-              <Card className="glass-card hover:shadow-float transition-all duration-300 hover:-translate-y-1">
-                <CardHeader className="text-center">
-                  <CardTitle className="text-2xl text-primary bg-gradient-to-r from-primary to-heritage-amber bg-clip-text text-transparent">
-                    {t('touristLogin')}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Input
-                    placeholder={t('touristId')}
-                    value={touristId}
-                    onChange={(e) => setTouristId(e.target.value)}
-                    className="text-center glass-effect transition-all duration-200 focus:shadow-glow"
-                  />
-                  <Button onClick={handleLogin} className="w-full" variant="desert">
-                    {t('login')}
-                  </Button>
-                </CardContent>
-              </Card>
+              <TouristOTPLogin onLoginSuccess={handleOTPLoginSuccess} />
 
               {/* Registration Button */}
               <Card className="glass-card hover:shadow-float transition-all duration-300 hover:-translate-y-1">
@@ -316,10 +344,21 @@ export const TouristView: React.FC = () => {
         {/* Welcome Header */}
         <Card className="bg-gradient-to-r from-primary/10 via-accent/10 to-heritage-amber/10 border border-primary/20 glass-effect animate-fade-in">
           <CardContent className="pt-6">
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-heritage-amber bg-clip-text text-transparent mb-2">
-              {t('welcomeTourist')}
-            </h2>
-            <p className="text-muted-foreground">{t('touristId')}: <span className="font-medium text-primary">{touristId}</span></p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-heritage-amber bg-clip-text text-transparent mb-2">
+                  {t('welcomeTourist')}
+                </h2>
+                <p className="text-muted-foreground">
+                  Logged in with: <span className="font-medium text-primary">
+                    {userSession?.user?.phone || userSession?.user?.email || 'OTP Login'}
+                  </span>
+                </p>
+              </div>
+              <Button variant="outline" onClick={handleLogout} size="sm">
+                Logout
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
