@@ -54,6 +54,13 @@ All colors MUST be HSL.
     --shadow-desert: 0 8px 32px hsla(25, 85%, 45%, 0.15);
     --shadow-card: 0 4px 20px hsla(25, 40%, 15%, 0.08);
     --shadow-float: 0 12px 40px hsla(25, 85%, 45%, 0.2);
+    --shadow-glow: 0 0 40px hsla(45, 85%, 60%, 0.3);
+    --shadow-inner: inset 0 2px 4px hsla(25, 40%, 15%, 0.06);
+
+    /* Animations & Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --transition-fast: all 0.15s ease-out;
 
     --radius: 0.5rem;
 
@@ -128,5 +135,105 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  /* Desert-themed button variants */
+  .btn-desert {
+    @apply bg-gradient-to-r from-primary to-heritage-amber text-primary-foreground shadow-desert hover:shadow-float transition-all duration-300 hover:-translate-y-0.5;
+  }
+
+  .btn-desert-outline {
+    @apply border-2 border-primary/30 bg-background/80 backdrop-blur-sm text-primary hover:bg-primary hover:text-primary-foreground hover:shadow-desert transition-all duration-300;
+  }
+
+  /* Enhanced cards */
+  .card-enhanced {
+    @apply bg-card/95 backdrop-blur-sm border border-border/50 shadow-card hover:shadow-desert transition-all duration-300 hover:-translate-y-1;
+  }
+
+  .card-gradient {
+    @apply bg-gradient-to-br from-card via-card to-secondary/20 shadow-desert;
+  }
+
+  /* Animation classes */
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .animate-bounce-in {
+    animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+  }
+
+  .animate-pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+
+  /* Gradient backgrounds */
+  .bg-desert-gradient {
+    background: var(--gradient-desert);
+  }
+
+  .bg-stone-gradient {
+    background: var(--gradient-stone);
+  }
+
+  /* Glassmorphism effects */
+  .glass-effect {
+    @apply bg-background/80 backdrop-blur-md border border-border/30;
+  }
+
+  .glass-card {
+    @apply bg-card/90 backdrop-blur-lg border border-border/40 shadow-lg;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+  }
+  50% {
+    transform: scale(1.05) translateY(-5px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px hsla(45, 85%, 60%, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px hsla(45, 85%, 60%, 0.6);
   }
 }

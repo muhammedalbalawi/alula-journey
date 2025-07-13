@@ -143,13 +143,15 @@ export function TourGuideView() {
   if (!isLoggedIn) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
+        <Card className="w-full max-w-md glass-card animate-bounce-in">
           <CardHeader className="text-center">
-            <div className="mx-auto w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
-              <Lock className="w-8 h-8 text-orange-600" />
+            <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary/20 to-heritage-amber/30 rounded-full flex items-center justify-center mb-4 backdrop-blur-sm">
+              <Lock className="w-8 h-8 text-primary" />
             </div>
-            <CardTitle className="text-2xl">Tour Guide Login</CardTitle>
-            <p className="text-gray-600">Sign in to access your dashboard</p>
+            <CardTitle className="text-2xl bg-gradient-to-r from-primary to-heritage-amber bg-clip-text text-transparent">
+              Tour Guide Login
+            </CardTitle>
+            <p className="text-muted-foreground">Sign in to access your dashboard</p>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -160,6 +162,7 @@ export function TourGuideView() {
                 placeholder="Enter your guide ID"
                 value={guideId}
                 onChange={(e) => setGuideId(e.target.value)}
+                className="glass-effect transition-all duration-200 focus:shadow-glow"
               />
             </div>
             <div className="space-y-2">
@@ -171,16 +174,18 @@ export function TourGuideView() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+                className="glass-effect transition-all duration-200 focus:shadow-glow"
               />
             </div>
             <Button 
               onClick={handleLogin} 
-              className="w-full"
+              className="w-full hover:shadow-glow transition-all duration-300"
               disabled={!guideId || !password}
+              variant="desert"
             >
               Sign In
             </Button>
-            <p className="text-xs text-center text-gray-500">
+            <p className="text-xs text-center text-muted-foreground">
               Demo credentials: guide123 / password
             </p>
           </CardContent>

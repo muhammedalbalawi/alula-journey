@@ -213,56 +213,58 @@ export const TouristView: React.FC = () => {
       <div className="min-h-screen p-4 pt-20">
         <div className="container mx-auto max-w-6xl space-y-8">
           {/* Tourist Experiences Icon Section */}
-          <div className="flex justify-center">
+          <div className="flex justify-center animate-bounce-in">
             <Button
               variant="outline"
               onClick={() => setShowExperiences(!showExperiences)}
-              className="flex items-center space-x-2 rtl:space-x-reverse shadow-desert"
+              className="flex items-center space-x-2 rtl:space-x-reverse glass-effect hover:shadow-desert transition-all duration-300 hover:-translate-y-0.5"
             >
               <Users className="w-5 h-5 text-primary" />
               <span className="text-lg font-semibold">{t('touristExperiences')}</span>
               {showExperiences ? (
-                <ChevronUp className="w-4 h-4" />
+                <ChevronUp className="w-4 h-4 transition-transform duration-200" />
               ) : (
-                <ChevronDown className="w-4 h-4" />
+                <ChevronDown className="w-4 h-4 transition-transform duration-200" />
               )}
             </Button>
           </div>
 
           {/* Collapsible Tourist Experiences Section */}
           {showExperiences && (
-            <div className="animate-fade-in">
+            <div className="animate-slide-up">
               <TouristExperiences />
             </div>
           )}
 
           {/* Login Section */}
           <div className="flex justify-center">
-            <div className="w-full max-w-md space-y-6">
+            <div className="w-full max-w-md space-y-6 animate-slide-up">
               {/* Login Card */}
-              <Card className="shadow-desert">
+              <Card className="glass-card hover:shadow-float transition-all duration-300 hover:-translate-y-1">
                 <CardHeader className="text-center">
-                  <CardTitle className="text-2xl text-primary">{t('touristLogin')}</CardTitle>
+                  <CardTitle className="text-2xl text-primary bg-gradient-to-r from-primary to-heritage-amber bg-clip-text text-transparent">
+                    {t('touristLogin')}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <Input
                     placeholder={t('touristId')}
                     value={touristId}
                     onChange={(e) => setTouristId(e.target.value)}
-                    className="text-center"
+                    className="text-center glass-effect transition-all duration-200 focus:shadow-glow"
                   />
-                  <Button onClick={handleLogin} className="w-full">
+                  <Button onClick={handleLogin} className="w-full" variant="desert">
                     {t('login')}
                   </Button>
                 </CardContent>
               </Card>
 
               {/* Registration Button */}
-              <Card className="shadow-desert">
+              <Card className="glass-card hover:shadow-float transition-all duration-300 hover:-translate-y-1">
                 <CardContent className="pt-6">
                   <Dialog open={showRegistration} onOpenChange={setShowRegistration}>
                     <DialogTrigger asChild>
-                      <Button variant="outline" className="w-full flex items-center space-x-2 rtl:space-x-reverse">
+                      <Button variant="outline" className="w-full flex items-center space-x-2 rtl:space-x-reverse glass-effect hover:shadow-desert transition-all duration-300">
                         <Plus className="w-4 h-4" />
                         <span>{t('registerJourney')}</span>
                       </Button>
@@ -312,10 +314,12 @@ export const TouristView: React.FC = () => {
     <div className="min-h-screen p-4 pt-20">
       <div className="container mx-auto max-w-6xl space-y-6">
         {/* Welcome Header */}
-        <Card className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
+        <Card className="bg-gradient-to-r from-primary/10 via-accent/10 to-heritage-amber/10 border border-primary/20 glass-effect animate-fade-in">
           <CardContent className="pt-6">
-            <h2 className="text-2xl font-bold text-primary mb-2">{t('welcomeTourist')}</h2>
-            <p className="text-muted-foreground">{t('touristId')}: {touristId}</p>
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-heritage-amber bg-clip-text text-transparent mb-2">
+              {t('welcomeTourist')}
+            </h2>
+            <p className="text-muted-foreground">{t('touristId')}: <span className="font-medium text-primary">{touristId}</span></p>
           </CardContent>
         </Card>
 
@@ -326,23 +330,30 @@ export const TouristView: React.FC = () => {
             <GoogleMaps locations={allLocations} />
 
             {/* Categorized Destinations */}
-            {Object.entries(destinations).map(([category, items]) => {
+            {Object.entries(destinations).map(([category, items], index) => {
               const IconComponent = getCategoryIcon(category);
               return (
-                <Card key={category} className="shadow-desert">
+                <Card key={category} className="glass-card hover:shadow-float transition-all duration-300 hover:-translate-y-1 animate-slide-up" 
+                      style={{ animationDelay: `${index * 0.1}s` }}>
                   <CardHeader>
                     <CardTitle className="flex items-center space-x-2 rtl:space-x-reverse">
-                      <IconComponent className="w-5 h-5" />
-                      <span>{t(`categories.${category}.name`)}</span>
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <IconComponent className="w-5 h-5 text-primary" />
+                      </div>
+                      <span className="bg-gradient-to-r from-primary to-heritage-amber bg-clip-text text-transparent">
+                        {t(`categories.${category}.name`)}
+                      </span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {items.map((item) => (
-                        <div key={item.id} className="p-4 bg-secondary/50 rounded-lg">
+                      {items.map((item, itemIndex) => (
+                        <div key={item.id} 
+                             className="p-4 bg-gradient-to-r from-secondary/50 to-accent/20 rounded-lg border border-border/30 hover:shadow-card transition-all duration-200 hover:-translate-y-0.5"
+                             style={{ animationDelay: `${(index * items.length + itemIndex) * 0.05}s` }}>
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
-                              <div className="font-semibold">{translateLocation(item.name)}</div>
+                              <div className="font-semibold text-foreground">{translateLocation(item.name)}</div>
                               <div className="text-sm text-muted-foreground space-y-1 mt-2">
                                 <div className="flex items-center space-x-4 rtl:space-x-reverse">
                                   <span className="flex items-center space-x-1 rtl:space-x-reverse">
@@ -354,16 +365,16 @@ export const TouristView: React.FC = () => {
                                     <span>{item.time}</span>
                                   </span>
                                 </div>
-                                <p className="text-xs">{item.description}</p>
+                                <p className="text-xs leading-relaxed">{item.description}</p>
                               </div>
                             </div>
                             <div className="flex items-center space-x-2 rtl:space-x-reverse ml-4 rtl:ml-0 rtl:mr-4">
-                              <Badge variant="outline">{item.date}</Badge>
+                              <Badge variant="outline" className="glass-effect">{item.date}</Badge>
                               <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => openRescheduleDialog(item)}
-                                className="flex items-center space-x-1 rtl:space-x-reverse"
+                                className="flex items-center space-x-1 rtl:space-x-reverse glass-effect hover:shadow-card transition-all duration-200"
                               >
                                 <RotateCcw className="w-3 h-3" />
                                 <span className="text-xs">{t('reschedule')}</span>
@@ -373,7 +384,7 @@ export const TouristView: React.FC = () => {
                                   size="sm"
                                   variant="outline"
                                   onClick={() => showDestinationNotes(item)}
-                                  className="flex items-center space-x-1 rtl:space-x-reverse"
+                                  className="flex items-center space-x-1 rtl:space-x-reverse glass-effect hover:shadow-card transition-all duration-200"
                                 >
                                   <StickyNote className="w-3 h-3" />
                                   <span className="text-xs">{t('viewNotes')}</span>
@@ -393,12 +404,15 @@ export const TouristView: React.FC = () => {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Capture Your Moment */}
-            <Card className="shadow-desert overflow-hidden">
+            <Card className="glass-card overflow-hidden hover:shadow-float transition-all duration-300 hover:-translate-y-1 animate-bounce-in">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/30" />
+                <div className="absolute inset-0 animate-pulse-glow opacity-50" />
                 <CardContent className="relative pt-6 text-center">
-                  <Camera className="w-12 h-12 mx-auto mb-4 text-primary" />
-                  <h3 className="text-xl font-semibold mb-2 text-primary">
+                  <div className="p-3 bg-primary/10 rounded-full w-fit mx-auto mb-4 backdrop-blur-sm">
+                    <Camera className="w-12 h-12 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2 bg-gradient-to-r from-primary to-heritage-amber bg-clip-text text-transparent">
                     {t('captureYourMoment')}
                   </h3>
                   <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
@@ -408,7 +422,7 @@ export const TouristView: React.FC = () => {
                     <Button 
                       variant="desert" 
                       size="lg" 
-                      className="w-full flex items-center space-x-2 rtl:space-x-reverse"
+                      className="w-full flex items-center space-x-2 rtl:space-x-reverse hover:shadow-glow transition-all duration-300"
                     >
                       <Camera className="w-5 h-5" />
                       <span className="font-medium">{t('capturePhoto')}</span>
@@ -419,20 +433,22 @@ export const TouristView: React.FC = () => {
             </Card>
 
             {/* Driver Booking */}
-            <DriverBooking />
+            <div className="animate-slide-up" style={{ animationDelay: '0.2s' }}>
+              <DriverBooking />
+            </div>
 
             {/* Actions */}
-            <Card className="shadow-desert">
+            <Card className="glass-card hover:shadow-float transition-all duration-300 hover:-translate-y-1 animate-slide-up" style={{ animationDelay: '0.3s' }}>
               <CardContent className="pt-6 space-y-3">
-                <Button onClick={openWhatsApp} className="w-full flex items-center space-x-2 rtl:space-x-reverse">
+                <Button onClick={openWhatsApp} className="w-full flex items-center space-x-2 rtl:space-x-reverse transition-all duration-200 hover:-translate-y-0.5" variant="desert">
                   <MessageCircle className="w-4 h-4" />
                   <span>{t('contactGuide')}</span>
                 </Button>
-                <Button variant="outline" className="w-full flex items-center space-x-2 rtl:space-x-reverse">
+                <Button variant="outline" className="w-full flex items-center space-x-2 rtl:space-x-reverse glass-effect hover:shadow-card transition-all duration-200">
                   <Download className="w-4 h-4" />
                   <span>{t('downloadPdf')}</span>
                 </Button>
-                <Button variant="outline" className="w-full flex items-center space-x-2 rtl:space-x-reverse">
+                <Button variant="outline" className="w-full flex items-center space-x-2 rtl:space-x-reverse glass-effect hover:shadow-card transition-all duration-200">
                   <Navigation className="w-4 h-4" />
                   <span>{t('viewMap')}</span>
                 </Button>
@@ -440,13 +456,13 @@ export const TouristView: React.FC = () => {
             </Card>
 
             {/* Rating */}
-            <Card className="shadow-desert">
+            <Card className="glass-card hover:shadow-float transition-all duration-300 hover:-translate-y-1 animate-slide-up" style={{ animationDelay: '0.4s' }}>
               <CardContent className="pt-6">
                 <Dialog open={showRating} onOpenChange={setShowRating}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" className="w-full flex items-center space-x-2 rtl:space-x-reverse">
+                    <Button variant="outline" className="w-full flex items-center space-x-2 rtl:space-x-reverse glass-effect hover:shadow-card transition-all duration-200">
                       <Star className="w-4 h-4" />
-                      <span>{t('rateGuide')}</span>
+                      <span>{t('rateExperience')}</span>
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-md">
