@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
@@ -31,7 +34,13 @@ import {
   Phone,
   Mail,
   UserX,
-  UserPlus
+  UserPlus,
+  FileText,
+  Table,
+  Edit,
+  Save,
+  X,
+  Flag
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
@@ -72,6 +81,10 @@ export const TouristView: React.FC = () => {
   const [tourAssignment, setTourAssignment] = useState<any>(null);
   const [guideRequest, setGuideRequest] = useState<any>(null);
   const [tourActivities, setTourActivities] = useState<any[]>([]);
+  const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
+  const [editingActivity, setEditingActivity] = useState<any>(null);
+  const [countries, setCountries] = useState<any[]>([]);
+  const [selectedCountry, setSelectedCountry] = useState<any>(null);
 
   // Dynamic tour activities from database
   const allLocations = tourActivities.map(activity => ({
@@ -151,6 +164,7 @@ export const TouristView: React.FC = () => {
     if (userSession?.user?.id) {
       fetchGuideRequest();
       fetchTourActivities();
+      fetchCountries();
       const cleanup = setupRealtimeUpdates();
       return cleanup;
     }
@@ -227,7 +241,7 @@ export const TouristView: React.FC = () => {
   const fetchTourActivitiesForAssignment = async (assignmentId: string) => {
     try {
       const { data, error } = await supabase
-        .from('tour_activities')
+        .from('activities')
         .select('*')
         .eq('tour_assignment_id', assignmentId)
         .order('scheduled_date', { ascending: true });
@@ -235,7 +249,7 @@ export const TouristView: React.FC = () => {
       if (error) throw error;
       setTourActivities(data || []);
     } catch (error: any) {
-      console.error('Error fetching tour activities for assignment:', error);
+      console.error('Error fetching activities for assignment:', error);
     }
   };
 
@@ -254,22 +268,106 @@ export const TouristView: React.FC = () => {
           fetchGuideRequest();
         }
       )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'tour_activities'
-        },
-        () => {
-          fetchTourActivities();
-        }
-      )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'activities'
+          },
+          () => {
+            fetchTourActivities();
+          }
+        )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
+  };
+
+  const fetchCountries = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('countries')
+        .select('*')
+        .eq('is_active', true)
+        .order('country_name_en');
+
+      if (error) throw error;
+      setCountries(data || []);
+    } catch (error: any) {
+      console.error('Error fetching countries:', error);
+    }
+  };
+
+  const downloadActivitiesCSV = () => {
+    const csvContent = [
+      ['Activity Name', 'Location', 'Date', 'Time', 'Description', 'Status'],
+      ...tourActivities.map(activity => [
+        activity.activity_name,
+        activity.location_name,
+        activity.scheduled_date,
+        activity.scheduled_time,
+        activity.description || '',
+        activity.status
+      ])
+    ].map(row => row.join(',')).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'activities.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const downloadActivitiesPDF = async () => {
+    const pdf = new jsPDF();
+    pdf.text('My Tour Activities', 20, 20);
+    
+    let yPosition = 40;
+    tourActivities.forEach((activity, index) => {
+      pdf.text(`${index + 1}. ${activity.activity_name}`, 20, yPosition);
+      pdf.text(`   Location: ${activity.location_name}`, 20, yPosition + 10);
+      pdf.text(`   Date: ${activity.scheduled_date} at ${activity.scheduled_time}`, 20, yPosition + 20);
+      if (activity.description) {
+        pdf.text(`   Description: ${activity.description}`, 20, yPosition + 30);
+        yPosition += 50;
+      } else {
+        yPosition += 40;
+      }
+    });
+    
+    pdf.save('activities.pdf');
+  };
+
+  const editActivity = async (activityId: string, updatedData: any) => {
+    try {
+      const { error } = await supabase
+        .from('activities')
+        .update(updatedData)
+        .eq('id', activityId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Activity Updated',
+        description: 'The activity has been updated successfully.'
+      });
+      
+      setEditingActivityId(null);
+      setEditingActivity(null);
+      fetchTourActivities();
+    } catch (error: any) {
+      console.error('Error updating activity:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update activity.',
+        variant: 'destructive'
+      });
+    }
   };
 
   const handleGuideRequest = async () => {
@@ -660,6 +758,201 @@ export const TouristView: React.FC = () => {
         <div className="animate-slide-up">
           <TouristProfile userId={userSession?.user?.id} />
         </div>
+
+        {/* Activities Table Section */}
+        <Card className="glass-card hover:shadow-float transition-all duration-300 animate-fade-in">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center space-x-2">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Table className="w-5 h-5 text-primary" />
+                </div>
+                <span className="bg-gradient-to-r from-primary to-heritage-amber bg-clip-text text-transparent">
+                  My Activities Schedule
+                </span>
+                <Badge variant="outline">{tourActivities.length}</Badge>
+              </CardTitle>
+              
+              {tourActivities.length > 0 && (
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={downloadActivitiesCSV}
+                    className="flex items-center space-x-1"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download CSV</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={downloadActivitiesPDF}
+                    className="flex items-center space-x-1"
+                  >
+                    <FileText className="w-4 h-4" />
+                    <span>Download PDF</span>
+                  </Button>
+                </div>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            {tourActivities.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="p-4 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                  <Table className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                  <h3 className="text-lg font-semibold text-foreground mb-2">
+                    No Activities Scheduled Yet
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {assignedGuide 
+                      ? "Your guide will add activities to your schedule soon!"
+                      : "Request a guide to start planning your activities."
+                    }
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left p-3 font-medium">Activity</th>
+                      <th className="text-left p-3 font-medium">Location</th>
+                      <th className="text-left p-3 font-medium">Date</th>
+                      <th className="text-left p-3 font-medium">Time</th>
+                      <th className="text-left p-3 font-medium">Status</th>
+                      <th className="text-left p-3 font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tourActivities.map((activity, index) => (
+                      <tr key={activity.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                        <td className="p-3">
+                          {editingActivityId === activity.id ? (
+                            <Input
+                              value={editingActivity?.activity_name || activity.activity_name}
+                              onChange={(e) => setEditingActivity({
+                                ...editingActivity,
+                                activity_name: e.target.value
+                              })}
+                              className="text-sm"
+                            />
+                          ) : (
+                            <div>
+                              <div className="font-medium">{activity.activity_name}</div>
+                              {activity.description && (
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  {activity.description}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </td>
+                        <td className="p-3">
+                          {editingActivityId === activity.id ? (
+                            <Input
+                              value={editingActivity?.location_name || activity.location_name}
+                              onChange={(e) => setEditingActivity({
+                                ...editingActivity,
+                                location_name: e.target.value
+                              })}
+                              className="text-sm"
+                            />
+                          ) : (
+                            activity.location_name
+                          )}
+                        </td>
+                        <td className="p-3">
+                          {editingActivityId === activity.id ? (
+                            <Input
+                              type="date"
+                              value={editingActivity?.scheduled_date || activity.scheduled_date}
+                              onChange={(e) => setEditingActivity({
+                                ...editingActivity,
+                                scheduled_date: e.target.value
+                              })}
+                              className="text-sm"
+                            />
+                          ) : (
+                            new Date(activity.scheduled_date).toLocaleDateString()
+                          )}
+                        </td>
+                        <td className="p-3">
+                          {editingActivityId === activity.id ? (
+                            <Input
+                              type="time"
+                              value={editingActivity?.scheduled_time || activity.scheduled_time}
+                              onChange={(e) => setEditingActivity({
+                                ...editingActivity,
+                                scheduled_time: e.target.value
+                              })}
+                              className="text-sm"
+                            />
+                          ) : (
+                            activity.scheduled_time
+                          )}
+                        </td>
+                        <td className="p-3">
+                          <Badge 
+                            variant={activity.status === 'completed' ? 'default' : 'outline'}
+                            className={
+                              activity.status === 'completed' ? 'bg-green-100 text-green-700 border-green-300' :
+                              activity.status === 'planned' ? 'bg-blue-100 text-blue-700 border-blue-300' :
+                              'bg-orange-100 text-orange-700 border-orange-300'
+                            }
+                          >
+                            {activity.status?.charAt(0).toUpperCase() + activity.status?.slice(1) || 'Pending'}
+                          </Badge>
+                        </td>
+                        <td className="p-3">
+                          <div className="flex space-x-1">
+                            {editingActivityId === activity.id ? (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => editActivity(activity.id, editingActivity)}
+                                  className="h-7 px-2"
+                                >
+                                  <Save className="w-3 h-3" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setEditingActivityId(null);
+                                    setEditingActivity(null);
+                                  }}
+                                  className="h-7 px-2"
+                                >
+                                  <X className="w-3 h-3" />
+                                </Button>
+                              </>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setEditingActivityId(activity.id);
+                                  setEditingActivity(activity);
+                                }}
+                                className="h-7 px-2"
+                              >
+                                <Edit className="w-3 h-3" />
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}

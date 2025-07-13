@@ -14,6 +14,149 @@ export type Database = {
   }
   public: {
     Tables: {
+      activities: {
+        Row: {
+          activity_id: string | null
+          activity_name: string
+          category: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          duration_minutes: number | null
+          id: string
+          latitude: number | null
+          location_name: string
+          longitude: number | null
+          notes: string | null
+          scheduled_date: string
+          scheduled_time: string
+          status: string | null
+          tour_assignment_id: string | null
+          tour_guide_id: string | null
+          tourist_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          activity_id?: string | null
+          activity_name: string
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          latitude?: number | null
+          location_name: string
+          longitude?: number | null
+          notes?: string | null
+          scheduled_date: string
+          scheduled_time: string
+          status?: string | null
+          tour_assignment_id?: string | null
+          tour_guide_id?: string | null
+          tourist_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          activity_id?: string | null
+          activity_name?: string
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          latitude?: number | null
+          location_name?: string
+          longitude?: number | null
+          notes?: string | null
+          scheduled_date?: string
+          scheduled_time?: string
+          status?: string | null
+          tour_assignment_id?: string | null
+          tour_guide_id?: string | null
+          tourist_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tour_activities_tour_assignment_id_fkey"
+            columns: ["tour_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "tour_assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_users: {
+        Row: {
+          admin_role: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          permissions: Json | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          admin_role?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          permissions?: Json | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          admin_role?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          permissions?: Json | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      countries: {
+        Row: {
+          country_code: string
+          country_name_ar: string | null
+          country_name_en: string
+          created_at: string | null
+          flag_emoji: string | null
+          id: string
+          is_active: boolean | null
+          phone_code: string
+          updated_at: string | null
+        }
+        Insert: {
+          country_code: string
+          country_name_ar?: string | null
+          country_name_en: string
+          created_at?: string | null
+          flag_emoji?: string | null
+          id?: string
+          is_active?: boolean | null
+          phone_code: string
+          updated_at?: string | null
+        }
+        Update: {
+          country_code?: string
+          country_name_ar?: string | null
+          country_name_en?: string
+          created_at?: string | null
+          flag_emoji?: string | null
+          id?: string
+          is_active?: boolean | null
+          phone_code?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       guide_requests: {
         Row: {
           admin_response: string | null
@@ -349,68 +492,6 @@ export type Database = {
             columns: ["tourist_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      tour_activities: {
-        Row: {
-          activity_name: string
-          category: string | null
-          created_at: string | null
-          description: string | null
-          duration_minutes: number | null
-          id: string
-          latitude: number | null
-          location_name: string
-          longitude: number | null
-          notes: string | null
-          scheduled_date: string
-          scheduled_time: string
-          status: string | null
-          tour_assignment_id: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          activity_name: string
-          category?: string | null
-          created_at?: string | null
-          description?: string | null
-          duration_minutes?: number | null
-          id?: string
-          latitude?: number | null
-          location_name: string
-          longitude?: number | null
-          notes?: string | null
-          scheduled_date: string
-          scheduled_time: string
-          status?: string | null
-          tour_assignment_id?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          activity_name?: string
-          category?: string | null
-          created_at?: string | null
-          description?: string | null
-          duration_minutes?: number | null
-          id?: string
-          latitude?: number | null
-          location_name?: string
-          longitude?: number | null
-          notes?: string | null
-          scheduled_date?: string
-          scheduled_time?: string
-          status?: string | null
-          tour_assignment_id?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tour_activities_tour_assignment_id_fkey"
-            columns: ["tour_assignment_id"]
-            isOneToOne: false
-            referencedRelation: "tour_assignments"
             referencedColumns: ["id"]
           },
         ]

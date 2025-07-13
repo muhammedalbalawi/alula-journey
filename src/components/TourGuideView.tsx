@@ -19,6 +19,7 @@ import {
   Plus,
   CalendarIcon
 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -179,7 +180,7 @@ export function TourGuideView() {
       if (assignmentIds.length === 0) return;
 
       const { data, error } = await supabase
-        .from('tour_activities')
+        .from('activities')
         .select('*')
         .in('tour_assignment_id', assignmentIds)
         .order('scheduled_date', { ascending: true });
@@ -187,7 +188,7 @@ export function TourGuideView() {
       if (error) throw error;
       setTourActivities(data || []);
     } catch (error: any) {
-      console.error('Error fetching tour activities:', error);
+      console.error('Error fetching activities:', error);
     }
   };
 
@@ -206,17 +207,17 @@ export function TourGuideView() {
           fetchAssignedTourists();
         }
       )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'tour_activities'
-        },
-        () => {
-          fetchTourActivities();
-        }
-      )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'activities'
+          },
+          () => {
+            fetchTourActivities();
+          }
+        )
       .subscribe();
 
     return () => {
@@ -276,7 +277,7 @@ export function TourGuideView() {
       }
 
       const { error } = await supabase
-        .from('tour_activities')
+        .from('activities')
         .insert({
           tour_assignment_id: assignment.id,
           activity_name: newActivity.activity_name,
@@ -286,7 +287,10 @@ export function TourGuideView() {
           description: newActivity.description,
           category: newActivity.category,
           duration_minutes: newActivity.duration_minutes,
-          status: 'planned'
+          status: 'planned',
+          tourist_id: assignment.tourist_id,
+          tour_guide_id: currentGuideData?.id,
+          created_by: currentGuideData?.id
         });
 
       if (error) throw error;
