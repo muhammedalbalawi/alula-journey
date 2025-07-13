@@ -34,7 +34,7 @@ import { DriverBooking } from '@/components/DriverBooking';
 import { TouristExperiences } from '@/components/TouristExperiences';
 import { GoogleMaps } from '@/components/GoogleMaps';
 import { PhotoCaptureModal } from '@/components/PhotoCaptureModal';
-import { TouristOTPLogin } from '@/components/TouristOTPLogin';
+import { TouristPasswordLogin } from '@/components/TouristPasswordLogin';
 import { supabase } from '@/integrations/supabase/client';
 
 export const TouristView: React.FC = () => {
@@ -285,7 +285,7 @@ export const TouristView: React.FC = () => {
           {/* OTP Login Section */}
           <div className="flex justify-center">
             <div className="w-full max-w-md space-y-6 animate-slide-up">
-              <TouristOTPLogin onLoginSuccess={handleOTPLoginSuccess} />
+              <TouristPasswordLogin onLoginSuccess={handleOTPLoginSuccess} />
 
               {/* Registration Button */}
               <Card className="glass-card hover:shadow-float transition-all duration-300 hover:-translate-y-1">
