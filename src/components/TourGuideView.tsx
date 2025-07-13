@@ -11,11 +11,14 @@ import {
   MessageSquare,
   Star,
   TrendingUp,
-  Users
+  Users,
+  Lock
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
@@ -39,6 +42,9 @@ interface RescheduleRequest {
 }
 
 export function TourGuideView() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [guideId, setGuideId] = useState('');
+  const [password, setPassword] = useState('');
   const [notifications, setNotifications] = useState<RescheduleRequest[]>([
     {
       id: '1',
@@ -116,6 +122,72 @@ export function TourGuideView() {
       minute: '2-digit' 
     });
   };
+
+  const handleLogin = () => {
+    if (guideId === 'guide123' && password === 'password') {
+      setIsLoggedIn(true);
+      toast({
+        title: 'Login Successful',
+        description: 'Welcome to your dashboard!'
+      });
+    } else {
+      toast({
+        title: 'Login Failed',
+        description: 'Invalid credentials. Try guide123/password',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  // Show login form if not logged in
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+              <Lock className="w-8 h-8 text-orange-600" />
+            </div>
+            <CardTitle className="text-2xl">Tour Guide Login</CardTitle>
+            <p className="text-gray-600">Sign in to access your dashboard</p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="guideId">Guide ID</Label>
+              <Input
+                id="guideId"
+                type="text"
+                placeholder="Enter your guide ID"
+                value={guideId}
+                onChange={(e) => setGuideId(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+              />
+            </div>
+            <Button 
+              onClick={handleLogin} 
+              className="w-full"
+              disabled={!guideId || !password}
+            >
+              Sign In
+            </Button>
+            <p className="text-xs text-center text-gray-500">
+              Demo credentials: guide123 / password
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 p-4">
