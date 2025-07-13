@@ -30,7 +30,8 @@ import {
   UserCheck,
   Phone,
   Mail,
-  UserX
+  UserX,
+  UserPlus
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
@@ -41,7 +42,6 @@ import { PhotoCaptureModal } from '@/components/PhotoCaptureModal';
 import { TouristPasswordLogin } from '@/components/TouristPasswordLogin';
 import { TouristAlbum } from '@/components/TouristAlbum';
 import { TouristProfile } from '@/components/TouristProfile';
-import { GuideRequest } from '@/components/GuideRequest';
 import { supabase } from '@/integrations/supabase/client';
 
 export const TouristView: React.FC = () => {
@@ -70,6 +70,7 @@ export const TouristView: React.FC = () => {
   });
   const [assignedGuide, setAssignedGuide] = useState<any>(null);
   const [tourAssignment, setTourAssignment] = useState<any>(null);
+  const [guideRequest, setGuideRequest] = useState<any>(null);
 
   // Categorized destinations
   const destinations = {
@@ -162,39 +163,7 @@ export const TouristView: React.FC = () => {
     }
   };
 
-  // Fetch assigned tour guide
-  useEffect(() => {
-    const fetchAssignedGuide = async () => {
-      if (!touristId) return;
-
-      try {
-        const { data: assignments, error: assignmentError } = await supabase
-          .from('tour_assignments')
-          .select('*, profiles!tour_assignments_guide_id_fkey(*)')
-          .eq('tourist_id', touristId)
-          .order('created_at', { ascending: false })
-          .limit(1);
-
-        if (assignmentError) {
-          console.error('Error fetching tour assignment:', assignmentError);
-          return;
-        }
-
-        if (assignments && assignments.length > 0) {
-          setTourAssignment(assignments[0]);
-          setAssignedGuide(assignments[0].profiles);
-        }
-      } catch (error) {
-        console.error('Error fetching assigned guide:', error);
-      }
-    };
-
-    if (isLoggedIn && touristId) {
-      fetchAssignedGuide();
-    }
-  }, [isLoggedIn, touristId]);
-
-  // Check for existing session on component mount
+  // Check for existing session and fetch guide request
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session && session.user) {
@@ -221,6 +190,116 @@ export const TouristView: React.FC = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Fetch guide request when user session changes
+  useEffect(() => {
+    if (userSession?.user?.id) {
+      fetchGuideRequest();
+    }
+  }, [userSession]);
+
+  const fetchGuideRequest = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('guide_requests')
+        .select(`
+          *,
+          guides (
+            name,
+            email,
+            phone,
+            rating,
+            specializations
+          )
+        `)
+        .eq('tourist_id', userSession?.user?.id)
+        .eq('status', 'approved')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const request = data[0];
+        setGuideRequest(request);
+        setAssignedGuide(request.guides);
+      } else {
+        setGuideRequest(null);
+        setAssignedGuide(null);
+      }
+    } catch (error: any) {
+      console.error('Error fetching guide request:', error);
+    }
+  };
+
+  const handleGuideRequest = async () => {
+    if (!comment.trim()) {
+      toast({
+        title: 'Message Required',
+        description: 'Please enter a message with your guide request.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      // First, ensure the user profile exists
+      const { data: existingProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', userSession?.user?.id)
+        .single();
+
+      if (profileError && profileError.code === 'PGRST116') {
+        // Profile doesn't exist, create it
+        const { error: createProfileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: userSession?.user?.id,
+            user_type: 'tourist'
+          });
+        
+        if (createProfileError) {
+          console.error('Error creating profile:', createProfileError);
+          toast({
+            title: 'Error',
+            description: 'Failed to create user profile. Please try again.',
+            variant: 'destructive',
+          });
+          return;
+        }
+      } else if (profileError) {
+        throw profileError;
+      }
+
+      // Now submit the guide request
+      const { error } = await supabase
+        .from('guide_requests')
+        .insert({
+          tourist_id: userSession?.user?.id,
+          request_message: comment.trim(),
+          status: 'pending'
+        });
+
+      if (error) throw error;
+
+      setComment('');
+      toast({
+        title: 'Request Submitted',
+        description: 'Your guide request has been sent to the admin for review.',
+      });
+      
+      // Refresh guide request status
+      fetchGuideRequest();
+    } catch (error: any) {
+      console.error('Error submitting request:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to submit guide request.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const handleRegistration = () => {
     setShowRegistration(false);
@@ -427,32 +506,44 @@ export const TouristView: React.FC = () => {
                     <div className="space-y-3 flex-1">
                       <div>
                         <h3 className="text-lg font-semibold text-foreground mb-1">
-                          {assignedGuide.full_name || 'Professional Guide'}
+                          {assignedGuide.name || 'Professional Guide'}
                         </h3>
                         <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700">
-                          {tourAssignment?.status || 'Active'}
+                          Assigned
                         </Badge>
                       </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {assignedGuide.contact_info && (
+                        {assignedGuide.phone && (
                           <div className="flex items-center space-x-2 rtl:space-x-reverse">
                             <Phone className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-sm text-foreground">{assignedGuide.contact_info}</span>
+                            <span className="text-sm text-foreground">{assignedGuide.phone}</span>
+                          </div>
+                        )}
+                        
+                        {assignedGuide.email && (
+                          <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                            <Mail className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-sm text-foreground">{assignedGuide.email}</span>
                           </div>
                         )}
                         
                         <div className="flex items-center space-x-2 rtl:space-x-reverse">
                           <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                          <span className="text-sm text-foreground">4.8/5.0 Rating</span>
+                          <span className="text-sm text-foreground">{assignedGuide.rating || 4.8}/5.0 Rating</span>
                         </div>
                       </div>
 
-                      {tourAssignment?.tour_name && (
+                      {assignedGuide.specializations && assignedGuide.specializations.length > 0 && (
                         <div className="pt-2 border-t border-border/50">
-                          <p className="text-sm text-muted-foreground">
-                            <span className="font-medium">Tour Package:</span> {tourAssignment.tour_name}
-                          </p>
+                          <p className="text-sm font-medium mb-2">Specializations:</p>
+                          <div className="flex flex-wrap gap-1">
+                            {assignedGuide.specializations.map((spec: string, index: number) => (
+                              <Badge key={index} variant="outline" className="text-xs">
+                                {spec}
+                              </Badge>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -463,46 +554,66 @@ export const TouristView: React.FC = () => {
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={() => window.open(`tel:${assignedGuide.contact_info}`, '_self')}
+                    onClick={() => window.open(`tel:${assignedGuide.phone}`, '_self')}
                     className="flex items-center space-x-1 rtl:space-x-reverse glass-effect hover:shadow-card"
                   >
                     <Phone className="w-3 h-3" />
                     <span>Call Guide</span>
                   </Button>
                   <Button 
-                    variant="outline" 
+                    variant="desert" 
                     size="sm"
-                    onClick={openWhatsApp}
-                    className="flex items-center space-x-1 rtl:space-x-reverse glass-effect hover:shadow-card"
+                    onClick={() => window.open(`https://wa.me/${assignedGuide.phone?.replace(/[^0-9]/g, '')}?text=Hello! I'm your assigned tourist from AlUla Journey. I'd like to discuss our tour plans.`, '_blank')}
+                    className="flex items-center space-x-1 rtl:space-x-reverse"
                   >
                     <MessageCircle className="w-3 h-3" />
-                    <span>WhatsApp</span>
+                    <span>Contact via WhatsApp</span>
                   </Button>
                 </div>
               </div>
             ) : (
-              <div className="text-center py-8">
-                <div className="p-4 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 rounded-lg border border-orange-200 dark:border-orange-800">
-                  <UserX className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                  <h3 className="text-lg font-semibold text-foreground mb-2">
-                    No Tour Guide Assigned Yet
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Your tour guide application is being processed. You will be notified once a professional guide is assigned to your tour.
-                  </p>
-                  <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-700">
-                    Pending Assignment
-                  </Badge>
+              <div className="space-y-4">
+                <div className="text-center py-8">
+                  <div className="p-4 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                    <UserX className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                    <h3 className="text-lg font-semibold text-foreground mb-2">
+                      No Tour Guide Assigned Yet
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Request a professional tour guide to enhance your AlUla experience.
+                    </p>
+                    <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-700">
+                      Ready to Request
+                    </Badge>
+                  </div>
+                </div>
+                
+                {/* Guide Request Form */}
+                <div className="space-y-4 p-4 bg-muted/20 rounded-lg border-2 border-dashed border-muted-foreground/30">
+                  <h3 className="font-medium">Request a Tour Guide</h3>
+                  <Textarea
+                    placeholder="Please describe your tour preferences, dates, and any special requirements..."
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    className="min-h-[100px]"
+                  />
+                  <Button
+                    onClick={handleGuideRequest}
+                    className="w-full"
+                    variant="desert"
+                  >
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Submit Guide Request
+                  </Button>
                 </div>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Tourist Profile and Guide Request Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-slide-up">
+        {/* Tourist Profile Section */}
+        <div className="animate-slide-up">
           <TouristProfile userId={userSession?.user?.id} />
-          <GuideRequest userId={userSession?.user?.id} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
