@@ -31,7 +31,8 @@ import {
   Navigation,
   Mountain,
   Castle,
-  Zap
+  Zap,
+  UserCircle
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
@@ -431,25 +432,27 @@ export const GuideView: React.FC = () => {
 
   return (
     <div className="min-h-screen p-4 pt-20">
-      <div className="container mx-auto max-w-7xl space-y-6">
-        {/* Welcome Header */}
-        <Card className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
-          <CardContent className="pt-6">
-            <h2 className="text-2xl font-bold text-primary mb-2">{t('welcomeGuide')}</h2>
-            <p className="text-muted-foreground">{t('guideId')}: {guideId}</p>
-          </CardContent>
-        </Card>
-
-        {/* Profile Section */}
-        <Card className="shadow-desert">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2 rtl:space-x-reverse">
-              <Users className="w-5 h-5" />
-              <span>Profile Information</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Profile Button - Top Left */}
+      <div className="fixed top-6 left-6 z-50">
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="shadow-lg hover-scale"
+            >
+              <UserCircle className="w-4 h-4 mr-2" />
+              Profile
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center space-x-2">
+                <UserCircle className="w-5 h-5" />
+                <span>Profile Information</span>
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 pt-4">
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Guide Name</label>
                 <p className="text-lg font-semibold">Khalid Al-Otaibi</p>
@@ -469,7 +472,7 @@ export const GuideView: React.FC = () => {
                   <span className="text-lg font-semibold">4.8</span>
                 </div>
               </div>
-              <div className="md:col-span-2">
+              <div>
                 <label className="text-sm font-medium text-muted-foreground">Specializations</label>
                 <div className="flex flex-wrap gap-2 mt-1">
                   <Badge variant="secondary">Heritage Sites</Badge>
@@ -477,6 +480,16 @@ export const GuideView: React.FC = () => {
                 </div>
               </div>
             </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <div className="container mx-auto max-w-7xl space-y-6">
+        {/* Welcome Header */}
+        <Card className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
+          <CardContent className="pt-6">
+            <h2 className="text-2xl font-bold text-primary mb-2">{t('welcomeGuide')}</h2>
+            <p className="text-muted-foreground">{t('guideId')}: {guideId}</p>
           </CardContent>
         </Card>
 
