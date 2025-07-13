@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Phone, Mail, LogIn, Loader2, Eye, EyeOff, UserPlus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface TouristPasswordLoginProps {
   onLoginSuccess: (userId: string, session: any) => void;
@@ -23,6 +24,7 @@ interface LoginState {
 }
 
 export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginProps) {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'phone' | 'email'>('email');
   const [loginState, setLoginState] = useState<LoginState>({
     identifier: '',
@@ -52,8 +54,8 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
   const validateInput = (): boolean => {
     if (!loginState.identifier.trim() || !loginState.password.trim()) {
       toast({
-        title: 'Missing Information',
-        description: `Please fill in all required fields.`,
+        title: t('missingInfo'),
+        description: t('fillAllFields'),
         variant: 'destructive',
       });
       return false;
@@ -61,8 +63,8 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
 
     if (loginState.isSignUp && !loginState.fullName.trim()) {
       toast({
-        title: 'Missing Information',
-        description: 'Please enter your full name.',
+        title: t('missingInfo'),
+        description: t('enterFullNameMsg'),
         variant: 'destructive',
       });
       return false;
@@ -72,8 +74,8 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(loginState.identifier)) {
         toast({
-          title: 'Invalid Email',
-          description: 'Please enter a valid email address.',
+          title: t('invalidEmail'),
+          description: t('validEmailMsg'),
           variant: 'destructive',
         });
         return false;
@@ -82,8 +84,8 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
       const digits = loginState.identifier.replace(/\D/g, '');
       if (digits.length < 9) {
         toast({
-          title: 'Invalid Phone Number',
-          description: 'Please enter a valid phone number.',
+          title: t('invalidPhone'),
+          description: t('validPhoneMsg'),
           variant: 'destructive',
         });
         return false;
@@ -92,8 +94,8 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
 
     if (loginState.isSignUp && loginState.password !== loginState.confirmPassword) {
       toast({
-        title: 'Passwords Do Not Match',
-        description: 'Please ensure both password fields match.',
+        title: t('passwordsNoMatch'),
+        description: t('passwordsMatchMsg'),
         variant: 'destructive',
       });
       return false;
@@ -101,8 +103,8 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
 
     if (loginState.password.length < 6) {
       toast({
-        title: 'Password Too Short',
-        description: 'Password must be at least 6 characters long.',
+        title: t('passwordTooShort'),
+        description: t('passwordLengthMsg'),
         variant: 'destructive',
       });
       return false;
@@ -126,8 +128,8 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
 
       if (data.user && data.session) {
         toast({
-          title: 'Login Successful',
-          description: 'Welcome back to AlUla Journey!',
+          title: t('loginSuccessful'),
+          description: t('welcomeTourist'),
         });
         
         onLoginSuccess(data.user.id, data.session);
@@ -136,8 +138,8 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
     } catch (error: any) {
       console.error('Error signing in:', error);
       toast({
-        title: 'Sign In Failed',
-        description: error.message || 'Invalid credentials. Please try again.',
+        title: t('signInFailed'),
+        description: error.message || t('invalidCredentials'),
         variant: 'destructive',
       });
     } finally {
@@ -167,15 +169,15 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
 
       if (data.user && data.session) {
         toast({
-          title: 'Account Created Successfully',
-          description: 'Welcome to AlUla Journey!',
+          title: t('accountCreated'),
+          description: t('welcomeTourist'),
         });
         
         onLoginSuccess(data.user.id, data.session);
       } else {
         toast({
-          title: 'Check Your Email',
-          description: 'Please check your email to confirm your account before signing in.',
+          title: t('checkEmail'),
+          description: t('confirmEmailMsg'),
         });
         setLoginState(prev => ({ ...prev, isSignUp: false }));
       }
@@ -183,8 +185,8 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
     } catch (error: any) {
       console.error('Error signing up:', error);
       toast({
-        title: 'Sign Up Failed',
-        description: error.message || 'Unable to create account. Please try again.',
+        title: t('signUpFailed'),
+        description: error.message || t('unableToCreate'),
         variant: 'destructive',
       });
     } finally {
@@ -218,12 +220,12 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
     <Card className="w-full max-w-md glass-card animate-bounce-in">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl bg-gradient-to-r from-primary to-heritage-amber bg-clip-text text-transparent">
-          {loginState.isSignUp ? 'Create Tourist Account' : 'Tourist Login'}
+          {loginState.isSignUp ? t('createTouristAccount') : t('touristLogin')}
         </CardTitle>
         <p className="text-muted-foreground">
           {loginState.isSignUp 
-            ? 'Join AlUla Journey today' 
-            : 'Welcome back to AlUla Journey'
+            ? t('joinAlUla')
+            : t('welcomeBack')
           }
         </p>
       </CardHeader>
@@ -236,17 +238,17 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
             </TabsTrigger>
             <TabsTrigger value="phone" className="flex items-center space-x-2" disabled>
               <Phone className="w-4 h-4" />
-              <span>Phone (Soon)</span>
+              <span>{t('phoneComingSoon')}</span>
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="email" className="space-y-4 mt-4">
             {loginState.isSignUp && (
               <div className="space-y-2">
-                <label className="text-sm font-medium">Full Name</label>
+                <label className="text-sm font-medium">{t('fullName')}</label>
                 <Input
                   type="text"
-                  placeholder="Enter your full name"
+                  placeholder={t('enterFullName')}
                   value={loginState.fullName}
                   onChange={(e) => setLoginState(prev => ({ ...prev, fullName: e.target.value }))}
                   className="glass-effect"
@@ -256,10 +258,10 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
             )}
             
             <div className="space-y-2">
-              <label className="text-sm font-medium">Email Address</label>
+              <label className="text-sm font-medium">{t('emailAddress')}</label>
               <Input
                 type="email"
-                placeholder="your.email@example.com"
+                placeholder={t('enterEmail')}
                 value={loginState.identifier}
                 onChange={(e) => setLoginState(prev => ({ ...prev, identifier: e.target.value }))}
                 className="glass-effect"
@@ -268,11 +270,11 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Password</label>
+              <label className="text-sm font-medium">{t('password')}</label>
               <div className="relative">
                 <Input
                   type={loginState.showPassword ? 'text' : 'password'}
-                  placeholder="Enter your password"
+                  placeholder={t('enterPassword')}
                   value={loginState.password}
                   onChange={(e) => setLoginState(prev => ({ ...prev, password: e.target.value }))}
                   className="glass-effect pr-10"
@@ -297,10 +299,10 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
 
             {loginState.isSignUp && (
               <div className="space-y-2">
-                <label className="text-sm font-medium">Confirm Password</label>
+                <label className="text-sm font-medium">{t('confirmPassword')}</label>
                 <Input
                   type={loginState.showPassword ? 'text' : 'password'}
-                  placeholder="Confirm your password"
+                  placeholder={t('confirmPasswordPlaceholder')}
                   value={loginState.confirmPassword}
                   onChange={(e) => setLoginState(prev => ({ ...prev, confirmPassword: e.target.value }))}
                   className="glass-effect"
@@ -314,7 +316,7 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
             <div className="p-4 bg-muted/50 rounded-lg text-center">
               <Phone className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
-                Phone authentication coming soon!
+                {t('phoneComingSoon')}
               </p>
             </div>
           </TabsContent>
@@ -329,19 +331,19 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
           {loginState.loading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              {loginState.isSignUp ? 'Creating Account...' : 'Signing In...'}
+              {loginState.isSignUp ? t('creatingAccount') : t('signingIn')}
             </>
           ) : (
             <>
               {loginState.isSignUp ? (
                 <>
                   <UserPlus className="w-4 h-4 mr-2" />
-                  Create Account
+                  {t('createAccount')}
                 </>
               ) : (
                 <>
                   <LogIn className="w-4 h-4 mr-2" />
-                  Sign In
+                  {t('signIn')}
                 </>
               )}
             </>
@@ -357,16 +359,16 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
             className="text-primary hover:text-primary/80"
           >
             {loginState.isSignUp 
-              ? 'Already have an account? Sign in' 
-              : 'New to AlUla Journey? Create account'
+              ? t('alreadyAccount')
+              : t('newToAlUla')
             }
           </Button>
         </div>
 
         <div className="p-3 bg-muted/50 rounded-lg text-xs text-muted-foreground">
-          <strong>Note:</strong> {loginState.isSignUp 
-            ? 'You may need to verify your email address after signing up.' 
-            : 'Use your email and password to access your tourist dashboard.'
+          <strong>{t('notes')}:</strong> {loginState.isSignUp 
+            ? t('emailVerifyNote')
+            : t('useEmailPassword')
           }
         </div>
       </CardContent>

@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { User, Save, Edit, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface TouristProfileProps {
   userId: string;
@@ -19,6 +20,7 @@ interface ProfileData {
 }
 
 export function TouristProfile({ userId }: TouristProfileProps) {
+  const { t } = useLanguage();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [profileData, setProfileData] = useState<ProfileData>({
@@ -88,8 +90,8 @@ export function TouristProfile({ userId }: TouristProfileProps) {
     } catch (error: any) {
       console.error('Error fetching profile:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to load profile information.',
+        title: t('error'),
+        description: t('failedToLoad'),
         variant: 'destructive',
       });
     }
@@ -114,8 +116,8 @@ export function TouristProfile({ userId }: TouristProfileProps) {
       setOriginalData(profileData);
       setIsEditing(false);
       toast({
-        title: 'Success',
-        description: 'Profile updated successfully!',
+        title: t('success'),
+        description: t('profileUpdated'),
       });
     } catch (error: any) {
       console.error('Error updating profile:', error);
@@ -139,7 +141,7 @@ export function TouristProfile({ userId }: TouristProfileProps) {
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center space-x-2">
           <User className="w-5 h-5" />
-          <span>Tourist Profile</span>
+          <span>{t('touristProfile')}</span>
         </CardTitle>
         {!isEditing ? (
           <Button
