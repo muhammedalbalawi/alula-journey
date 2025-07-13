@@ -12,6 +12,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PhotoCaptureModalProps {
   children: React.ReactNode;
@@ -49,15 +50,51 @@ export function PhotoCaptureModal({ children }: PhotoCaptureModalProps) {
     }
   };
 
-  const handleSubmit = () => {
-    if (selectedPhoto) {
-      // Here you would upload the photo and save the comment
-      toast({
-        title: t('success'),
-        description: 'Photo and comment saved successfully!'
-      });
-      setOpen(false);
-      resetModal();
+  const handleSubmit = async () => {
+    if (selectedPhoto && comment.trim()) {
+      try {
+        const { data: user } = await supabase.auth.getUser();
+        if (!user.user) throw new Error('Not authenticated');
+
+        const fileExt = selectedPhoto.name.split('.').pop();
+        const fileName = `${Date.now()}.${fileExt}`;
+        const filePath = `${user.user.id}/${fileName}`;
+
+        // Upload file to storage
+        const { error: uploadError } = await supabase.storage
+          .from('tourist-photos')
+          .upload(filePath, selectedPhoto);
+
+        if (uploadError) throw uploadError;
+
+        // Save photo metadata to database
+        const { error: dbError } = await supabase
+          .from('tourist_photos')
+          .insert({
+            user_id: user.user.id,
+            file_path: filePath,
+            file_name: selectedPhoto.name,
+            file_size: selectedPhoto.size,
+            content_type: selectedPhoto.type,
+            caption: comment.trim()
+          });
+
+        if (dbError) throw dbError;
+
+        toast({
+          title: t('success'),
+          description: 'Photo and comment saved successfully!'
+        });
+        setOpen(false);
+        resetModal();
+      } catch (error) {
+        console.error('Error saving photo:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to save photo and comment',
+          variant: 'destructive'
+        });
+      }
     }
   };
 

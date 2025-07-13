@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Upload, Edit2, Trash2, MessageCircle, MapPin, Calendar, Plus } from 'lucide-react';
+import { FolderOpen, Edit2, Trash2, MessageCircle, MapPin, Calendar } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Photo {
@@ -29,12 +28,6 @@ interface Comment {
 export const TouristAlbum = () => {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [comments, setComments] = useState<Record<string, Comment[]>>({});
-  const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadForm, setUploadForm] = useState({
-    caption: '',
-    location: ''
-  });
   const [editingComment, setEditingComment] = useState<string | null>(null);
   const [editCommentText, setEditCommentText] = useState('');
   const [newComment, setNewComment] = useState('');
@@ -44,21 +37,15 @@ export const TouristAlbum = () => {
   const isArabic = language === 'ar';
 
   const texts = {
-    title: isArabic ? 'ألبوم الصور' : 'Photo Album',
-    uploadPhoto: isArabic ? 'رفع صورة' : 'Upload Photo',
-    caption: isArabic ? 'التعليق' : 'Caption',
-    location: isArabic ? 'الموقع' : 'Location',
-    upload: isArabic ? 'رفع' : 'Upload',
-    cancel: isArabic ? 'إلغاء' : 'Cancel',
+    title: isArabic ? 'مجلد الصور' : 'Photo Folder',
     comments: isArabic ? 'التعليقات' : 'Comments',
     addComment: isArabic ? 'إضافة تعليق' : 'Add Comment',
     edit: isArabic ? 'تعديل' : 'Edit',
     delete: isArabic ? 'حذف' : 'Delete',
     save: isArabic ? 'حفظ' : 'Save',
+    cancel: isArabic ? 'إلغاء' : 'Cancel',
     noPhotos: isArabic ? 'لا توجد صور بعد' : 'No photos yet',
-    uploadFirst: isArabic ? 'ارفع أول صورة لك!' : 'Upload your first photo!',
-    selectFile: isArabic ? 'اختر ملف' : 'Select File',
-    optional: isArabic ? '(اختياري)' : '(Optional)'
+    captureFirst: isArabic ? 'التقط أول لحظة لك!' : 'Capture your first moment!',
   };
 
   useEffect(() => {
@@ -106,60 +93,6 @@ export const TouristAlbum = () => {
         description: "Failed to load photos",
         variant: "destructive"
       });
-    }
-  };
-
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    try {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error('Not authenticated');
-
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `${user.user.id}/${fileName}`;
-
-      // Upload file to storage
-      const { error: uploadError } = await supabase.storage
-        .from('tourist-photos')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      // Save photo metadata to database
-      const { error: dbError } = await supabase
-        .from('tourist_photos')
-        .insert({
-          user_id: user.user.id,
-          file_path: filePath,
-          file_name: file.name,
-          file_size: file.size,
-          content_type: file.type,
-          caption: uploadForm.caption,
-          location_name: uploadForm.location
-        });
-
-      if (dbError) throw dbError;
-
-      toast({
-        title: "Success",
-        description: "Photo uploaded successfully"
-      });
-
-      setUploadForm({ caption: '', location: '' });
-      fetchPhotos();
-    } catch (error) {
-      console.error('Error uploading photo:', error);
-      toast({
-        title: "Error",
-        description: "Failed to upload photo",
-        variant: "destructive"
-      });
-    } finally {
-      setIsUploading(false);
     }
   };
 
@@ -273,7 +206,6 @@ export const TouristAlbum = () => {
       if (dbError) throw dbError;
 
       fetchPhotos();
-      setSelectedPhoto(null);
       toast({
         title: "Success",
         description: "Photo deleted successfully"
@@ -293,46 +225,17 @@ export const TouristAlbum = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Upload className="w-5 h-5" />
+            <FolderOpen className="w-5 h-5" />
             {texts.title}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {/* Upload Section */}
-          <div className="mb-6 p-4 border rounded-lg bg-muted/20">
-            <div className="space-y-4">
-              <Input
-                placeholder={texts.caption}
-                value={uploadForm.caption}
-                onChange={(e) => setUploadForm({ ...uploadForm, caption: e.target.value })}
-              />
-              <Input
-                placeholder={`${texts.location} ${texts.optional}`}
-                value={uploadForm.location}
-                onChange={(e) => setUploadForm({ ...uploadForm, location: e.target.value })}
-              />
-              <div className="flex items-center gap-2">
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileUpload}
-                  disabled={isUploading}
-                  className="flex-1"
-                />
-                <Button disabled={isUploading} variant="outline">
-                  <Plus className="w-4 h-4 mr-2" />
-                  {isUploading ? '...' : texts.uploadPhoto}
-                </Button>
-              </div>
-            </div>
-          </div>
-
           {/* Photos Grid */}
           {photos.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              <Upload className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <FolderOpen className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p className="text-lg font-medium">{texts.noPhotos}</p>
-              <p>{texts.uploadFirst}</p>
+              <p>{texts.captureFirst}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -491,7 +394,7 @@ export const TouristAlbum = () => {
                             onClick={() => addComment(photo.id)}
                             disabled={!newComment.trim()}
                           >
-                            <Plus className="w-4 h-4 mr-2" />
+                            <MessageCircle className="w-4 h-4 mr-2" />
                             {texts.addComment}
                           </Button>
                         </div>
