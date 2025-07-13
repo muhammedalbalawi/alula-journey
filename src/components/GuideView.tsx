@@ -38,12 +38,15 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
 import { GoogleMaps } from '@/components/GoogleMaps';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
 export const GuideView: React.FC = () => {
   const { t, translateLocation } = useLanguage();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [guideId, setGuideId] = useState('');
   const [password, setPassword] = useState('');
+  const [currentGuide, setCurrentGuide] = useState<any>(null);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [selectedTourist, setSelectedTourist] = useState('');
   const [showNotesDialog, setShowNotesDialog] = useState(false);
   const [selectedDestination, setSelectedDestination] = useState<any>(null);
@@ -127,13 +130,51 @@ export const GuideView: React.FC = () => {
     adventure: itinerary.filter(item => item.category === 'adventure')
   };
 
-  const handleLogin = () => {
-    if (guideId.trim() && password.trim()) {
+  const handleLogin = async () => {
+    if (!guideId.trim() || !password.trim()) {
+      toast({
+        title: t('error'),
+        description: 'Please enter both Guide ID and password',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setIsLoggingIn(true);
+
+    try {
+      const { data, error } = await supabase
+        .from('guides')
+        .select('*')
+        .eq('guide_id', guideId.trim())
+        .eq('password', password.trim())
+        .single();
+
+      if (error || !data) {
+        toast({
+          title: t('error'),
+          description: 'Invalid Guide ID or password',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      setCurrentGuide(data);
       setIsLoggedIn(true);
       toast({
         title: t('success'),
-        description: t('welcomeGuide')
+        description: `Welcome, ${data.name}!`
       });
+
+    } catch (error) {
+      console.error('Login error:', error);
+      toast({
+        title: t('error'),
+        description: 'Login failed. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -421,8 +462,13 @@ export const GuideView: React.FC = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-            <Button onClick={handleLogin} className="w-full">
-              {t('login')}
+            <Button 
+              onClick={handleLogin} 
+              className="w-full"
+              disabled={isLoggingIn}
+              onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+            >
+              {isLoggingIn ? 'Signing in...' : t('login')}
             </Button>
           </CardContent>
         </Card>
@@ -440,6 +486,7 @@ export const GuideView: React.FC = () => {
               variant="outline"
               size="sm"
               className="shadow-lg hover-scale"
+              onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
             >
               <UserCircle className="w-4 h-4 mr-2" />
               Profile
@@ -455,28 +502,29 @@ export const GuideView: React.FC = () => {
             <div className="space-y-4 pt-4">
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Guide Name</label>
-                <p className="text-lg font-semibold">Khalid Al-Otaibi</p>
+                <p className="text-lg font-semibold">{currentGuide?.name || 'Unknown Guide'}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Email</label>
-                <p className="text-lg">khalid@guides.sa</p>
+                <p className="text-lg">{currentGuide?.email || 'N/A'}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Phone</label>
-                <p className="text-lg">+966551234567</p>
+                <p className="text-lg">{currentGuide?.phone || 'N/A'}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Rating</label>
                 <div className="flex items-center space-x-2">
                   <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                  <span className="text-lg font-semibold">4.8</span>
+                  <span className="text-lg font-semibold">{currentGuide?.rating || '0.0'}</span>
                 </div>
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Specializations</label>
                 <div className="flex flex-wrap gap-2 mt-1">
-                  <Badge variant="secondary">Heritage Sites</Badge>
-                  <Badge variant="secondary">Desert Adventures</Badge>
+                  {(currentGuide?.specializations || []).map((spec: string, index: number) => (
+                    <Badge key={index} variant="secondary">{spec}</Badge>
+                  ))}
                 </div>
               </div>
             </div>

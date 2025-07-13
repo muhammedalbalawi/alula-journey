@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      guides: {
+        Row: {
+          created_at: string | null
+          email: string
+          guide_id: string
+          id: string
+          name: string
+          password: string
+          phone: string
+          rating: number | null
+          specializations: string[] | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          guide_id: string
+          id?: string
+          name: string
+          password: string
+          phone: string
+          rating?: number | null
+          specializations?: string[] | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          guide_id?: string
+          id?: string
+          name?: string
+          password?: string
+          phone?: string
+          rating?: number | null
+          specializations?: string[] | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           created_at: string | null

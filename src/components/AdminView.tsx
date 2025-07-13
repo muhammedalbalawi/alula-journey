@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,7 @@ import {
   Clock
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Tourist {
   id: string;
@@ -74,26 +75,7 @@ export const AdminView: React.FC = () => {
     }
   ]);
 
-  const [guides] = useState<Guide[]>([
-    {
-      id: 'G001',
-      name: 'Khalid Al-Otaibi',
-      email: 'khalid@guides.sa',
-      phone: '+966551234567',
-      rating: 4.8,
-      specializations: ['Heritage Sites', 'Desert Adventures'],
-      status: 'busy'
-    },
-    {
-      id: 'G002',
-      name: 'Fatima Al-Zahra',
-      email: 'fatima@guides.sa',
-      phone: '+966559876543',
-      rating: 4.9,
-      specializations: ['Cultural Tours', 'Photography'],
-      status: 'busy'
-    }
-  ]);
+  const [guides, setGuides] = useState<Guide[]>([]);
 
   const [assignments, setAssignments] = useState<Assignment[]>([
     {
@@ -123,6 +105,53 @@ export const AdminView: React.FC = () => {
   const [tourName, setTourName] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+
+  // New guide form states
+  const [newGuideName, setNewGuideName] = useState('');
+  const [newGuideEmail, setNewGuideEmail] = useState('');
+  const [newGuidePhone, setNewGuidePhone] = useState('');
+  const [newGuidePassword, setNewGuidePassword] = useState('');
+  const [newGuideSpecializations, setNewGuideSpecializations] = useState('');
+  const [newGuideStatus, setNewGuideStatus] = useState('available');
+  const [isCreatingGuide, setIsCreatingGuide] = useState(false);
+
+  // Fetch guides from database
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchGuides();
+    }
+  }, [isLoggedIn]);
+
+  const fetchGuides = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('guides')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      if (data) {
+        const formattedGuides = data.map(guide => ({
+          id: guide.id,
+          name: guide.name,
+          email: guide.email,
+          phone: guide.phone,
+          rating: guide.rating,
+          specializations: guide.specializations || [],
+          status: guide.status as 'available' | 'busy' | 'offline'
+        }));
+        setGuides(formattedGuides);
+      }
+    } catch (error) {
+      console.error('Error fetching guides:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch guides',
+        variant: 'destructive'
+      });
+    }
+  };
 
   const handleLogin = () => {
     if (adminId === 'admin' && password === 'admin123') {
@@ -182,6 +211,71 @@ export const AdminView: React.FC = () => {
       title: 'Assignment Removed',
       description: 'Assignment has been removed successfully.'
     });
+  };
+
+  const handleCreateGuide = async () => {
+    if (!newGuideName || !newGuideEmail || !newGuidePhone || !newGuidePassword) {
+      toast({
+        title: 'Error',
+        description: 'Please fill in all required fields',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setIsCreatingGuide(true);
+
+    try {
+      // Generate guide ID from name (you can customize this logic)
+      const guideId = newGuideName.toLowerCase().replace(/\s+/g, '') + Date.now().toString().slice(-4);
+      
+      const specializations = newGuideSpecializations 
+        ? newGuideSpecializations.split(',').map(s => s.trim()).filter(s => s)
+        : [];
+
+      const { data, error } = await supabase
+        .from('guides')
+        .insert([
+          {
+            guide_id: guideId,
+            password: newGuidePassword,
+            name: newGuideName,
+            email: newGuideEmail,
+            phone: newGuidePhone,
+            specializations,
+            status: newGuideStatus,
+            rating: 0.0
+          }
+        ]);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: `Guide created successfully! Guide ID: ${guideId}`,
+      });
+
+      // Reset form
+      setNewGuideName('');
+      setNewGuideEmail('');
+      setNewGuidePhone('');
+      setNewGuidePassword('');
+      setNewGuideSpecializations('');
+      setNewGuideStatus('available');
+
+      // Refresh guides list
+      fetchGuides();
+
+    } catch (error: any) {
+      console.error('Error creating guide:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to create guide',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsCreatingGuide(false);
+    }
   };
 
   const updateAssignmentStatus = (assignmentId: string, status: 'pending' | 'active' | 'completed') => {
@@ -502,12 +596,34 @@ export const AdminView: React.FC = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input placeholder="Guide Name" />
-              <Input placeholder="Email" type="email" />
-              <Input placeholder="Phone" />
-              <Input placeholder="Password" type="password" />
-              <Input placeholder="Specializations (comma separated)" />
-              <Select defaultValue="available">
+              <Input 
+                placeholder="Guide Name*" 
+                value={newGuideName}
+                onChange={(e) => setNewGuideName(e.target.value)}
+              />
+              <Input 
+                placeholder="Email*" 
+                type="email" 
+                value={newGuideEmail}
+                onChange={(e) => setNewGuideEmail(e.target.value)}
+              />
+              <Input 
+                placeholder="Phone*" 
+                value={newGuidePhone}
+                onChange={(e) => setNewGuidePhone(e.target.value)}
+              />
+              <Input 
+                placeholder="Password*" 
+                type="password" 
+                value={newGuidePassword}
+                onChange={(e) => setNewGuidePassword(e.target.value)}
+              />
+              <Input 
+                placeholder="Specializations (comma separated)" 
+                value={newGuideSpecializations}
+                onChange={(e) => setNewGuideSpecializations(e.target.value)}
+              />
+              <Select value={newGuideStatus} onValueChange={setNewGuideStatus}>
                 <SelectTrigger>
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
@@ -518,9 +634,13 @@ export const AdminView: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-            <Button className="w-full">
+            <Button 
+              onClick={handleCreateGuide} 
+              className="w-full"
+              disabled={isCreatingGuide}
+            >
               <Plus className="w-4 h-4 mr-2" />
-              Create Guide
+              {isCreatingGuide ? 'Creating...' : 'Create Guide'}
             </Button>
           </CardContent>
         </Card>
