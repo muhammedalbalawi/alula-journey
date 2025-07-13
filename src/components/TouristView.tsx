@@ -191,10 +191,12 @@ export const TouristView: React.FC = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Fetch guide request when user session changes
+  // Fetch guide request when user session changes and set up real-time updates
   useEffect(() => {
     if (userSession?.user?.id) {
       fetchGuideRequest();
+      const cleanup = setupRealtimeUpdates();
+      return cleanup;
     }
   }, [userSession]);
 
@@ -230,6 +232,28 @@ export const TouristView: React.FC = () => {
     } catch (error: any) {
       console.error('Error fetching guide request:', error);
     }
+  };
+
+  const setupRealtimeUpdates = () => {
+    const channel = supabase
+      .channel('tourist-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'guide_requests',
+          filter: `tourist_id=eq.${userSession?.user?.id}`
+        },
+        () => {
+          fetchGuideRequest();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   };
 
   const handleGuideRequest = async () => {

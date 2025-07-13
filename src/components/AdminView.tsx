@@ -153,8 +153,41 @@ export const AdminView: React.FC = () => {
     if (isLoggedIn) {
       fetchGuides();
       fetchGuideRequests();
+      setupRealtimeUpdates();
     }
   }, [isLoggedIn]);
+
+  const setupRealtimeUpdates = () => {
+    const channel = supabase
+      .channel('admin-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'guide_requests'
+        },
+        () => {
+          fetchGuideRequests();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'guides'
+        },
+        () => {
+          fetchGuides();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
 
   const fetchGuides = async () => {
     try {
@@ -406,6 +439,7 @@ export const AdminView: React.FC = () => {
       });
 
       fetchGuideRequests(); // Refresh the list
+      fetchGuides(); // Also refresh guides to update their status
     } catch (error: any) {
       console.error('Error updating request:', error);
       toast({

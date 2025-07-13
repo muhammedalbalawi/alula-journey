@@ -12,7 +12,10 @@ import {
   Star,
   TrendingUp,
   Users,
-  Lock
+  Lock,
+  UserCheck,
+  Phone,
+  Mail
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,6 +30,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { supabase } from '@/integrations/supabase/client';
 
 interface RescheduleRequest {
   id: string;
@@ -41,36 +45,26 @@ interface RescheduleRequest {
   timestamp: string;
 }
 
+interface AssignedTourist {
+  id: string;
+  tourist_id: string;
+  status: string;
+  created_at: string;
+  profiles: {
+    full_name: string;
+    contact_info: string;
+    nationality: string;
+    gender: string;
+  };
+}
+
 export function TourGuideView() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [guideId, setGuideId] = useState('');
   const [password, setPassword] = useState('');
-  const [notifications, setNotifications] = useState<RescheduleRequest[]>([
-    {
-      id: '1',
-      touristName: 'Ahmed Al-Rashid',
-      originalDate: '2024-07-15',
-      originalTime: '09:00',
-      requestedDate: '2024-07-16',
-      requestedTime: '10:00',
-      reason: 'Family emergency - need to reschedule',
-      status: 'pending',
-      location: 'Hegra (الحجر)',
-      timestamp: new Date().toISOString()
-    },
-    {
-      id: '2',
-      touristName: 'Sarah Johnson',
-      originalDate: '2024-07-14',
-      originalTime: '14:00',
-      requestedDate: '2024-07-14',
-      requestedTime: '16:00',
-      reason: 'Flight delay',
-      status: 'pending',
-      location: 'Al-Ula Old Town',
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
-    }
-  ]);
+  const [currentGuideData, setCurrentGuideData] = useState<any>(null);
+  const [assignedTourists, setAssignedTourists] = useState<AssignedTourist[]>([]);
+  const [notifications, setNotifications] = useState<RescheduleRequest[]>([]);
 
   const [selectedRequest, setSelectedRequest] = useState<RescheduleRequest | null>(null);
   const [responseMessage, setResponseMessage] = useState('');
@@ -123,17 +117,91 @@ export function TourGuideView() {
     });
   };
 
-  const handleLogin = () => {
-    if (guideId === 'guide123' && password === 'password') {
+  // Fetch assigned tourists and set up real-time updates
+  useEffect(() => {
+    if (isLoggedIn && currentGuideData) {
+      fetchAssignedTourists();
+      setupRealtimeUpdates();
+    }
+  }, [isLoggedIn, currentGuideData]);
+
+  const fetchAssignedTourists = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('guide_requests')
+        .select(`
+          id,
+          tourist_id,
+          status,
+          created_at,
+          profiles (
+            full_name,
+            contact_info,
+            nationality,
+            gender
+          )
+        `)
+        .eq('assigned_guide_id', currentGuideData?.id)
+        .eq('status', 'approved');
+
+      if (error) throw error;
+      setAssignedTourists(data || []);
+    } catch (error: any) {
+      console.error('Error fetching assigned tourists:', error);
+    }
+  };
+
+  const setupRealtimeUpdates = () => {
+    const channel = supabase
+      .channel('guide-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'guide_requests',
+          filter: `assigned_guide_id=eq.${currentGuideData?.id}`
+        },
+        () => {
+          fetchAssignedTourists();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
+
+  const handleLogin = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('guides')
+        .select('*')
+        .eq('guide_id', guideId)
+        .eq('password', password)
+        .single();
+
+      if (error || !data) {
+        toast({
+          title: 'Login Failed',
+          description: 'Invalid credentials. Please check your Guide ID and password.',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      setCurrentGuideData(data);
       setIsLoggedIn(true);
       toast({
         title: 'Login Successful',
-        description: 'Welcome to your dashboard!'
+        description: `Welcome back, ${data.name}!`
       });
-    } else {
+    } catch (error: any) {
+      console.error('Login error:', error);
       toast({
         title: 'Login Failed',
-        description: 'Invalid credentials. Try guide123/password',
+        description: 'An error occurred during login.',
         variant: 'destructive'
       });
     }
@@ -186,7 +254,7 @@ export function TourGuideView() {
               Sign In
             </Button>
             <p className="text-xs text-center text-muted-foreground">
-              Demo credentials: guide123 / password
+              Use your Guide ID and password from the admin
             </p>
           </CardContent>
         </Card>
@@ -223,8 +291,8 @@ export function TourGuideView() {
                 <Users className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Active Tours</p>
-                <p className="text-xl font-semibold">12</p>
+                <p className="text-sm text-gray-600">Assigned Tourists</p>
+                <p className="text-xl font-semibold">{assignedTourists.length}</p>
               </div>
             </CardContent>
           </Card>
@@ -265,6 +333,87 @@ export function TourGuideView() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Assigned Tourists */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <UserCheck className="w-5 h-5" />
+              <span>Your Assigned Tourists</span>
+              {assignedTourists.length > 0 && (
+                <Badge variant="default">{assignedTourists.length}</Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {assignedTourists.length === 0 ? (
+                <p className="text-center text-gray-500 py-8">No tourists assigned yet</p>
+              ) : (
+                assignedTourists.map((tourist) => (
+                  <div key={tourist.id} className="border rounded-lg p-4 space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-3">
+                          <h3 className="font-semibold">{tourist.profiles?.full_name || 'Tourist'}</h3>
+                          <Badge variant="outline" className="text-green-600 border-green-600">
+                            Active
+                          </Badge>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
+                          {tourist.profiles?.contact_info && (
+                            <div className="flex items-center space-x-1">
+                              <Phone className="w-4 h-4" />
+                              <span>{tourist.profiles.contact_info}</span>
+                            </div>
+                          )}
+                          {tourist.profiles?.nationality && (
+                            <div className="flex items-center space-x-1">
+                              <MapPin className="w-4 h-4" />
+                              <span>{tourist.profiles.nationality}</span>
+                            </div>
+                          )}
+                          {tourist.profiles?.gender && (
+                            <div className="flex items-center space-x-1">
+                              <User className="w-4 h-4" />
+                              <span>{tourist.profiles.gender}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center space-x-1">
+                            <Calendar className="w-4 h-4" />
+                            <span>Assigned: {new Date(tourist.created_at).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex space-x-2 pt-2">
+                      <Button 
+                        size="sm" 
+                        onClick={() => window.open(`tel:${tourist.profiles?.contact_info}`, '_self')}
+                        className="flex items-center space-x-1"
+                        disabled={!tourist.profiles?.contact_info}
+                      >
+                        <Phone className="w-4 h-4" />
+                        <span>Call</span>
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => window.open(`https://wa.me/${tourist.profiles?.contact_info?.replace(/[^0-9]/g, '')}?text=Hello! I'm your assigned tour guide from AlUla Journey. I'm ready to help you explore AlUla!`, '_blank')}
+                        className="flex items-center space-x-1"
+                        disabled={!tourist.profiles?.contact_info}
+                      >
+                        <MessageSquare className="w-4 h-4" />
+                        <span>WhatsApp</span>
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Reschedule Requests */}
         <Card>
