@@ -454,7 +454,7 @@ export type Database = {
             foreignKeyName: "tour_assignments_guide_id_fkey"
             columns: ["guide_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "guides"
             referencedColumns: ["id"]
           },
           {
