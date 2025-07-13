@@ -64,14 +64,6 @@ export const AdminView: React.FC = () => {
       assignedGuide: 'G001'
     },
     {
-      id: 'T002',
-      name: 'Sarah Johnson',
-      email: 'sarah@email.com',
-      phone: '+1234567890',
-      nationality: 'United States',
-      status: 'pending'
-    },
-    {
       id: 'T003',
       name: 'Mohammed Hassan',
       email: 'mohammed@email.com',
@@ -79,14 +71,6 @@ export const AdminView: React.FC = () => {
       nationality: 'Saudi Arabia',
       status: 'assigned',
       assignedGuide: 'G002'
-    },
-    {
-      id: 'T004',
-      name: 'Emily Davis',
-      email: 'emily@email.com',
-      phone: '+447123456789',
-      nationality: 'United Kingdom',
-      status: 'pending'
     }
   ]);
 
@@ -108,24 +92,6 @@ export const AdminView: React.FC = () => {
       rating: 4.9,
       specializations: ['Cultural Tours', 'Photography'],
       status: 'busy'
-    },
-    {
-      id: 'G003',
-      name: 'Omar Abdullah',
-      email: 'omar@guides.sa',
-      phone: '+966558765432',
-      rating: 4.6,
-      specializations: ['Adventure Tours', 'Rock Climbing'],
-      status: 'available'
-    },
-    {
-      id: 'G004',
-      name: 'Nora Al-Mansouri',
-      email: 'nora@guides.sa',
-      phone: '+966557654321',
-      rating: 4.7,
-      specializations: ['History', 'Art & Culture'],
-      status: 'available'
     }
   ]);
 
@@ -523,6 +489,39 @@ export const AdminView: React.FC = () => {
                 </div>
               ))}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Create New Guide */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Plus className="w-5 h-5" />
+              <span>Create New Tour Guide</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input placeholder="Guide Name" />
+              <Input placeholder="Email" type="email" />
+              <Input placeholder="Phone" />
+              <Input placeholder="Password" type="password" />
+              <Input placeholder="Specializations (comma separated)" />
+              <Select defaultValue="available">
+                <SelectTrigger>
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="available">Available</SelectItem>
+                  <SelectItem value="busy">Busy</SelectItem>
+                  <SelectItem value="offline">Offline</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button className="w-full">
+              <Plus className="w-4 h-4 mr-2" />
+              Create Guide
+            </Button>
           </CardContent>
         </Card>
 

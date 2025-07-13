@@ -102,54 +102,14 @@ export const GuideView: React.FC = () => {
 
   const mockTourists = [
     { id: 'T001', name: 'Ahmed Al-Rashid', status: 'Active' },
-    { id: 'T002', name: 'Sarah Johnson', status: 'Active' },
     { id: 'T003', name: 'Mohammed Hassan', status: 'Pending' }
   ].filter(tourist => assignedTouristIds.includes(tourist.id));
 
-  const mockJourneyRequests = [
-    {
-      id: 'R001',
-      fullName: 'Fatima Al-Zahra',
-      contact: '+966581828132',
-      nationality: 'Saudi Arabia',
-      specialNeeds: 'Wheelchair accessible locations preferred',
-      status: 'pending'
-    },
-    {
-      id: 'R002',
-      fullName: 'John Smith',
-      contact: 'john.smith@email.com',
-      nationality: 'United States',
-      specialNeeds: 'Vegetarian meals',
-      status: 'pending'
-    }
-  ];
+  const mockJourneyRequests: any[] = [];
 
-  const mockDriverBookings = [
-    {
-      id: 'DB001',
-      touristName: 'Ahmed Al-Rashid',
-      date: '2024-07-20',
-      time: '09:00',
-      pickupLocation: 'Marriott Hotel AlUla',
-      specialRequest: 'Need child seat for 5-year-old',
-      status: 'pending'
-    },
-    {
-      id: 'DB002',
-      touristName: 'Sarah Johnson',
-      date: '2024-07-21',
-      time: '14:30',
-      pickupLocation: '',
-      specialRequest: 'Airport pickup needed',
-      status: 'pending'
-    }
-  ];
+  const mockDriverBookings: any[] = [];
 
-  const mockRatings = [
-    { tourist: 'Ahmed Al-Rashid', rating: 5, comment: 'Excellent guide, very knowledgeable!' },
-    { tourist: 'Sarah Johnson', rating: 4, comment: 'Great experience, learned a lot about AlUla history.' }
-  ];
+  const mockRatings: any[] = [];
 
   const allLocations = itinerary.map(item => ({
     id: item.id,
@@ -477,6 +437,46 @@ export const GuideView: React.FC = () => {
           <CardContent className="pt-6">
             <h2 className="text-2xl font-bold text-primary mb-2">{t('welcomeGuide')}</h2>
             <p className="text-muted-foreground">{t('guideId')}: {guideId}</p>
+          </CardContent>
+        </Card>
+
+        {/* Profile Section */}
+        <Card className="shadow-desert">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2 rtl:space-x-reverse">
+              <Users className="w-5 h-5" />
+              <span>Profile Information</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Guide Name</label>
+                <p className="text-lg font-semibold">Khalid Al-Otaibi</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Email</label>
+                <p className="text-lg">khalid@guides.sa</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Phone</label>
+                <p className="text-lg">+966551234567</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Rating</label>
+                <div className="flex items-center space-x-2">
+                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  <span className="text-lg font-semibold">4.8</span>
+                </div>
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-sm font-medium text-muted-foreground">Specializations</label>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  <Badge variant="secondary">Heritage Sites</Badge>
+                  <Badge variant="secondary">Desert Adventures</Badge>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
