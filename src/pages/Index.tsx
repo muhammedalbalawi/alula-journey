@@ -52,16 +52,18 @@ const Index = () => {
           
           {/* Fixed Action Buttons */}
           <div className="fixed bottom-6 right-6 z-50 flex flex-col space-y-2">
-            <Link to="/guide">
-              <Button
-                variant="outline"
-                size="sm"
-                className="shadow-float"
-                title="Tour Guide Dashboard"
-              >
-                <Settings className="w-4 h-4" />
-              </Button>
-            </Link>
+            {currentView === 'guide' && (
+              <Link to="/guide">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="shadow-float"
+                  title="Tour Guide Dashboard"
+                >
+                  <Settings className="w-4 h-4" />
+                </Button>
+              </Link>
+            )}
             <Button
               variant={currentView === 'about' ? 'default' : 'outline'}
               size="sm"
