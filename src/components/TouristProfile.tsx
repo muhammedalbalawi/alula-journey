@@ -48,7 +48,32 @@ export function TouristProfile({ userId }: TouristProfileProps) {
         .eq('id', userId)
         .single();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error && error.code === 'PGRST116') {
+        // Profile doesn't exist, create a basic one
+        const { error: createError } = await supabase
+          .from('profiles')
+          .insert({
+            id: userId,
+            user_type: 'tourist'
+          });
+        
+        if (createError) {
+          console.error('Error creating profile:', createError);
+        } else {
+          // Set empty profile data after creation
+          const profile = {
+            full_name: '',
+            gender: '',
+            nationality: '',
+            contact_info: ''
+          };
+          setProfileData(profile);
+          setOriginalData(profile);
+        }
+        return;
+      }
+
+      if (error) throw error;
 
       if (data) {
         const profile = {

@@ -81,6 +81,36 @@ export function GuideRequest({ userId }: GuideRequestProps) {
 
     setSubmitting(true);
     try {
+      // First, ensure the user profile exists
+      const { data: existingProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', userId)
+        .single();
+
+      if (profileError && profileError.code === 'PGRST116') {
+        // Profile doesn't exist, create it
+        const { error: createProfileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: userId,
+            user_type: 'tourist'
+          });
+        
+        if (createProfileError) {
+          console.error('Error creating profile:', createProfileError);
+          toast({
+            title: 'Error',
+            description: 'Failed to create user profile. Please try again.',
+            variant: 'destructive',
+          });
+          return;
+        }
+      } else if (profileError) {
+        throw profileError;
+      }
+
+      // Now submit the guide request
       const { error } = await supabase
         .from('guide_requests')
         .insert({
