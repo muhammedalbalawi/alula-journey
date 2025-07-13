@@ -15,7 +15,9 @@ import {
   Lock,
   UserCheck,
   Phone,
-  Mail
+  Mail,
+  Plus,
+  CalendarIcon
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,6 +32,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 
 interface RescheduleRequest {
@@ -65,10 +70,22 @@ export function TourGuideView() {
   const [currentGuideData, setCurrentGuideData] = useState<any>(null);
   const [assignedTourists, setAssignedTourists] = useState<AssignedTourist[]>([]);
   const [notifications, setNotifications] = useState<RescheduleRequest[]>([]);
+  const [tourActivities, setTourActivities] = useState<any[]>([]);
 
   const [selectedRequest, setSelectedRequest] = useState<RescheduleRequest | null>(null);
   const [responseMessage, setResponseMessage] = useState('');
   const [showResponseDialog, setShowResponseDialog] = useState(false);
+  const [showAddActivity, setShowAddActivity] = useState(false);
+  const [selectedTouristForSchedule, setSelectedTouristForSchedule] = useState<string>('');
+  const [newActivity, setNewActivity] = useState({
+    activity_name: '',
+    location_name: '',
+    scheduled_date: new Date(),
+    scheduled_time: '09:00',
+    description: '',
+    category: 'attraction',
+    duration_minutes: 180
+  });
   const { toast } = useToast();
 
   const pendingCount = notifications.filter(n => n.status === 'pending').length;
@@ -121,6 +138,7 @@ export function TourGuideView() {
   useEffect(() => {
     if (isLoggedIn && currentGuideData) {
       fetchAssignedTourists();
+      fetchTourActivities();
       setupRealtimeUpdates();
     }
   }, [isLoggedIn, currentGuideData]);
@@ -154,6 +172,25 @@ export function TourGuideView() {
     }
   };
 
+  const fetchTourActivities = async () => {
+    try {
+      // Get all tour assignments for this guide to get activity data
+      const assignmentIds = assignedTourists.map(t => t.id);
+      if (assignmentIds.length === 0) return;
+
+      const { data, error } = await supabase
+        .from('tour_activities')
+        .select('*')
+        .in('tour_assignment_id', assignmentIds)
+        .order('scheduled_date', { ascending: true });
+
+      if (error) throw error;
+      setTourActivities(data || []);
+    } catch (error: any) {
+      console.error('Error fetching tour activities:', error);
+    }
+  };
+
   const setupRealtimeUpdates = () => {
     const channel = supabase
       .channel('guide-updates')
@@ -167,6 +204,17 @@ export function TourGuideView() {
         },
         () => {
           fetchAssignedTourists();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tour_activities'
+        },
+        () => {
+          fetchTourActivities();
         }
       )
       .subscribe();
@@ -205,6 +253,67 @@ export function TourGuideView() {
       toast({
         title: 'Login Failed',
         description: 'An error occurred during login.',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const addActivityToSchedule = async () => {
+    if (!selectedTouristForSchedule || !newActivity.activity_name || !newActivity.location_name) {
+      toast({
+        title: 'Missing Information',
+        description: 'Please fill in all required fields.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      // Find the tour assignment for the selected tourist
+      const assignment = assignedTourists.find(t => t.tourist_id === selectedTouristForSchedule);
+      if (!assignment) {
+        throw new Error('Tour assignment not found');
+      }
+
+      const { error } = await supabase
+        .from('tour_activities')
+        .insert({
+          tour_assignment_id: assignment.id,
+          activity_name: newActivity.activity_name,
+          location_name: newActivity.location_name,
+          scheduled_date: newActivity.scheduled_date.toISOString().split('T')[0],
+          scheduled_time: newActivity.scheduled_time,
+          description: newActivity.description,
+          category: newActivity.category,
+          duration_minutes: newActivity.duration_minutes,
+          status: 'planned'
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Activity Added',
+        description: 'The activity has been added to the schedule successfully.'
+      });
+
+      // Reset form
+      setNewActivity({
+        activity_name: '',
+        location_name: '',
+        scheduled_date: new Date(),
+        scheduled_time: '09:00',
+        description: '',
+        category: 'attraction',
+        duration_minutes: 180
+      });
+      setSelectedTouristForSchedule('');
+      setShowAddActivity(false);
+      fetchTourActivities();
+    } catch (error: any) {
+      console.error('Error adding activity:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to add activity to schedule.',
         variant: 'destructive'
       });
     }
@@ -390,7 +499,7 @@ export function TourGuideView() {
                       </div>
                     </div>
                     
-                    <div className="flex space-x-2 pt-2">
+                     <div className="flex space-x-2 pt-2">
                       <Button 
                         size="sm" 
                         onClick={() => window.open(`tel:${tourist.profiles?.contact_info}`, '_self')}
@@ -410,9 +519,89 @@ export function TourGuideView() {
                         <MessageSquare className="w-4 h-4" />
                         <span>WhatsApp</span>
                       </Button>
+                      <Button 
+                        size="sm" 
+                        variant="default"
+                        onClick={() => {
+                          setSelectedTouristForSchedule(tourist.tourist_id);
+                          setShowAddActivity(true);
+                        }}
+                        className="flex items-center space-x-1"
+                      >
+                        <Calendar className="w-4 h-4" />
+                        <span>Add Schedule</span>
+                      </Button>
                     </div>
                   </div>
                 ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Tour Schedule */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Calendar className="w-5 h-5" />
+              <span>Tour Schedule</span>
+              {tourActivities.length > 0 && (
+                <Badge variant="default">{tourActivities.length}</Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {tourActivities.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500 mb-4">No schedule created yet</p>
+                  <Button 
+                    onClick={() => setShowAddActivity(true)}
+                    className="flex items-center space-x-2"
+                    disabled={assignedTourists.length === 0}
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add First Activity</span>
+                  </Button>
+                </div>
+              ) : (
+                tourActivities.map((activity) => {
+                  const tourist = assignedTourists.find(t => t.id === activity.tour_assignment_id);
+                  return (
+                    <div key={activity.id} className="border rounded-lg p-4 space-y-2">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1">
+                          <h3 className="font-semibold">{activity.activity_name}</h3>
+                          <p className="text-sm text-gray-600">{activity.location_name}</p>
+                          <p className="text-sm text-gray-600">
+                            Tourist: {tourist?.profiles?.full_name || 'Unknown'}
+                          </p>
+                        </div>
+                        <Badge variant="outline" className="text-blue-600 border-blue-600">
+                          {activity.status}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center space-x-4 text-sm text-gray-600">
+                        <div className="flex items-center space-x-1">
+                          <Calendar className="w-4 h-4" />
+                          <span>{new Date(activity.scheduled_date).toLocaleDateString()}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Clock className="w-4 h-4" />
+                          <span>{activity.scheduled_time}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <span>{activity.duration_minutes} minutes</span>
+                        </div>
+                      </div>
+                      {activity.description && (
+                        <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                          {activity.description}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })
               )}
             </div>
           </CardContent>
@@ -542,6 +731,99 @@ export function TourGuideView() {
                   className="flex-1"
                 >
                   Decline
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Activity Dialog */}
+        <Dialog open={showAddActivity} onOpenChange={setShowAddActivity}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Add New Activity</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 pt-4">
+              <div className="space-y-2">
+                <Label>Tourist</Label>
+                <select 
+                  value={selectedTouristForSchedule}
+                  onChange={(e) => setSelectedTouristForSchedule(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select Tourist</option>
+                  {assignedTourists.map((tourist) => (
+                    <option key={tourist.tourist_id} value={tourist.tourist_id}>
+                      {tourist.profiles?.full_name || 'Tourist'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <Input
+                placeholder="Activity Name"
+                value={newActivity.activity_name}
+                onChange={(e) => setNewActivity({...newActivity, activity_name: e.target.value})}
+              />
+              <Input
+                placeholder="Location"
+                value={newActivity.location_name}
+                onChange={(e) => setNewActivity({...newActivity, location_name: e.target.value})}
+              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-start text-left font-normal">
+                    <Calendar className="mr-2 h-4 w-4" />
+                    {newActivity.scheduled_date ? format(newActivity.scheduled_date, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={newActivity.scheduled_date}
+                    onSelect={(date) => date && setNewActivity({...newActivity, scheduled_date: date})}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+              <div className="grid grid-cols-2 gap-2">
+                <Input
+                  type="time"
+                  value={newActivity.scheduled_time}
+                  onChange={(e) => setNewActivity({...newActivity, scheduled_time: e.target.value})}
+                />
+                <Input
+                  type="number"
+                  placeholder="Duration (minutes)"
+                  value={newActivity.duration_minutes}
+                  onChange={(e) => setNewActivity({...newActivity, duration_minutes: parseInt(e.target.value) || 180})}
+                />
+              </div>
+              <select 
+                value={newActivity.category}
+                onChange={(e) => setNewActivity({...newActivity, category: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="heritage">Heritage Sites</option>
+                <option value="attraction">Attraction Places</option>
+                <option value="adventure">Adventure Activities</option>
+              </select>
+              <Textarea
+                placeholder="Description (optional)"
+                value={newActivity.description}
+                onChange={(e) => setNewActivity({...newActivity, description: e.target.value})}
+                className="min-h-[80px]"
+              />
+              <div className="flex space-x-2">
+                <Button onClick={addActivityToSchedule} className="flex-1">
+                  Add Activity
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowAddActivity(false)}
+                  className="flex-1"
+                >
+                  Cancel
                 </Button>
               </div>
             </div>

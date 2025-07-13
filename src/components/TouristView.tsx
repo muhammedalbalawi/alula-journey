@@ -71,72 +71,27 @@ export const TouristView: React.FC = () => {
   const [assignedGuide, setAssignedGuide] = useState<any>(null);
   const [tourAssignment, setTourAssignment] = useState<any>(null);
   const [guideRequest, setGuideRequest] = useState<any>(null);
+  const [tourActivities, setTourActivities] = useState<any[]>([]);
+
+  // Dynamic tour activities from database
+  const allLocations = tourActivities.map(activity => ({
+    id: activity.id,
+    name: activity.activity_name,
+    location: activity.location_name,
+    time: activity.scheduled_time,
+    date: activity.scheduled_date,
+    description: activity.description || activity.activity_name,
+    notes: activity.notes || 'Contact your guide for more information.',
+    coordinates: { lat: activity.latitude || 26.6084, lng: activity.longitude || 37.8456 },
+    category: activity.category as 'heritage' | 'attraction' | 'adventure'
+  }));
 
   // Categorized destinations
   const destinations = {
-    heritage: [
-      {
-        id: 'h1',
-        name: 'Hegra Archaeological Site',
-        location: 'Hegra',
-        time: '08:00 - 12:00',
-        date: '2024-07-16',
-        description: 'Explore the ancient Nabatean tombs and archaeological wonders',
-        notes: 'Bring comfortable walking shoes. Photography is allowed in designated areas only.',
-        coordinates: { lat: 26.7853, lng: 37.9542 }
-      },
-      {
-        id: 'h2',
-        name: 'Dadan Archaeological Site',
-        location: 'Dadan',
-        time: '09:00 - 11:00',
-        date: '2024-07-17',
-        description: 'Ancient capital of the Dadanite and Lihyanite kingdoms',
-        notes: 'Early morning visit recommended for better lighting.',
-        coordinates: { lat: 26.6469, lng: 37.9278 }
-      }
-    ],
-    attraction: [
-      {
-        id: 'a1',
-        name: 'Elephant Rock',
-        location: 'Jabal AlFil',
-        time: '16:00 - 19:00',
-        date: '2024-07-15',
-        description: 'Witness the spectacular sunset at the iconic elephant-shaped rock formation',
-        notes: 'Best sunset viewing from the viewing platform. Bring a camera!',
-        coordinates: { lat: 26.5814, lng: 37.6956 }
-      },
-      {
-        id: 'a2',
-        name: 'AlUla Old Town',
-        location: 'Historical District',
-        time: '09:00 - 13:00',
-        date: '2024-07-17',
-        description: 'Walk through the historic mudbrick buildings and traditional architecture',
-        notes: 'Traditional coffee will be served during the visit.',
-        coordinates: { lat: 26.6085, lng: 37.9218 }
-      }
-    ],
-    adventure: [
-      {
-        id: 'ad1',
-        name: 'Desert Safari',
-        location: 'Sharaan Nature Reserve',
-        time: '14:00 - 18:00',
-        date: '2024-07-18',
-        description: 'Thrilling desert adventure with wildlife spotting',
-        notes: 'All safety equipment provided. Minimum age requirement: 12 years.',
-        coordinates: { lat: 26.5289, lng: 37.8742 }
-      }
-    ]
+    heritage: allLocations.filter(d => d.category === 'heritage'),
+    attraction: allLocations.filter(d => d.category === 'attraction'),
+    adventure: allLocations.filter(d => d.category === 'adventure')
   };
-
-  const allLocations = [
-    ...destinations.heritage.map(d => ({ ...d, category: 'heritage' as const })),
-    ...destinations.attraction.map(d => ({ ...d, category: 'attraction' as const })),
-    ...destinations.adventure.map(d => ({ ...d, category: 'adventure' as const }))
-  ];
 
   const handleOTPLoginSuccess = (userId: string, session: any) => {
     setTouristId(userId);
@@ -195,6 +150,7 @@ export const TouristView: React.FC = () => {
   useEffect(() => {
     if (userSession?.user?.id) {
       fetchGuideRequest();
+      fetchTourActivities();
       const cleanup = setupRealtimeUpdates();
       return cleanup;
     }
@@ -225,12 +181,61 @@ export const TouristView: React.FC = () => {
         const request = data[0];
         setGuideRequest(request);
         setAssignedGuide(request.guides);
+        
+        // Also fetch tour assignment for activities
+        await fetchTourAssignment();
       } else {
         setGuideRequest(null);
         setAssignedGuide(null);
+        setTourActivities([]);
       }
     } catch (error: any) {
       console.error('Error fetching guide request:', error);
+    }
+  };
+
+  const fetchTourAssignment = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('tour_assignments')
+        .select('*')
+        .eq('tourist_id', userSession?.user?.id)
+        .eq('status', 'active')
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      setTourAssignment(data);
+      
+      // Fetch activities after getting assignment
+      if (data?.id) {
+        fetchTourActivitiesForAssignment(data.id);
+      }
+    } catch (error: any) {
+      console.error('Error fetching tour assignment:', error);
+    }
+  };
+
+  const fetchTourActivities = async () => {
+    try {
+      if (!tourAssignment?.id) return;
+      await fetchTourActivitiesForAssignment(tourAssignment.id);
+    } catch (error: any) {
+      console.error('Error fetching tour activities:', error);
+    }
+  };
+
+  const fetchTourActivitiesForAssignment = async (assignmentId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('tour_activities')
+        .select('*')
+        .eq('tour_assignment_id', assignmentId)
+        .order('scheduled_date', { ascending: true });
+
+      if (error) throw error;
+      setTourActivities(data || []);
+    } catch (error: any) {
+      console.error('Error fetching tour activities for assignment:', error);
     }
   };
 
@@ -247,6 +252,17 @@ export const TouristView: React.FC = () => {
         },
         () => {
           fetchGuideRequest();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tour_activities'
+        },
+        () => {
+          fetchTourActivities();
         }
       )
       .subscribe();
@@ -484,7 +500,7 @@ export const TouristView: React.FC = () => {
 
   return (
     <div className="min-h-screen p-4 pt-20">
-      <div className="container mx-auto max-w-6xl space-y-6">
+        <div className="container mx-auto max-w-6xl space-y-6">
         {/* Welcome Header */}
         <Card className="bg-gradient-to-r from-primary/10 via-accent/10 to-heritage-amber/10 border border-primary/20 glass-effect animate-fade-in">
           <CardContent className="pt-6">
@@ -498,6 +514,11 @@ export const TouristView: React.FC = () => {
                     {userSession?.user?.phone || userSession?.user?.email || 'OTP Login'}
                   </span>
                 </p>
+                {tourActivities.length === 0 && assignedGuide && (
+                  <p className="text-sm text-amber-600 mt-2">
+                    Your guide hasn't created your schedule yet. They will add activities soon!
+                  </p>
+                )}
               </div>
               <Button variant="outline" onClick={handleLogout} size="sm">
                 Logout
