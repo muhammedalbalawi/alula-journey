@@ -35,6 +35,7 @@ import { TouristExperiences } from '@/components/TouristExperiences';
 import { GoogleMaps } from '@/components/GoogleMaps';
 import { PhotoCaptureModal } from '@/components/PhotoCaptureModal';
 import { TouristPasswordLogin } from '@/components/TouristPasswordLogin';
+import { TouristAlbum } from '@/components/TouristAlbum';
 import { supabase } from '@/integrations/supabase/client';
 
 export const TouristView: React.FC = () => {
@@ -438,6 +439,11 @@ export const TouristView: React.FC = () => {
                 </Card>
               );
             })}
+
+            {/* Photo Album Section */}
+            <div className="animate-slide-up" style={{ animationDelay: '0.5s' }}>
+              <TouristAlbum />
+            </div>
           </div>
 
           {/* Sidebar */}
