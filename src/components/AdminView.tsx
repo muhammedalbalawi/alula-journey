@@ -105,28 +105,7 @@ export const AdminView: React.FC = () => {
   const [guides, setGuides] = useState<Guide[]>([]);
   const [guideRequests, setGuideRequests] = useState<GuideRequestAdmin[]>([]);
 
-  const [assignments, setAssignments] = useState<Assignment[]>([
-    {
-      id: 'A001',
-      touristId: 'T001',
-      guideId: 'G001',
-      tourName: 'Heritage Discovery Tour',
-      startDate: '2024-07-15',
-      endDate: '2024-07-17',
-      status: 'active',
-      createdAt: '2024-07-10T10:00:00Z'
-    },
-    {
-      id: 'A002',
-      touristId: 'T003',
-      guideId: 'G002',
-      tourName: 'Cultural Photography Tour',
-      startDate: '2024-07-20',
-      endDate: '2024-07-22',
-      status: 'pending',
-      createdAt: '2024-07-12T14:30:00Z'
-    }
-  ]);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
 
   const [selectedTourist, setSelectedTourist] = useState('');
   const [selectedGuide, setSelectedGuide] = useState('');
@@ -148,14 +127,55 @@ export const AdminView: React.FC = () => {
   const [editingGuide, setEditingGuide] = useState<string | null>(null);
   const [editGuideData, setEditGuideData] = useState<any>(null);
 
-  // Fetch guides from database
+  // Fetch data from database
   useEffect(() => {
     if (isLoggedIn) {
       fetchGuides();
       fetchGuideRequests();
+      fetchAssignments();
       setupRealtimeUpdates();
     }
   }, [isLoggedIn]);
+
+  const fetchAssignments = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('tour_assignments')
+        .select(`
+          id,
+          tourist_id,
+          guide_id,
+          tour_name,
+          start_date,
+          end_date,
+          status,
+          created_at
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      
+      const formattedAssignments: Assignment[] = (data || []).map(item => ({
+        id: item.id,
+        touristId: item.tourist_id,
+        guideId: item.guide_id,
+        tourName: item.tour_name,
+        startDate: item.start_date,
+        endDate: item.end_date,
+        status: item.status as 'pending' | 'active' | 'completed',
+        createdAt: item.created_at
+      }));
+      
+      setAssignments(formattedAssignments);
+    } catch (error: any) {
+      console.error('Error fetching assignments:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch assignments',
+        variant: 'destructive'
+      });
+    }
+  };
 
   const setupRealtimeUpdates = () => {
     const channel = supabase
@@ -180,6 +200,17 @@ export const AdminView: React.FC = () => {
         },
         () => {
           fetchGuides();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tour_assignments'
+        },
+        () => {
+          fetchAssignments();
         }
       )
       .subscribe();
@@ -262,7 +293,7 @@ export const AdminView: React.FC = () => {
     }
   };
 
-  const handleAssignGuide = () => {
+  const handleAssignGuide = async () => {
     if (!selectedTourist || !selectedGuide || !tourName || !startDate || !endDate) {
       toast({
         title: 'Error',
@@ -272,30 +303,56 @@ export const AdminView: React.FC = () => {
       return;
     }
 
-    const newAssignment: Assignment = {
-      id: `A${Date.now()}`,
-      touristId: selectedTourist,
-      guideId: selectedGuide,
-      tourName,
-      startDate,
-      endDate,
-      status: 'pending',
-      createdAt: new Date().toISOString()
-    };
+    try {
+      // Create tour assignment in database
+      const { data, error } = await supabase
+        .from('tour_assignments')
+        .insert([{
+          tourist_id: selectedTourist,
+          guide_id: selectedGuide,
+          tour_name: tourName,
+          start_date: startDate,
+          end_date: endDate,
+          status: 'active'
+        }])
+        .select()
+        .single();
 
-    setAssignments(prev => [...prev, newAssignment]);
+      if (error) throw error;
 
-    // Reset form
-    setSelectedTourist('');
-    setSelectedGuide('');
-    setTourName('');
-    setStartDate('');
-    setEndDate('');
+      // Add to local state for immediate UI update
+      const newAssignment: Assignment = {
+        id: data.id,
+        touristId: selectedTourist,
+        guideId: selectedGuide,
+        tourName,
+        startDate,
+        endDate,
+        status: 'active',
+        createdAt: new Date().toISOString()
+      };
 
-    toast({
-      title: 'Assignment Created',
-      description: 'Tour guide has been assigned successfully!'
-    });
+      setAssignments(prev => [...prev, newAssignment]);
+
+      // Reset form
+      setSelectedTourist('');
+      setSelectedGuide('');
+      setTourName('');
+      setStartDate('');
+      setEndDate('');
+
+      toast({
+        title: 'Assignment Created',
+        description: 'Tour guide has been assigned successfully!'
+      });
+    } catch (error: any) {
+      console.error('Error creating assignment:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to create assignment',
+        variant: 'destructive'
+      });
+    }
   };
 
   const removeAssignment = (assignmentId: string) => {

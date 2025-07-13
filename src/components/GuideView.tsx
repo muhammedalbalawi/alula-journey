@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -93,21 +93,71 @@ export const GuideView: React.FC = () => {
     }
   ]);
 
-  // Mock assignments - in real app this would come from database
-  const mockAssignments = [
-    { touristId: 'T001', guideId: 'guide123', status: 'active' },
-    { touristId: 'T003', guideId: 'guide123', status: 'active' }
-  ];
+  const [assignedTourists, setAssignedTourists] = useState<any[]>([]);
 
-  // Filter tourists to show only those assigned to current guide
-  const assignedTouristIds = mockAssignments
-    .filter(assignment => assignment.guideId === guideId && assignment.status === 'active')
-    .map(assignment => assignment.touristId);
+  // Fetch assigned tourists when logged in
+  useEffect(() => {
+    if (isLoggedIn && currentGuide) {
+      fetchAssignedTourists();
+      setupRealtimeUpdates();
+    }
+  }, [isLoggedIn, currentGuide]);
 
-  const mockTourists = [
-    { id: 'T001', name: 'Ahmed Al-Rashid', status: 'Active' },
-    { id: 'T003', name: 'Mohammed Hassan', status: 'Pending' }
-  ].filter(tourist => assignedTouristIds.includes(tourist.id));
+  const fetchAssignedTourists = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('tour_assignments')
+        .select(`
+          id,
+          tourist_id,
+          status,
+          tour_name,
+          start_date,
+          end_date,
+          profiles!tourist_id (
+            full_name,
+            contact_info,
+            nationality,
+            gender
+          )
+        `)
+        .eq('guide_id', currentGuide?.id)
+        .in('status', ['pending', 'active']);
+
+      if (error) throw error;
+      setAssignedTourists(data || []);
+    } catch (error: any) {
+      console.error('Error fetching assigned tourists:', error);
+    }
+  };
+
+  const setupRealtimeUpdates = () => {
+    const channel = supabase
+      .channel('guide-assignments')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tour_assignments',
+          filter: `guide_id=eq.${currentGuide?.id}`
+        },
+        () => {
+          fetchAssignedTourists();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
+
+  const mockTourists = assignedTourists.map(assignment => ({
+    id: assignment.tourist_id,
+    name: assignment.profiles?.full_name || 'Tourist',
+    status: assignment.status === 'active' ? 'Active' : 'Pending'
+  }));
 
   const mockJourneyRequests: any[] = [];
 

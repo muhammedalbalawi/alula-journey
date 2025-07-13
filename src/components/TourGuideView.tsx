@@ -128,24 +128,27 @@ export function TourGuideView() {
   const fetchAssignedTourists = async () => {
     try {
       const { data, error } = await supabase
-        .from('guide_requests')
+        .from('tour_assignments')
         .select(`
           id,
           tourist_id,
           status,
           created_at,
-          profiles (
+          tour_name,
+          start_date,
+          end_date,
+          profiles!tourist_id (
             full_name,
             contact_info,
             nationality,
             gender
           )
         `)
-        .eq('assigned_guide_id', currentGuideData?.id)
-        .eq('status', 'approved');
+        .eq('guide_id', currentGuideData?.id)
+        .in('status', ['pending', 'active']);
 
       if (error) throw error;
-      setAssignedTourists(data || []);
+      setAssignedTourists((data || []) as AssignedTourist[]);
     } catch (error: any) {
       console.error('Error fetching assigned tourists:', error);
     }
@@ -159,8 +162,8 @@ export function TourGuideView() {
         {
           event: '*',
           schema: 'public',
-          table: 'guide_requests',
-          filter: `assigned_guide_id=eq.${currentGuideData?.id}`
+          table: 'tour_assignments',
+          filter: `guide_id=eq.${currentGuideData?.id}`
         },
         () => {
           fetchAssignedTourists();
