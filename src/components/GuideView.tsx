@@ -89,11 +89,22 @@ export const GuideView: React.FC = () => {
     }
   ]);
 
+  // Mock assignments - in real app this would come from database
+  const mockAssignments = [
+    { touristId: 'T001', guideId: 'guide123', status: 'active' },
+    { touristId: 'T003', guideId: 'guide123', status: 'active' }
+  ];
+
+  // Filter tourists to show only those assigned to current guide
+  const assignedTouristIds = mockAssignments
+    .filter(assignment => assignment.guideId === guideId && assignment.status === 'active')
+    .map(assignment => assignment.touristId);
+
   const mockTourists = [
     { id: 'T001', name: 'Ahmed Al-Rashid', status: 'Active' },
     { id: 'T002', name: 'Sarah Johnson', status: 'Active' },
     { id: 'T003', name: 'Mohammed Hassan', status: 'Pending' }
-  ];
+  ].filter(tourist => assignedTouristIds.includes(tourist.id));
 
   const mockJourneyRequests = [
     {

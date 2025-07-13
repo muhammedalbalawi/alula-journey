@@ -5,7 +5,7 @@ import { TouristView } from '@/components/TouristView';
 import { GuideView } from '@/components/GuideView';
 import { AboutSection } from '@/components/AboutSection';
 import { Button } from '@/components/ui/button';
-import { Info, Settings } from 'lucide-react';
+import { Info, Settings, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import alulaBackground from '@/assets/alula-background.jpg';
 
@@ -52,6 +52,16 @@ const Index = () => {
           
           {/* Fixed Action Buttons */}
           <div className="fixed bottom-6 right-6 z-50 flex flex-col space-y-2">
+            <Link to="/admin">
+              <Button
+                variant="outline"
+                size="sm"
+                className="shadow-float"
+                title="Admin Dashboard"
+              >
+                <Shield className="w-4 h-4" />
+              </Button>
+            </Link>
             {currentView === 'guide' && (
               <Link to="/guide">
                 <Button
