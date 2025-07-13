@@ -12,7 +12,10 @@ import {
   Plus,
   Trash2,
   CheckCircle,
-  Clock
+  Clock,
+  Edit,
+  Save,
+  X
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,6 +32,7 @@ interface Tourist {
 
 interface Guide {
   id: string;
+  guide_id?: string;
   name: string;
   email: string;
   phone: string;
@@ -110,10 +114,15 @@ export const AdminView: React.FC = () => {
   const [newGuideName, setNewGuideName] = useState('');
   const [newGuideEmail, setNewGuideEmail] = useState('');
   const [newGuidePhone, setNewGuidePhone] = useState('');
+  const [newGuideId, setNewGuideId] = useState('');
   const [newGuidePassword, setNewGuidePassword] = useState('');
   const [newGuideSpecializations, setNewGuideSpecializations] = useState('');
   const [newGuideStatus, setNewGuideStatus] = useState('available');
   const [isCreatingGuide, setIsCreatingGuide] = useState(false);
+
+  // Edit guide states
+  const [editingGuide, setEditingGuide] = useState<string | null>(null);
+  const [editGuideData, setEditGuideData] = useState<any>(null);
 
   // Fetch guides from database
   useEffect(() => {
@@ -134,6 +143,7 @@ export const AdminView: React.FC = () => {
       if (data) {
         const formattedGuides = data.map(guide => ({
           id: guide.id,
+          guide_id: guide.guide_id,
           name: guide.name,
           email: guide.email,
           phone: guide.phone,
@@ -214,7 +224,7 @@ export const AdminView: React.FC = () => {
   };
 
   const handleCreateGuide = async () => {
-    if (!newGuideName || !newGuideEmail || !newGuidePhone || !newGuidePassword) {
+    if (!newGuideName || !newGuideEmail || !newGuidePhone || !newGuideId || !newGuidePassword) {
       toast({
         title: 'Error',
         description: 'Please fill in all required fields',
@@ -226,9 +236,6 @@ export const AdminView: React.FC = () => {
     setIsCreatingGuide(true);
 
     try {
-      // Generate guide ID from name (you can customize this logic)
-      const guideId = newGuideName.toLowerCase().replace(/\s+/g, '') + Date.now().toString().slice(-4);
-      
       const specializations = newGuideSpecializations 
         ? newGuideSpecializations.split(',').map(s => s.trim()).filter(s => s)
         : [];
@@ -237,7 +244,7 @@ export const AdminView: React.FC = () => {
         .from('guides')
         .insert([
           {
-            guide_id: guideId,
+            guide_id: newGuideId,
             password: newGuidePassword,
             name: newGuideName,
             email: newGuideEmail,
@@ -252,13 +259,14 @@ export const AdminView: React.FC = () => {
 
       toast({
         title: 'Success',
-        description: `Guide created successfully! Guide ID: ${guideId}`,
+        description: `Guide created successfully! Guide ID: ${newGuideId}`,
       });
 
       // Reset form
       setNewGuideName('');
       setNewGuideEmail('');
       setNewGuidePhone('');
+      setNewGuideId('');
       setNewGuidePassword('');
       setNewGuideSpecializations('');
       setNewGuideStatus('available');
@@ -276,6 +284,52 @@ export const AdminView: React.FC = () => {
     } finally {
       setIsCreatingGuide(false);
     }
+  };
+
+  const handleEditGuide = (guide: Guide) => {
+    setEditingGuide(guide.id);
+    setEditGuideData({ ...guide });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editGuideData) return;
+
+    try {
+      const { error } = await supabase
+        .from('guides')
+        .update({
+          name: editGuideData.name,
+          email: editGuideData.email,
+          phone: editGuideData.phone,
+          specializations: editGuideData.specializations,
+          status: editGuideData.status
+        })
+        .eq('id', editGuideData.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'Guide updated successfully!'
+      });
+
+      setEditingGuide(null);
+      setEditGuideData(null);
+      fetchGuides();
+
+    } catch (error: any) {
+      console.error('Error updating guide:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update guide',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingGuide(null);
+    setEditGuideData(null);
   };
 
   const updateAssignmentStatus = (assignmentId: string, status: 'pending' | 'active' | 'completed') => {
@@ -602,6 +656,12 @@ export const AdminView: React.FC = () => {
                 onChange={(e) => setNewGuideName(e.target.value)}
               />
               <Input 
+                placeholder="Guide ID*" 
+                value={newGuideId}
+                onChange={(e) => setNewGuideId(e.target.value)}
+                className="font-mono"
+              />
+              <Input 
                 placeholder="Email*" 
                 type="email" 
                 value={newGuideEmail}
@@ -618,11 +678,6 @@ export const AdminView: React.FC = () => {
                 value={newGuidePassword}
                 onChange={(e) => setNewGuidePassword(e.target.value)}
               />
-              <Input 
-                placeholder="Specializations (comma separated)" 
-                value={newGuideSpecializations}
-                onChange={(e) => setNewGuideSpecializations(e.target.value)}
-              />
               <Select value={newGuideStatus} onValueChange={setNewGuideStatus}>
                 <SelectTrigger>
                   <SelectValue placeholder="Status" />
@@ -633,6 +688,13 @@ export const AdminView: React.FC = () => {
                   <SelectItem value="offline">Offline</SelectItem>
                 </SelectContent>
               </Select>
+              <div className="md:col-span-2">
+                <Input 
+                  placeholder="Specializations (comma separated)" 
+                  value={newGuideSpecializations}
+                  onChange={(e) => setNewGuideSpecializations(e.target.value)}
+                />
+              </div>
             </div>
             <Button 
               onClick={handleCreateGuide} 
@@ -654,27 +716,95 @@ export const AdminView: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {guides.map((guide) => (
                 <div key={guide.id} className="border rounded-lg p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h4 className="font-semibold">{guide.name}</h4>
-                      <p className="text-sm text-muted-foreground">{guide.email}</p>
-                      <p className="text-sm text-muted-foreground">{guide.phone}</p>
-                      <div className="flex items-center space-x-1 mt-1">
-                        <span className="text-sm">⭐ {guide.rating}</span>
+                  {editingGuide === guide.id ? (
+                    // Edit mode
+                    <div className="space-y-3">
+                      <Input
+                        value={editGuideData?.name || ''}
+                        onChange={(e) => setEditGuideData({...editGuideData, name: e.target.value})}
+                        placeholder="Guide Name"
+                      />
+                      <Input
+                        value={editGuideData?.email || ''}
+                        onChange={(e) => setEditGuideData({...editGuideData, email: e.target.value})}
+                        placeholder="Email"
+                        type="email"
+                      />
+                      <Input
+                        value={editGuideData?.phone || ''}
+                        onChange={(e) => setEditGuideData({...editGuideData, phone: e.target.value})}
+                        placeholder="Phone"
+                      />
+                      <Select 
+                        value={editGuideData?.status || 'available'} 
+                        onValueChange={(value) => setEditGuideData({...editGuideData, status: value})}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="available">Available</SelectItem>
+                          <SelectItem value="busy">Busy</SelectItem>
+                          <SelectItem value="offline">Offline</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        value={(editGuideData?.specializations || []).join(', ')}
+                        onChange={(e) => setEditGuideData({
+                          ...editGuideData, 
+                          specializations: e.target.value.split(',').map(s => s.trim()).filter(s => s)
+                        })}
+                        placeholder="Specializations (comma separated)"
+                      />
+                      <div className="flex space-x-2">
+                        <Button size="sm" onClick={handleSaveEdit}>
+                          <Save className="w-3 h-3 mr-1" />
+                          Save
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={handleCancelEdit}>
+                          <X className="w-3 h-3 mr-1" />
+                          Cancel
+                        </Button>
                       </div>
                     </div>
-                    {getStatusBadge(guide.status)}
-                  </div>
-                  <div className="mt-2">
-                    <p className="text-xs text-muted-foreground">Specializations:</p>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {guide.specializations.map((spec, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          {spec}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
+                  ) : (
+                    // View mode
+                    <>
+                       <div className="flex items-start justify-between mb-2">
+                         <div>
+                           <h4 className="font-semibold">{guide.name}</h4>
+                           {guide.guide_id && (
+                             <p className="text-sm text-blue-600 font-mono">ID: {guide.guide_id}</p>
+                           )}
+                           <p className="text-sm text-muted-foreground">{guide.email}</p>
+                           <p className="text-sm text-muted-foreground">{guide.phone}</p>
+                           <div className="flex items-center space-x-1 mt-1">
+                             <span className="text-sm">⭐ {guide.rating}</span>
+                           </div>
+                         </div>
+                        <div className="flex flex-col items-end space-y-2">
+                          {getStatusBadge(guide.status)}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEditGuide(guide)}
+                          >
+                            <Edit className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="mt-2">
+                        <p className="text-xs text-muted-foreground">Specializations:</p>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {guide.specializations.map((spec, index) => (
+                            <Badge key={index} variant="outline" className="text-xs">
+                              {spec}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               ))}
             </div>
