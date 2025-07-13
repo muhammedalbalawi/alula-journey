@@ -26,7 +26,11 @@ import {
   Users,
   ChevronDown,
   ChevronUp,
-  RotateCcw
+  RotateCcw,
+  UserCheck,
+  Phone,
+  Mail,
+  UserX
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
@@ -62,6 +66,8 @@ export const TouristView: React.FC = () => {
     nationality: '',
     specialNeeds: ''
   });
+  const [assignedGuide, setAssignedGuide] = useState<any>(null);
+  const [tourAssignment, setTourAssignment] = useState<any>(null);
 
   // Categorized destinations
   const destinations = {
@@ -153,6 +159,38 @@ export const TouristView: React.FC = () => {
       console.error('Error logging out:', error);
     }
   };
+
+  // Fetch assigned tour guide
+  useEffect(() => {
+    const fetchAssignedGuide = async () => {
+      if (!touristId) return;
+
+      try {
+        const { data: assignments, error: assignmentError } = await supabase
+          .from('tour_assignments')
+          .select('*, profiles!tour_assignments_guide_id_fkey(*)')
+          .eq('tourist_id', touristId)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (assignmentError) {
+          console.error('Error fetching tour assignment:', assignmentError);
+          return;
+        }
+
+        if (assignments && assignments.length > 0) {
+          setTourAssignment(assignments[0]);
+          setAssignedGuide(assignments[0].profiles);
+        }
+      } catch (error) {
+        console.error('Error fetching assigned guide:', error);
+      }
+    };
+
+    if (isLoggedIn && touristId) {
+      fetchAssignedGuide();
+    }
+  }, [isLoggedIn, touristId]);
 
   // Check for existing session on component mount
   useEffect(() => {
@@ -360,6 +398,102 @@ export const TouristView: React.FC = () => {
                 Logout
               </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Tour Guide Assignment Section */}
+        <Card className="glass-card hover:shadow-float transition-all duration-300 animate-fade-in">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2 rtl:space-x-reverse">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                {assignedGuide ? (
+                  <UserCheck className="w-5 h-5 text-primary" />
+                ) : (
+                  <UserX className="w-5 h-5 text-muted-foreground" />
+                )}
+              </div>
+              <span className="bg-gradient-to-r from-primary to-heritage-amber bg-clip-text text-transparent">
+                {assignedGuide ? 'Your Assigned Tour Guide' : 'Tour Guide Status'}
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {assignedGuide ? (
+              <div className="space-y-4">
+                <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-lg border border-green-200 dark:border-green-800">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-3 flex-1">
+                      <div>
+                        <h3 className="text-lg font-semibold text-foreground mb-1">
+                          {assignedGuide.full_name || 'Professional Guide'}
+                        </h3>
+                        <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700">
+                          {tourAssignment?.status || 'Active'}
+                        </Badge>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {assignedGuide.contact_info && (
+                          <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                            <Phone className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-sm text-foreground">{assignedGuide.contact_info}</span>
+                          </div>
+                        )}
+                        
+                        <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                          <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                          <span className="text-sm text-foreground">4.8/5.0 Rating</span>
+                        </div>
+                      </div>
+
+                      {tourAssignment?.tour_name && (
+                        <div className="pt-2 border-t border-border/50">
+                          <p className="text-sm text-muted-foreground">
+                            <span className="font-medium">Tour Package:</span> {tourAssignment.tour_name}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex flex-wrap gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => window.open(`tel:${assignedGuide.contact_info}`, '_self')}
+                    className="flex items-center space-x-1 rtl:space-x-reverse glass-effect hover:shadow-card"
+                  >
+                    <Phone className="w-3 h-3" />
+                    <span>Call Guide</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={openWhatsApp}
+                    className="flex items-center space-x-1 rtl:space-x-reverse glass-effect hover:shadow-card"
+                  >
+                    <MessageCircle className="w-3 h-3" />
+                    <span>WhatsApp</span>
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="p-4 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                  <UserX className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                  <h3 className="text-lg font-semibold text-foreground mb-2">
+                    No Tour Guide Assigned Yet
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Your tour guide application is being processed. You will be notified once a professional guide is assigned to your tour.
+                  </p>
+                  <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-700">
+                    Pending Assignment
+                  </Badge>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
