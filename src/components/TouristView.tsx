@@ -40,6 +40,8 @@ import { GoogleMaps } from '@/components/GoogleMaps';
 import { PhotoCaptureModal } from '@/components/PhotoCaptureModal';
 import { TouristPasswordLogin } from '@/components/TouristPasswordLogin';
 import { TouristAlbum } from '@/components/TouristAlbum';
+import { TouristProfile } from '@/components/TouristProfile';
+import { GuideRequest } from '@/components/GuideRequest';
 import { supabase } from '@/integrations/supabase/client';
 
 export const TouristView: React.FC = () => {
@@ -496,6 +498,12 @@ export const TouristView: React.FC = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Tourist Profile and Guide Request Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-slide-up">
+          <TouristProfile userId={userSession?.user?.id} />
+          <GuideRequest userId={userSession?.user?.id} />
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}

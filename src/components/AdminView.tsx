@@ -15,7 +15,9 @@ import {
   Clock,
   Edit,
   Save,
-  X
+  X,
+  MessageSquare,
+  UserPlus
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -52,6 +54,27 @@ interface Assignment {
   createdAt: string;
 }
 
+interface GuideRequestAdmin {
+  id: string;
+  tourist_id: string;
+  request_message: string;
+  status: 'pending' | 'approved' | 'rejected';
+  assigned_guide_id?: string;
+  admin_response?: string;
+  created_at: string;
+  profiles?: {
+    full_name: string;
+    contact_info: string;
+    nationality: string;
+    gender: string;
+  };
+  guides?: {
+    name: string;
+    email: string;
+    phone: string;
+  };
+}
+
 export const AdminView: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [adminId, setAdminId] = useState('');
@@ -80,6 +103,7 @@ export const AdminView: React.FC = () => {
   ]);
 
   const [guides, setGuides] = useState<Guide[]>([]);
+  const [guideRequests, setGuideRequests] = useState<GuideRequestAdmin[]>([]);
 
   const [assignments, setAssignments] = useState<Assignment[]>([
     {
@@ -128,6 +152,7 @@ export const AdminView: React.FC = () => {
   useEffect(() => {
     if (isLoggedIn) {
       fetchGuides();
+      fetchGuideRequests();
     }
   }, [isLoggedIn]);
 
@@ -137,27 +162,52 @@ export const AdminView: React.FC = () => {
         .from('guides')
         .select('*')
         .order('created_at', { ascending: false });
-      
+
       if (error) throw error;
-      
-      if (data) {
-        const formattedGuides = data.map(guide => ({
-          id: guide.id,
-          guide_id: guide.guide_id,
-          name: guide.name,
-          email: guide.email,
-          phone: guide.phone,
-          rating: guide.rating,
-          specializations: guide.specializations || [],
-          status: guide.status as 'available' | 'busy' | 'offline'
-        }));
-        setGuides(formattedGuides);
-      }
-    } catch (error) {
+      setGuides((data || []).map(item => ({
+        ...item,
+        status: item.status as 'available' | 'busy' | 'offline'
+      })));
+    } catch (error: any) {
       console.error('Error fetching guides:', error);
       toast({
         title: 'Error',
         description: 'Failed to fetch guides',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const fetchGuideRequests = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('guide_requests')
+        .select(`
+          *,
+          profiles (
+            full_name,
+            contact_info,
+            nationality,
+            gender
+          ),
+          guides (
+            name,
+            email,
+            phone
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setGuideRequests((data || []).map(item => ({
+        ...item,
+        status: item.status as 'pending' | 'approved' | 'rejected'
+      })));
+    } catch (error: any) {
+      console.error('Error fetching guide requests:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch guide requests',
         variant: 'destructive'
       });
     }
@@ -330,6 +380,40 @@ export const AdminView: React.FC = () => {
   const handleCancelEdit = () => {
     setEditingGuide(null);
     setEditGuideData(null);
+  };
+
+  const handleRequestResponse = async (requestId: string, status: 'approved' | 'rejected', guideId?: string, response?: string) => {
+    try {
+      const updateData: any = {
+        status,
+        admin_response: response
+      };
+
+      if (status === 'approved' && guideId) {
+        updateData.assigned_guide_id = guideId;
+      }
+
+      const { error } = await supabase
+        .from('guide_requests')
+        .update(updateData)
+        .eq('id', requestId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: `Request ${status} successfully!`,
+      });
+
+      fetchGuideRequests(); // Refresh the list
+    } catch (error: any) {
+      console.error('Error updating request:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update request',
+        variant: 'destructive'
+      });
+    }
   };
 
   const updateAssignmentStatus = (assignmentId: string, status: 'pending' | 'active' | 'completed') => {
@@ -807,6 +891,131 @@ export const AdminView: React.FC = () => {
                   )}
                 </div>
               ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Guide Requests Management */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <MessageSquare className="w-5 h-5" />
+              <span>Guide Requests</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {guideRequests.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  No guide requests found.
+                </p>
+              ) : (
+                guideRequests.map((request) => (
+                  <Card key={request.id} className="border border-muted/50">
+                    <CardContent className="pt-4">
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-start">
+                          <div className="space-y-2">
+                            <div>
+                              <h4 className="font-semibold">
+                                {request.profiles?.full_name || 'Tourist'}
+                              </h4>
+                              <p className="text-sm text-muted-foreground">
+                                Submitted: {new Date(request.created_at).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <p><strong>Contact:</strong> {request.profiles?.contact_info || 'N/A'}</p>
+                                <p><strong>Nationality:</strong> {request.profiles?.nationality || 'N/A'}</p>
+                              </div>
+                              <div>
+                                <p><strong>Gender:</strong> {request.profiles?.gender || 'N/A'}</p>
+                              </div>
+                            </div>
+                          </div>
+                          {request.status === 'pending' && (
+                            <Badge variant="secondary" className="flex items-center">
+                              <Clock className="w-3 h-3 mr-1" />
+                              Pending
+                            </Badge>
+                          )}
+                          {request.status === 'approved' && (
+                            <Badge variant="default" className="bg-green-600 flex items-center">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Approved
+                            </Badge>
+                          )}
+                          {request.status === 'rejected' && (
+                            <Badge variant="destructive" className="flex items-center">
+                              <X className="w-3 h-3 mr-1" />
+                              Rejected
+                            </Badge>
+                          )}
+                        </div>
+
+                        <div>
+                          <p className="text-sm font-medium mb-1">Request Message:</p>
+                          <p className="text-sm text-muted-foreground bg-muted/30 p-3 rounded">
+                            {request.request_message}
+                          </p>
+                        </div>
+
+                        {request.status === 'approved' && request.guides && (
+                          <div className="bg-green-50 dark:bg-green-950/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
+                            <p className="text-sm font-medium text-green-800 dark:text-green-200 mb-2">
+                              Assigned Guide:
+                            </p>
+                            <div className="text-sm text-green-700 dark:text-green-300">
+                              <p><strong>Name:</strong> {request.guides.name}</p>
+                              <p><strong>Email:</strong> {request.guides.email}</p>
+                              <p><strong>Phone:</strong> {request.guides.phone}</p>
+                            </div>
+                          </div>
+                        )}
+
+                        {request.admin_response && (
+                          <div>
+                            <p className="text-sm font-medium mb-1">Admin Response:</p>
+                            <p className="text-sm text-muted-foreground bg-muted/30 p-3 rounded">
+                              {request.admin_response}
+                            </p>
+                          </div>
+                        )}
+
+                        {request.status === 'pending' && (
+                          <div className="flex flex-wrap gap-2 pt-2 border-t">
+                            <Select
+                              onValueChange={(guideId) => {
+                                handleRequestResponse(request.id, 'approved', guideId, 'Guide assigned successfully!');
+                              }}
+                            >
+                              <SelectTrigger className="w-[200px]">
+                                <SelectValue placeholder="Assign Guide" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {guides.filter(g => g.status === 'available').map((guide) => (
+                                  <SelectItem key={guide.id} value={guide.id}>
+                                    {guide.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleRequestResponse(request.id, 'rejected', undefined, 'Sorry, no guides available at this time.')}
+                            >
+                              <X className="w-3 h-3 mr-1" />
+                              Reject
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
           </CardContent>
         </Card>

@@ -15,6 +15,7 @@ interface LoginState {
   identifier: string;
   password: string;
   confirmPassword: string;
+  fullName: string;
   method: 'phone' | 'email';
   isSignUp: boolean;
   showPassword: boolean;
@@ -27,6 +28,7 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
     identifier: '',
     password: '',
     confirmPassword: '',
+    fullName: '',
     method: 'email',
     isSignUp: false,
     showPassword: false,
@@ -52,6 +54,15 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
       toast({
         title: 'Missing Information',
         description: `Please fill in all required fields.`,
+        variant: 'destructive',
+      });
+      return false;
+    }
+
+    if (loginState.isSignUp && !loginState.fullName.trim()) {
+      toast({
+        title: 'Missing Information',
+        description: 'Please enter your full name.',
         variant: 'destructive',
       });
       return false;
@@ -147,7 +158,7 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
           emailRedirectTo: `${window.location.origin}/`,
           data: {
             user_type: 'tourist',
-            full_name: 'Tourist User'
+            full_name: loginState.fullName.trim()
           }
         }
       });
@@ -194,7 +205,8 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
       ...prev,
       isSignUp: !prev.isSignUp,
       password: '',
-      confirmPassword: ''
+      confirmPassword: '',
+      fullName: ''
     }));
   };
 
@@ -229,6 +241,20 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
           </TabsList>
 
           <TabsContent value="email" className="space-y-4 mt-4">
+            {loginState.isSignUp && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Full Name</label>
+                <Input
+                  type="text"
+                  placeholder="Enter your full name"
+                  value={loginState.fullName}
+                  onChange={(e) => setLoginState(prev => ({ ...prev, fullName: e.target.value }))}
+                  className="glass-effect"
+                  disabled={loginState.loading}
+                />
+              </div>
+            )}
+            
             <div className="space-y-2">
               <label className="text-sm font-medium">Email Address</label>
               <Input

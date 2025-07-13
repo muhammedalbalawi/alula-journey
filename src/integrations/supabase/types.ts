@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      guide_requests: {
+        Row: {
+          admin_response: string | null
+          assigned_guide_id: string | null
+          created_at: string | null
+          id: string
+          request_message: string | null
+          status: string | null
+          tourist_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          admin_response?: string | null
+          assigned_guide_id?: string | null
+          created_at?: string | null
+          id?: string
+          request_message?: string | null
+          status?: string | null
+          tourist_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          admin_response?: string | null
+          assigned_guide_id?: string | null
+          created_at?: string | null
+          id?: string
+          request_message?: string | null
+          status?: string | null
+          tourist_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guide_requests_assigned_guide_id_fkey"
+            columns: ["assigned_guide_id"]
+            isOneToOne: false
+            referencedRelation: "guides"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guide_requests_tourist_id_fkey"
+            columns: ["tourist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guides: {
         Row: {
           created_at: string | null
@@ -196,6 +244,7 @@ export type Database = {
           contact_info: string | null
           created_at: string | null
           full_name: string | null
+          gender: string | null
           id: string
           is_active: boolean | null
           nationality: string | null
@@ -208,6 +257,7 @@ export type Database = {
           contact_info?: string | null
           created_at?: string | null
           full_name?: string | null
+          gender?: string | null
           id: string
           is_active?: boolean | null
           nationality?: string | null
@@ -220,6 +270,7 @@ export type Database = {
           contact_info?: string | null
           created_at?: string | null
           full_name?: string | null
+          gender?: string | null
           id?: string
           is_active?: boolean | null
           nationality?: string | null
