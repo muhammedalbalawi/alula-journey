@@ -135,6 +135,13 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    /* Safari specific fixes */
+    -webkit-appearance: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Mobile Safari viewport and safe area handling */
+    -webkit-text-size-adjust: 100%;
+    touch-action: manipulation;
   }
 }
 
@@ -235,5 +242,49 @@ All colors MUST be HSL.
   }
   50% {
     box-shadow: 0 0 40px hsla(45, 85%, 60%, 0.6);
+  }
+}
+
+@layer utilities {
+  .hover-scale {
+    @apply transition-transform duration-200 hover:scale-105;
+  }
+  
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Safari mobile optimizations */
+  .pb-safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .px-safe-area-inset-x {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  
+  /* Mobile Safari form fixes */
+  input[type="time"],
+  input[type="date"],
+  input[type="number"] {
+    -webkit-appearance: none;
+    -moz-appearance: textfield;
+    border-radius: 0.375rem;
+    background-color: hsl(var(--background));
+    border: 1px solid hsl(var(--border));
+  }
+  
+  /* Mobile Safari dialog fixes */
+  [role="dialog"] {
+    max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Safari mobile viewport fixes */
+  .mobile-viewport {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
   }
 }

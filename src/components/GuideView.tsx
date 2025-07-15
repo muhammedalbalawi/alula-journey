@@ -32,7 +32,8 @@ import {
   Mountain,
   Castle,
   Zap,
-  UserCircle
+  UserCircle,
+  Trash2
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
@@ -57,41 +58,18 @@ export const GuideView: React.FC = () => {
     'T003': true
   });
   const [editingItem, setEditingItem] = useState<string | null>(null);
-  const [itinerary, setItinerary] = useState([
-    {
-      id: 'dest1',
-      day: 1,
-      date: '2024-07-15',
-      activity: 'Elephant Rock & Sunset',
-      location: 'Jabal AlFil',
-      time: '16:00 - 19:00',
-      category: 'attraction',
-      coordinates: { lat: 26.5814, lng: 37.6956 },
-      notes: 'Best sunset viewing from the viewing platform. Bring a camera!'
-    },
-    {
-      id: 'dest2',
-      day: 2,
-      date: '2024-07-16',
-      activity: 'Hegra Archaeological Site',
-      location: 'Madain Saleh',
-      time: '08:00 - 12:00',
-      category: 'heritage',
-      coordinates: { lat: 26.7853, lng: 37.9542 },
-      notes: 'Bring comfortable walking shoes. Photography is allowed in designated areas only.'
-    },
-    {
-      id: 'dest3',
-      day: 3,
-      date: '2024-07-17',
-      activity: 'Zip Line Adventure',
-      location: 'Adventure Park',
-      time: '10:00 - 13:00',
-      category: 'adventure',
-      coordinates: { lat: 26.6084, lng: 37.8456 },
-      notes: 'Wear comfortable clothes and closed-toe shoes. Weight limit applies.'
-    }
-  ]);
+  const [itinerary, setItinerary] = useState<any[]>([]);
+  const [showAddActivityDialog, setShowAddActivityDialog] = useState(false);
+  const [newActivity, setNewActivity] = useState({
+    date: '',
+    category: 'attraction',
+    activity: '',
+    location: '',
+    notes: '',
+    startTime: '09:00',
+    endTime: '12:00',
+    duration: 180
+  });
 
   const [assignedTourists, setAssignedTourists] = useState<any[]>([]);
 
@@ -99,6 +77,7 @@ export const GuideView: React.FC = () => {
   useEffect(() => {
     if (isLoggedIn && currentGuide) {
       fetchAssignedTourists();
+      fetchActivities();
       setupRealtimeUpdates();
     }
   }, [isLoggedIn, currentGuide]);
@@ -129,6 +108,45 @@ export const GuideView: React.FC = () => {
     } catch (error: any) {
       console.error('Error fetching assigned tourists:', error);
     }
+  };
+
+  const fetchActivities = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('activities')
+        .select('*')
+        .eq('tour_guide_id', currentGuide?.id)
+        .order('scheduled_date', { ascending: true });
+
+      if (error) throw error;
+      
+      const formattedData = (data || []).map((activity, index) => ({
+        id: activity.id,
+        day: index + 1,
+        date: activity.scheduled_date,
+        activity: activity.activity_name,
+        location: activity.location_name,
+        time: `${activity.scheduled_time} - ${calculateEndTime(activity.scheduled_time, activity.duration_minutes || 180)}`,
+        category: activity.category || 'attraction',
+        coordinates: { lat: activity.latitude || 26.6084, lng: activity.longitude || 37.8456 },
+        notes: activity.notes || '',
+        duration: activity.duration_minutes || 180,
+        startTime: activity.scheduled_time,
+        endTime: calculateEndTime(activity.scheduled_time, activity.duration_minutes || 180)
+      }));
+      
+      setItinerary(formattedData);
+    } catch (error: any) {
+      console.error('Error fetching activities:', error);
+    }
+  };
+
+  const calculateEndTime = (startTime: string, durationMinutes: number) => {
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const startDate = new Date();
+    startDate.setHours(hours, minutes, 0, 0);
+    startDate.setMinutes(startDate.getMinutes() + durationMinutes);
+    return startDate.toTimeString().slice(0, 5);
   };
 
   const setupRealtimeUpdates = () => {
@@ -298,37 +316,145 @@ export const GuideView: React.FC = () => {
     ));
   };
 
-  const saveItineraryItem = (itemId: string) => {
-    setEditingItem(null);
-    toast({
-      title: t('success'),
-      description: 'Itinerary item updated successfully!'
-    });
+  const saveItineraryItem = async (itemId: string) => {
+    const item = itinerary.find(i => i.id === itemId);
+    if (!item) return;
+
+    try {
+      await updateActivityInDB(itemId, item);
+      setEditingItem(null);
+      toast({
+        title: t('success'),
+        description: 'Activity updated successfully!'
+      });
+    } catch (error) {
+      toast({
+        title: t('error'),
+        description: 'Failed to update activity. Please try again.',
+        variant: 'destructive'
+      });
+    }
   };
 
-  const addNewDay = () => {
-    const nextDay = Math.max(...itinerary.map(item => item.day)) + 1;
-    const newDate = new Date();
-    newDate.setDate(newDate.getDate() + nextDay - 1);
-    
-    const newItem = {
-      id: `dest${Date.now()}`,
-      day: nextDay,
-      date: newDate.toISOString().split('T')[0],
-      activity: 'New Activity',
-      location: 'New Location',
-      time: '09:00 - 12:00',
-      category: 'attraction',
-      coordinates: { lat: 26.6084, lng: 37.8456 },
-      notes: ''
-    };
+  const addNewActivity = async () => {
+    if (!newActivity.date || !newActivity.activity || !newActivity.location) {
+      toast({
+        title: t('error'),
+        description: 'Please fill in all required fields',
+        variant: 'destructive'
+      });
+      return;
+    }
 
-    setItinerary(prev => [...prev, newItem]);
-    setEditingItem(newItem.id);
-    toast({
-      title: t('success'),
-      description: 'New day added to itinerary!'
-    });
+    try {
+      const { data, error } = await supabase
+        .from('activities')
+        .insert({
+          tour_guide_id: currentGuide?.id,
+          activity_name: newActivity.activity,
+          category: newActivity.category,
+          location_name: newActivity.location,
+          notes: newActivity.notes,
+          scheduled_date: newActivity.date,
+          scheduled_time: newActivity.startTime,
+          duration_minutes: newActivity.duration,
+          status: 'planned',
+          created_by: currentGuide?.id
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Add to local state immediately
+      const newItem = {
+        id: data.id,
+        day: itinerary.length + 1,
+        date: newActivity.date,
+        activity: newActivity.activity,
+        location: newActivity.location,
+        time: `${newActivity.startTime} - ${newActivity.endTime}`,
+        category: newActivity.category,
+        coordinates: { lat: 26.6084, lng: 37.8456 },
+        notes: newActivity.notes,
+        duration: newActivity.duration,
+        startTime: newActivity.startTime,
+        endTime: newActivity.endTime
+      };
+
+      setItinerary(prev => [...prev, newItem]);
+      setShowAddActivityDialog(false);
+      
+      // Reset form
+      setNewActivity({
+        date: '',
+        category: 'attraction',
+        activity: '',
+        location: '',
+        notes: '',
+        startTime: '09:00',
+        endTime: '12:00',
+        duration: 180
+      });
+
+      toast({
+        title: t('success'),
+        description: 'New activity added successfully!'
+      });
+    } catch (error: any) {
+      console.error('Error adding activity:', error);
+      toast({
+        title: t('error'),
+        description: 'Failed to add activity. Please try again.',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const deleteActivity = async (activityId: string) => {
+    try {
+      const { error } = await supabase
+        .from('activities')
+        .delete()
+        .eq('id', activityId);
+
+      if (error) throw error;
+
+      setItinerary(prev => prev.filter(item => item.id !== activityId));
+      toast({
+        title: t('success'),
+        description: 'Activity deleted successfully!'
+      });
+    } catch (error: any) {
+      console.error('Error deleting activity:', error);
+      toast({
+        title: t('error'),
+        description: 'Failed to delete activity. Please try again.',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const updateActivityInDB = async (activityId: string, updates: any) => {
+    try {
+      const { error } = await supabase
+        .from('activities')
+        .update({
+          activity_name: updates.activity,
+          category: updates.category,
+          location_name: updates.location,
+          notes: updates.notes,
+          scheduled_date: updates.date,
+          scheduled_time: updates.startTime,
+          duration_minutes: updates.duration
+        })
+        .eq('id', activityId);
+
+      if (error) throw error;
+    } catch (error: any) {
+      console.error('Error updating activity:', error);
+      throw error;
+    }
   };
 
   const getCategoryIcon = (category: string) => {
@@ -468,6 +594,14 @@ export const GuideView: React.FC = () => {
                         {editingItem === item.id ? t('save') : t('edit')}
                       </span>
                     </Button>
+                    <Button 
+                      size="sm" 
+                      variant="destructive"
+                      onClick={() => deleteActivity(item.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span className="ml-1 rtl:ml-0 rtl:mr-1">Remove</span>
+                    </Button>
                   </div>
                   <div className="flex items-center space-x-2 rtl:space-x-reverse">
                     <Button 
@@ -527,7 +661,7 @@ export const GuideView: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen p-4 pt-20">
+    <div className="min-h-screen p-4 pt-20 pb-safe-area-inset-bottom">
       {/* Profile Button - Top Left */}
       <div className="fixed top-6 left-6 z-50">
         <Dialog>
@@ -582,7 +716,7 @@ export const GuideView: React.FC = () => {
         </Dialog>
       </div>
 
-      <div className="container mx-auto max-w-7xl space-y-6">
+      <div className="container mx-auto max-w-7xl space-y-6 px-safe-area-inset-x">
         {/* Welcome Header */}
         <Card className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
           <CardContent className="pt-6">
@@ -686,9 +820,13 @@ export const GuideView: React.FC = () => {
                   items.length > 0 && renderCategorySection(category, items)
                 )}
                 
-                <Button variant="outline" className="w-full" onClick={addNewDay}>
+                <Button 
+                  variant="default" 
+                  className="w-full" 
+                  onClick={() => setShowAddActivityDialog(true)}
+                >
                   <CalendarIcon className="w-4 h-4 mr-2" />
-                  {t('addNewDay')}
+                  Add New Activities
                 </Button>
               </div>
             )}
@@ -859,6 +997,175 @@ export const GuideView: React.FC = () => {
               <Button onClick={saveNotes} className="w-full">
                 {t('save')}
               </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Activity Dialog */}
+        <Dialog open={showAddActivityDialog} onOpenChange={setShowAddActivityDialog}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Add New Activity</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-6 pt-4">
+              {/* Date Selection */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Date *</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {newActivity.date ? format(new Date(newActivity.date), "PPP") : "Select date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={newActivity.date ? new Date(newActivity.date) : undefined}
+                      onSelect={(date) => {
+                        if (date) {
+                          setNewActivity(prev => ({
+                            ...prev,
+                            date: date.toISOString().split('T')[0]
+                          }));
+                        }
+                      }}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Activity Type */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Type of Activity *</label>
+                <Select
+                  value={newActivity.category}
+                  onValueChange={(value) => setNewActivity(prev => ({ ...prev, category: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="heritage">
+                      <div className="flex items-center space-x-2">
+                        <Castle className="w-4 h-4" />
+                        <span>Heritage Sites</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="attraction">
+                      <div className="flex items-center space-x-2">
+                        <Mountain className="w-4 h-4" />
+                        <span>Attraction Places</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="adventure">
+                      <div className="flex items-center space-x-2">
+                        <Zap className="w-4 h-4" />
+                        <span>Adventurous Experiences</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Activity Name */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Name of Activity *</label>
+                <Input
+                  placeholder="Enter activity name"
+                  value={newActivity.activity}
+                  onChange={(e) => setNewActivity(prev => ({ ...prev, activity: e.target.value }))}
+                />
+              </div>
+
+              {/* Location */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Location *</label>
+                <Input
+                  placeholder="Enter location"
+                  value={newActivity.location}
+                  onChange={(e) => setNewActivity(prev => ({ ...prev, location: e.target.value }))}
+                />
+              </div>
+
+              {/* Time Settings */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Start Time</label>
+                  <Input
+                    type="time"
+                    value={newActivity.startTime}
+                    onChange={(e) => {
+                      const startTime = e.target.value;
+                      const endTime = calculateEndTime(startTime, newActivity.duration);
+                      setNewActivity(prev => ({ 
+                        ...prev, 
+                        startTime,
+                        endTime
+                      }));
+                    }}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Duration (minutes)</label>
+                  <Input
+                    type="number"
+                    min="30"
+                    step="30"
+                    value={newActivity.duration}
+                    onChange={(e) => {
+                      const duration = parseInt(e.target.value) || 180;
+                      const endTime = calculateEndTime(newActivity.startTime, duration);
+                      setNewActivity(prev => ({ 
+                        ...prev, 
+                        duration,
+                        endTime
+                      }));
+                    }}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">End Time</label>
+                  <Input
+                    value={newActivity.endTime}
+                    readOnly
+                    className="bg-muted"
+                  />
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Notes</label>
+                <Textarea
+                  placeholder="Add any additional notes or instructions"
+                  value={newActivity.notes}
+                  onChange={(e) => setNewActivity(prev => ({ ...prev, notes: e.target.value }))}
+                  className="min-h-[100px]"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex space-x-3 pt-4">
+                <Button 
+                  onClick={() => setShowAddActivityDialog(false)}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={addNewActivity}
+                  className="flex-1"
+                >
+                  Add Activity
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
