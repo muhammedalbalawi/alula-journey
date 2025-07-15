@@ -152,6 +152,7 @@ export function TourGuideView() {
     if (isLoggedIn && currentGuideData) {
       fetchAssignedTourists();
       fetchTourActivities();
+      fetchRescheduleRequests();
       setupRealtimeUpdates();
     }
   }, [isLoggedIn, currentGuideData]);
@@ -204,6 +205,51 @@ export function TourGuideView() {
     }
   };
 
+  const fetchRescheduleRequests = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('reschedule_requests')
+        .select(`
+          id,
+          tourist_id,
+          guide_id,
+          location_name,
+          original_date,
+          original_time,
+          requested_date,
+          requested_time,
+          reason,
+          status,
+          created_at,
+          profiles!tourist_id (
+            full_name
+          )
+        `)
+        .eq('guide_id', currentGuideData?.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Transform the data to match the RescheduleRequest interface
+      const transformedData = (data || []).map(item => ({
+        id: item.id,
+        touristName: item.profiles?.full_name || 'Unknown Tourist',
+        originalDate: item.original_date,
+        originalTime: item.original_time,
+        requestedDate: item.requested_date,
+        requestedTime: item.requested_time,
+        reason: item.reason || '',
+        status: item.status as 'pending' | 'approved' | 'declined',
+        location: item.location_name || '',
+        timestamp: item.created_at
+      }));
+
+      setNotifications(transformedData);
+    } catch (error: any) {
+      console.error('Error fetching reschedule requests:', error);
+    }
+  };
+
   const setupRealtimeUpdates = () => {
     const channel = supabase
       .channel('guide-updates')
@@ -219,17 +265,29 @@ export function TourGuideView() {
           fetchAssignedTourists();
         }
       )
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'activities'
-          },
-          () => {
-            fetchTourActivities();
-          }
-        )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'activities'
+        },
+        () => {
+          fetchTourActivities();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'reschedule_requests',
+          filter: `guide_id=eq.${currentGuideData?.id}`
+        },
+        () => {
+          fetchRescheduleRequests();
+        }
+      )
       .subscribe();
 
     return () => {
