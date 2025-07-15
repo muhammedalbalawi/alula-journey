@@ -80,6 +80,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "activities_tour_guide_id_fkey"
+            columns: ["tour_guide_id"]
+            isOneToOne: false
+            referencedRelation: "guides"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "tour_activities_tour_assignment_id_fkey"
             columns: ["tour_assignment_id"]
             isOneToOne: false
