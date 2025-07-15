@@ -149,6 +149,19 @@ export const GuideView: React.FC = () => {
     return startDate.toTimeString().slice(0, 5);
   };
 
+  const formatTo12Hour = (time24: string) => {
+    if (!time24) return '';
+    const [hours, minutes] = time24.split(':').map(Number);
+    const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+    return `${displayHours}:${minutes.toString().padStart(2, '0')}`;
+  };
+
+  const getAMPM = (time24: string) => {
+    if (!time24) return '';
+    const [hours] = time24.split(':').map(Number);
+    return hours >= 12 ? 'PM' : 'AM';
+  };
+
   const setupRealtimeUpdates = () => {
     const channel = supabase
       .channel('guide-assignments')
@@ -1097,19 +1110,22 @@ export const GuideView: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Start Time</label>
-                  <Input
-                    type="time"
-                    value={newActivity.startTime}
-                    onChange={(e) => {
-                      const startTime = e.target.value;
-                      const endTime = calculateEndTime(startTime, newActivity.duration);
-                      setNewActivity(prev => ({ 
-                        ...prev, 
-                        startTime,
-                        endTime
-                      }));
-                    }}
-                  />
+                  <div className="flex space-x-2">
+                    <Input
+                      type="time"
+                      value={newActivity.startTime}
+                      onChange={(e) => {
+                        const startTime = e.target.value;
+                        const endTime = calculateEndTime(startTime, newActivity.duration);
+                        setNewActivity(prev => ({ 
+                          ...prev, 
+                          startTime,
+                          endTime
+                        }));
+                      }}
+                      className="flex-1"
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Duration (minutes)</label>
@@ -1131,11 +1147,16 @@ export const GuideView: React.FC = () => {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">End Time</label>
-                  <Input
-                    value={newActivity.endTime}
-                    readOnly
-                    className="bg-muted"
-                  />
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      value={formatTo12Hour(newActivity.endTime)}
+                      readOnly
+                      className="bg-muted flex-1"
+                    />
+                    <Badge variant="outline" className="px-2 py-1">
+                      {getAMPM(newActivity.endTime)}
+                    </Badge>
+                  </div>
                 </div>
               </div>
 
