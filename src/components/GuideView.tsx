@@ -260,7 +260,6 @@ export const GuideView: React.FC = () => {
       });
     }
   };
-  };
 
   const mockTourists = assignedTourists.map(assignment => ({
     id: assignment.tourist_id,
