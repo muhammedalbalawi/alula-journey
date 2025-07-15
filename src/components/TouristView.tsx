@@ -71,6 +71,8 @@ export const TouristView: React.FC = () => {
     time: '',
     notes: ''
   });
+  const [selectedActivity, setSelectedActivity] = useState<any>(null);
+  const [showActivityReschedule, setShowActivityReschedule] = useState(false);
   const [assignedGuide, setAssignedGuide] = useState<any>(null);
   const [tourAssignment, setTourAssignment] = useState<any>(null);
   const [guideRequest, setGuideRequest] = useState<any>(null);
@@ -491,6 +493,80 @@ export const TouristView: React.FC = () => {
   const openRescheduleDialog = (destination: any) => {
     setSelectedDestination(destination);
     setShowReschedule(true);
+  };
+
+  const openActivityRescheduleDialog = (activity: any) => {
+    setSelectedActivity(activity);
+    setShowActivityReschedule(true);
+  };
+
+  const handleActivityReschedule = async () => {
+    if (!rescheduleData.date || !rescheduleData.time) {
+      toast({
+        title: t('error'),
+        description: 'Please select both date and time for rescheduling.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      // Create reschedule request in database
+      const { data: rescheduleRequest, error: rescheduleError } = await supabase
+        .from('reschedule_requests')
+        .insert({
+          tourist_id: userSession?.user?.id,
+          guide_id: assignedGuide?.id,
+          tour_assignment_id: tourAssignment?.id,
+          location_name: selectedActivity?.location_name,
+          original_date: selectedActivity?.scheduled_date,
+          original_time: selectedActivity?.scheduled_time,
+          requested_date: format(rescheduleData.date, 'yyyy-MM-dd'),
+          requested_time: rescheduleData.time,
+          reason: rescheduleData.notes,
+          status: 'pending'
+        })
+        .select()
+        .single();
+
+      if (rescheduleError) throw rescheduleError;
+
+      // Send notification to tour guide
+      const { error: notificationError } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: assignedGuide?.id,
+          title: 'Reschedule Request',
+          message: `Tourist has requested to reschedule "${selectedActivity?.activity_name}" from ${selectedActivity?.scheduled_date} at ${selectedActivity?.scheduled_time} to ${format(rescheduleData.date, 'yyyy-MM-dd')} at ${rescheduleData.time}. Reason: ${rescheduleData.notes || 'No reason provided'}`,
+          notification_type: 'reschedule_request',
+          related_id: rescheduleRequest.id,
+          is_read: false
+        });
+
+      if (notificationError) {
+        console.error('Error sending notification:', notificationError);
+        // Continue even if notification fails
+      }
+
+      setShowActivityReschedule(false);
+      toast({
+        title: t('success'),
+        description: 'Reschedule request sent to your guide successfully!'
+      });
+      
+      setRescheduleData({
+        date: undefined,
+        time: '',
+        notes: ''
+      });
+    } catch (error: any) {
+      console.error('Error creating reschedule request:', error);
+      toast({
+        title: t('error'),
+        description: 'Failed to send reschedule request. Please try again.',
+        variant: 'destructive'
+      });
+    }
   };
 
   const openWhatsApp = () => {
@@ -914,43 +990,17 @@ export const TouristView: React.FC = () => {
                           </Badge>
                         </td>
                         <td className="p-3">
-                          <div className="flex space-x-1">
-                            {editingActivityId === activity.id ? (
-                              <>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => editActivity(activity.id, editingActivity)}
-                                  className="h-7 px-2"
-                                >
-                                  <Save className="w-3 h-3" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    setEditingActivityId(null);
-                                    setEditingActivity(null);
-                                  }}
-                                  className="h-7 px-2"
-                                >
-                                  <X className="w-3 h-3" />
-                                </Button>
-                              </>
-                            ) : (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setEditingActivityId(activity.id);
-                                  setEditingActivity(activity);
-                                }}
-                                className="h-7 px-2"
-                              >
-                                <Edit className="w-3 h-3" />
-                              </Button>
-                            )}
-                          </div>
+                           <div className="flex space-x-1">
+                             <Button
+                               size="sm"
+                               variant="outline"
+                               onClick={() => openActivityRescheduleDialog(activity)}
+                               className="h-7 px-2 flex items-center space-x-1"
+                             >
+                               <RotateCcw className="w-3 h-3" />
+                               <span className="text-xs">Reschedule</span>
+                             </Button>
+                           </div>
                         </td>
                       </tr>
                     ))}
@@ -1207,6 +1257,77 @@ export const TouristView: React.FC = () => {
 
               <Button onClick={handleReschedule} className="w-full">
                 {t('submitReschedule')}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Activity Reschedule Dialog */}
+        <Dialog open={showActivityReschedule} onOpenChange={setShowActivityReschedule}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Reschedule Activity - {selectedActivity?.activity_name}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 pt-4">
+              {/* Original Schedule Info */}
+              <div className="bg-muted p-3 rounded-lg">
+                <h4 className="font-medium text-sm mb-2">Current Schedule:</h4>
+                <p className="text-sm text-muted-foreground">
+                  {selectedActivity?.scheduled_date} at {selectedActivity?.scheduled_time}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Location: {selectedActivity?.location_name}
+                </p>
+              </div>
+
+              {/* Date Picker */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">New Date</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {rescheduleData.date ? format(rescheduleData.date, "PPP") : <span>Select new date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={rescheduleData.date}
+                      onSelect={(date) => setRescheduleData({...rescheduleData, date})}
+                      disabled={(date) => date < new Date()}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Time Picker */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">New Time</label>
+                <TimePicker
+                  value={rescheduleData.time}
+                  onChange={(time) => setRescheduleData({...rescheduleData, time})}
+                />
+              </div>
+
+              {/* Reason */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Reason for Rescheduling</label>
+                <Textarea
+                  placeholder="Please provide a reason for rescheduling this activity..."
+                  value={rescheduleData.notes}
+                  onChange={(e) => setRescheduleData({...rescheduleData, notes: e.target.value})}
+                  className="min-h-[80px]"
+                />
+              </div>
+
+              <Button onClick={handleActivityReschedule} className="w-full">
+                Send Reschedule Request
               </Button>
             </div>
           </DialogContent>
