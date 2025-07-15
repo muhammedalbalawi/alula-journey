@@ -60,6 +60,15 @@ export const GuideView: React.FC = () => {
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [itinerary, setItinerary] = useState<any[]>([]);
   const [showAddActivityDialog, setShowAddActivityDialog] = useState(false);
+  const [showAddPackageDialog, setShowAddPackageDialog] = useState(false);
+  const [touristPackages, setTouristPackages] = useState<any[]>([]);
+  const [newPackage, setNewPackage] = useState({
+    name: '',
+    description: '',
+    price: '',
+    duration: '',
+    included_activities: [] as string[]
+  });
   const [newActivity, setNewActivity] = useState({
     date: '',
     category: 'attraction',
@@ -78,9 +87,24 @@ export const GuideView: React.FC = () => {
     if (isLoggedIn && currentGuide) {
       fetchAssignedTourists();
       fetchActivities();
+      fetchTouristPackages();
       setupRealtimeUpdates();
     }
   }, [isLoggedIn, currentGuide]);
+
+  const fetchTouristPackages = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('packages')
+        .select('*')
+        .eq('created_by', currentGuide?.id);
+
+      if (error) throw error;
+      setTouristPackages(data || []);
+    } catch (error: any) {
+      console.error('Error fetching packages:', error);
+    }
+  };
 
   const fetchAssignedTourists = async () => {
     try {
@@ -182,6 +206,60 @@ export const GuideView: React.FC = () => {
     return () => {
       supabase.removeChannel(channel);
     };
+  };
+
+  const addNewPackage = async () => {
+    if (!selectedTourist || !newPackage.name.trim()) {
+      toast({
+        title: t('error'),
+        description: 'Please select a tourist and enter package name',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('packages')
+        .insert({
+          package_name: newPackage.name,
+          description: newPackage.description,
+          price: parseFloat(newPackage.price) || 0,
+          duration_hours: parseInt(newPackage.duration) || 1,
+          included_activities: newPackage.included_activities,
+          created_by: currentGuide?.id,
+          status: 'active'
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setTouristPackages(prev => [...prev, data]);
+      setShowAddPackageDialog(false);
+      
+      // Reset form
+      setNewPackage({
+        name: '',
+        description: '',
+        price: '',
+        duration: '',
+        included_activities: []
+      });
+
+      toast({
+        title: t('success'),
+        description: 'Package added successfully!'
+      });
+    } catch (error: any) {
+      console.error('Error adding package:', error);
+      toast({
+        title: t('error'),
+        description: 'Failed to add package. Please try again.',
+        variant: 'destructive'
+      });
+    }
+  };
   };
 
   const mockTourists = assignedTourists.map(assignment => ({
@@ -775,56 +853,99 @@ export const GuideView: React.FC = () => {
             )}
 
             {/* Package Management */}
-            <Card className="shadow-desert">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 rtl:space-x-reverse">
-                  <Package className="w-5 h-5" />
-                  <span>{t('managePackages')}</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {mockTourists.map((tourist) => (
-                    <div key={tourist.id} className="p-4 border border-border rounded-lg">
-                      <div className="flex items-center justify-between mb-4">
-                        <div>
-                          <h4 className="font-semibold">{tourist.name}</h4>
-                          <p className="text-sm text-muted-foreground">{tourist.id}</p>
-                        </div>
-                        <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                          <span className="text-sm">{packageStates[tourist.id] ? t('packageEnabled') : t('packageDisabled')}</span>
-                          <Switch
-                            checked={packageStates[tourist.id] || false}
-                            onCheckedChange={() => togglePackage(tourist.id)}
-                          />
-                        </div>
-                      </div>
-                      
-                      {packageStates[tourist.id] && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <div className="flex items-center space-x-3 rtl:space-x-reverse p-3 bg-secondary/30 rounded-lg">
-                            <Droplets className="w-4 h-4 text-accent" />
-                            <span className="text-sm">{t('packageItems.refreshments')}</span>
-                          </div>
-                          <div className="flex items-center space-x-3 rtl:space-x-reverse p-3 bg-secondary/30 rounded-lg">
-                            <Sun className="w-4 h-4 text-accent" />
-                            <span className="text-sm">{t('packageItems.sunshade')}</span>
-                          </div>
-                          <div className="flex items-center space-x-3 rtl:space-x-reverse p-3 bg-secondary/30 rounded-lg">
-                            <Heart className="w-4 h-4 text-accent" />
-                            <span className="text-sm">{t('packageItems.medical')}</span>
-                          </div>
-                          <div className="flex items-center space-x-3 rtl:space-x-reverse p-3 bg-secondary/30 rounded-lg">
-                            <Shield className="w-4 h-4 text-accent" />
-                            <span className="text-sm">{t('packageItems.special')}</span>
-                          </div>
-                        </div>
-                      )}
+            {selectedTourist && (
+              <Card className="shadow-desert">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                      <Package className="w-5 h-5" />
+                      <span>{t('managePackages')}</span>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowAddPackageDialog(true)}
+                      className="flex items-center space-x-2"
+                    >
+                      <Package className="w-4 h-4" />
+                      <span>Add a Package</span>
+                    </Button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {/* Selected Tourist Info */}
+                    {(() => {
+                      const tourist = mockTourists.find(t => t.id === selectedTourist);
+                      return tourist ? (
+                        <div className="p-4 border border-border rounded-lg bg-muted/30">
+                          <div className="flex items-center justify-between mb-4">
+                            <div>
+                              <h4 className="font-semibold">{tourist.name}</h4>
+                              <p className="text-sm text-muted-foreground">{tourist.id}</p>
+                            </div>
+                            <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                              <span className="text-sm">{packageStates[tourist.id] ? t('packageEnabled') : t('packageDisabled')}</span>
+                              <Switch
+                                checked={packageStates[tourist.id] || false}
+                                onCheckedChange={() => togglePackage(tourist.id)}
+                              />
+                            </div>
+                          </div>
+                          
+                          {/* Tourist's Packages */}
+                          <div className="space-y-3">
+                            <h5 className="font-medium text-sm">Packages for {tourist.name}:</h5>
+                            {touristPackages.length > 0 ? (
+                              <div className="grid grid-cols-1 gap-3">
+                                {touristPackages.map((pkg) => (
+                                  <div key={pkg.id} className="p-3 bg-secondary/30 rounded-lg border">
+                                    <div className="flex items-center justify-between">
+                                      <div>
+                                        <h6 className="font-medium">{pkg.package_name}</h6>
+                                        <p className="text-sm text-muted-foreground">{pkg.description}</p>
+                                        <div className="flex items-center space-x-4 mt-2 text-xs text-muted-foreground">
+                                          <span>Price: ${pkg.price}</span>
+                                          <span>Duration: {pkg.duration_hours}h</span>
+                                        </div>
+                                      </div>
+                                      <Badge variant="secondary">Active</Badge>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-sm text-muted-foreground">No packages assigned to this tourist yet.</p>
+                            )}
+                          </div>
+                          
+                          {packageStates[tourist.id] && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+                              <div className="flex items-center space-x-3 rtl:space-x-reverse p-3 bg-secondary/30 rounded-lg">
+                                <Droplets className="w-4 h-4 text-accent" />
+                                <span className="text-sm">{t('packageItems.refreshments')}</span>
+                              </div>
+                              <div className="flex items-center space-x-3 rtl:space-x-reverse p-3 bg-secondary/30 rounded-lg">
+                                <Sun className="w-4 h-4 text-accent" />
+                                <span className="text-sm">{t('packageItems.sunshade')}</span>
+                              </div>
+                              <div className="flex items-center space-x-3 rtl:space-x-reverse p-3 bg-secondary/30 rounded-lg">
+                                <Heart className="w-4 h-4 text-accent" />
+                                <span className="text-sm">{t('packageItems.medical')}</span>
+                              </div>
+                              <div className="flex items-center space-x-3 rtl:space-x-reverse p-3 bg-secondary/30 rounded-lg">
+                                <Shield className="w-4 h-4 text-accent" />
+                                <span className="text-sm">{t('packageItems.special')}</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : null;
+                    })()}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Categorized Itinerary Management */}
             {selectedTourist && (
@@ -1185,6 +1306,79 @@ export const GuideView: React.FC = () => {
                   className="flex-1"
                 >
                   Add Activity
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Package Dialog */}
+        <Dialog open={showAddPackageDialog} onOpenChange={setShowAddPackageDialog}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Add a Pack</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-6 pt-4">
+              {/* Package Name */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Package Name *</label>
+                <Input
+                  placeholder="Enter package name"
+                  value={newPackage.name}
+                  onChange={(e) => setNewPackage(prev => ({ ...prev, name: e.target.value }))}
+                />
+              </div>
+
+              {/* Description */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Description</label>
+                <Textarea
+                  placeholder="Describe what's included in this package"
+                  value={newPackage.description}
+                  onChange={(e) => setNewPackage(prev => ({ ...prev, description: e.target.value }))}
+                  className="min-h-[100px]"
+                />
+              </div>
+
+              {/* Price and Duration */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Price ($)</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={newPackage.price}
+                    onChange={(e) => setNewPackage(prev => ({ ...prev, price: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Duration (hours)</label>
+                  <Input
+                    type="number"
+                    min="1"
+                    placeholder="1"
+                    value={newPackage.duration}
+                    onChange={(e) => setNewPackage(prev => ({ ...prev, duration: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex space-x-3 pt-4">
+                <Button 
+                  onClick={() => setShowAddPackageDialog(false)}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={addNewPackage}
+                  className="flex-1"
+                >
+                  Add New Pack
                 </Button>
               </div>
             </div>
