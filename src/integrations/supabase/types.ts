@@ -222,6 +222,54 @@ export type Database = {
         }
         Relationships: []
       }
+      guide_ratings: {
+        Row: {
+          comment: string | null
+          created_at: string
+          guide_id: string
+          id: string
+          rating: number
+          tour_assignment_id: string | null
+          tourist_id: string
+          updated_at: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          guide_id: string
+          id?: string
+          rating: number
+          tour_assignment_id?: string | null
+          tourist_id: string
+          updated_at?: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          guide_id?: string
+          id?: string
+          rating?: number
+          tour_assignment_id?: string | null
+          tourist_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guide_ratings_guide_id_fkey"
+            columns: ["guide_id"]
+            isOneToOne: false
+            referencedRelation: "guides"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guide_ratings_tour_assignment_id_fkey"
+            columns: ["tour_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "tour_assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guide_requests: {
         Row: {
           admin_response: string | null

@@ -165,6 +165,7 @@ export const TouristView: React.FC = () => {
     fetchTourActivities();
     fetchCountries();
     fetchPackages();
+    fetchUserGuideRating();
     const cleanup = setupRealtimeUpdates();
     return cleanup;
     }
@@ -278,6 +279,29 @@ export const TouristView: React.FC = () => {
           },
           () => {
             fetchTourActivities();
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'guide_ratings',
+            filter: `tourist_id=eq.${userSession?.user?.id}`
+          },
+          () => {
+            fetchUserGuideRating();
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'guides'
+          },
+          () => {
+            fetchGuideRequest(); // This will also update the guide's rating display
           }
         )
       .subscribe();
