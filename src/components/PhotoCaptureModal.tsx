@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,6 +23,7 @@ export function PhotoCaptureModal({ children }: PhotoCaptureModalProps) {
   const [open, setOpen] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
   const [comment, setComment] = useState('');
+  const [shareWithWorld, setShareWithWorld] = useState(false);
   const [showCommentSection, setShowCommentSection] = useState(false);
   const { t } = useLanguage();
   const { toast } = useToast();
@@ -31,6 +33,7 @@ export function PhotoCaptureModal({ children }: PhotoCaptureModalProps) {
   const resetModal = () => {
     setSelectedPhoto(null);
     setComment('');
+    setShareWithWorld(false);
     setShowCommentSection(false);
   };
 
@@ -76,7 +79,8 @@ export function PhotoCaptureModal({ children }: PhotoCaptureModalProps) {
             file_name: selectedPhoto.name,
             file_size: selectedPhoto.size,
             content_type: selectedPhoto.type,
-            caption: comment.trim()
+            caption: comment.trim(),
+            share_with_world: shareWithWorld
           });
 
         if (dbError) throw dbError;
@@ -157,6 +161,20 @@ export function PhotoCaptureModal({ children }: PhotoCaptureModalProps) {
                       onChange={(e) => setComment(e.target.value)}
                       className="min-h-[80px]"
                     />
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="shareWithWorld"
+                      checked={shareWithWorld}
+                      onCheckedChange={(checked) => setShareWithWorld(checked as boolean)}
+                    />
+                    <label 
+                      htmlFor="shareWithWorld" 
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {t('shareWithWorld')}
+                    </label>
                   </div>
                   <div className="flex gap-2">
                     <Button variant="outline" onClick={handleBack} className="flex-1">

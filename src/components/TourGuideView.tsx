@@ -20,6 +20,7 @@ import {
   CalendarIcon,
   Package
 } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { PackageManagement } from './PackageManagement';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -67,6 +68,7 @@ interface AssignedTourist {
 }
 
 export function TourGuideView() {
+  const { t } = useLanguage();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [guideId, setGuideId] = useState('');
   const [password, setPassword] = useState('');
@@ -79,6 +81,7 @@ export function TourGuideView() {
   const [responseMessage, setResponseMessage] = useState('');
   const [showResponseDialog, setShowResponseDialog] = useState(false);
   const [showAddActivity, setShowAddActivity] = useState(false);
+  const [showAddTouristSchedule, setShowAddTouristSchedule] = useState(false);
   const [selectedTouristForSchedule, setSelectedTouristForSchedule] = useState<string>('');
   const [newActivity, setNewActivity] = useState({
     activity_name: '',
@@ -88,6 +91,13 @@ export function TourGuideView() {
     description: '',
     category: 'attraction',
     duration_minutes: 180
+  });
+  const [newTouristSchedule, setNewTouristSchedule] = useState({
+    tourType: '',
+    tourName: '',
+    tourLocation: '',
+    tourDuration: '',
+    tourDescription: ''
   });
   const { toast } = useToast();
 
@@ -256,6 +266,64 @@ export function TourGuideView() {
       toast({
         title: 'Login Failed',
         description: 'An error occurred during login.',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleAddTouristSchedule = async () => {
+    if (!selectedTouristForSchedule || !newTouristSchedule.tourName || !newTouristSchedule.tourLocation) {
+      toast({
+        title: 'Missing Information',
+        description: 'Please fill in all required fields.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      const assignment = assignedTourists.find(t => t.tourist_id === selectedTouristForSchedule);
+      if (!assignment) throw new Error('Tour assignment not found');
+
+      const { error } = await supabase
+        .from('activities')
+        .insert({
+          tour_assignment_id: assignment.id,
+          activity_name: newTouristSchedule.tourName,
+          location_name: newTouristSchedule.tourLocation,
+          scheduled_date: newActivity.scheduled_date.toISOString().split('T')[0],
+          scheduled_time: newActivity.scheduled_time,
+          description: newTouristSchedule.tourDescription,
+          category: newTouristSchedule.tourType || 'attraction',
+          duration_minutes: parseInt(newTouristSchedule.tourDuration) || 180,
+          status: 'planned',
+          tourist_id: assignment.tourist_id,
+          tour_guide_id: currentGuideData?.id,
+          created_by: currentGuideData?.id
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Schedule Added',
+        description: 'The tour schedule has been added successfully and will appear in the tourist\'s schedule.'
+      });
+
+      setNewTouristSchedule({
+        tourType: '',
+        tourName: '',
+        tourLocation: '',
+        tourDuration: '',
+        tourDescription: ''
+      });
+      setSelectedTouristForSchedule('');
+      setShowAddTouristSchedule(false);
+      fetchTourActivities();
+    } catch (error: any) {
+      console.error('Error adding tourist schedule:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to add schedule to tourist.',
         variant: 'destructive'
       });
     }
@@ -525,18 +593,18 @@ export function TourGuideView() {
                         <MessageSquare className="w-4 h-4" />
                         <span>WhatsApp</span>
                       </Button>
-                      <Button 
-                        size="sm" 
-                        variant="default"
-                        onClick={() => {
-                          setSelectedTouristForSchedule(tourist.tourist_id);
-                          setShowAddActivity(true);
-                        }}
-                        className="flex items-center space-x-1"
-                      >
-                        <Calendar className="w-4 h-4" />
-                        <span>Add Schedule</span>
-                      </Button>
+                       <Button 
+                         size="sm" 
+                         variant="default"
+                         onClick={() => {
+                           setSelectedTouristForSchedule(tourist.tourist_id);
+                           setShowAddTouristSchedule(true);
+                         }}
+                         className="flex items-center space-x-1"
+                       >
+                         <Calendar className="w-4 h-4" />
+                         <span>{t('addTouristSchedule')}</span>
+                       </Button>
                     </div>
                   </div>
                 ))
@@ -840,6 +908,75 @@ export function TourGuideView() {
                 <Button 
                   variant="outline" 
                   onClick={() => setShowAddActivity(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Tourist Schedule Dialog */}
+        <Dialog open={showAddTouristSchedule} onOpenChange={setShowAddTouristSchedule}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>{t('addTouristSchedule')}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 pt-4">
+              <div className="space-y-2">
+                <Label>Tourist</Label>
+                <select 
+                  value={selectedTouristForSchedule}
+                  onChange={(e) => setSelectedTouristForSchedule(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select Tourist</option>
+                  {assignedTourists.map((tourist) => (
+                    <option key={tourist.tourist_id} value={tourist.tourist_id}>
+                      {tourist.profiles?.full_name || 'Tourist'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <Input
+                placeholder={t('tourName')}
+                value={newTouristSchedule.tourName}
+                onChange={(e) => setNewTouristSchedule({...newTouristSchedule, tourName: e.target.value})}
+              />
+              <Input
+                placeholder={t('tourLocation')}
+                value={newTouristSchedule.tourLocation}
+                onChange={(e) => setNewTouristSchedule({...newTouristSchedule, tourLocation: e.target.value})}
+              />
+              <select 
+                value={newTouristSchedule.tourType}
+                onChange={(e) => setNewTouristSchedule({...newTouristSchedule, tourType: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select Tour Type</option>
+                <option value="heritage">Heritage Sites</option>
+                <option value="attraction">Attraction Places</option>
+                <option value="adventure">Adventure Activities</option>
+              </select>
+              <Input
+                placeholder={t('tourDuration') + " (minutes)"}
+                value={newTouristSchedule.tourDuration}
+                onChange={(e) => setNewTouristSchedule({...newTouristSchedule, tourDuration: e.target.value})}
+              />
+              <Textarea
+                placeholder={t('tourDescription')}
+                value={newTouristSchedule.tourDescription}
+                onChange={(e) => setNewTouristSchedule({...newTouristSchedule, tourDescription: e.target.value})}
+                className="min-h-[80px]"
+              />
+              <div className="flex space-x-2">
+                <Button onClick={handleAddTouristSchedule} className="flex-1">
+                  Add Schedule
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowAddTouristSchedule(false)}
                   className="flex-1"
                 >
                   Cancel

@@ -7,6 +7,7 @@ import { Phone, Mail, LogIn, Loader2, Eye, EyeOff, UserPlus } from 'lucide-react
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { CountryCodeSelector } from '@/components/CountryCodeSelector';
 
 interface TouristPasswordLoginProps {
   onLoginSuccess: (userId: string, session: any) => void;
@@ -17,6 +18,7 @@ interface LoginState {
   password: string;
   confirmPassword: string;
   fullName: string;
+  phoneNumber: string;
   method: 'phone' | 'email';
   isSignUp: boolean;
   showPassword: boolean;
@@ -31,6 +33,7 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
     password: '',
     confirmPassword: '',
     fullName: '',
+    phoneNumber: '',
     method: 'email',
     isSignUp: false,
     showPassword: false,
@@ -65,6 +68,15 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
       toast({
         title: t('missingInfo'),
         description: t('enterFullNameMsg'),
+        variant: 'destructive',
+      });
+      return false;
+    }
+
+    if (loginState.isSignUp && !loginState.phoneNumber.trim()) {
+      toast({
+        title: t('missingInfo'),
+        description: 'Please enter your phone number.',
         variant: 'destructive',
       });
       return false;
@@ -160,7 +172,8 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
           emailRedirectTo: `${window.location.origin}/`,
           data: {
             user_type: 'tourist',
-            full_name: loginState.fullName.trim()
+            full_name: loginState.fullName.trim(),
+            phone_number: loginState.phoneNumber.trim()
           }
         }
       });
@@ -208,7 +221,8 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
       isSignUp: !prev.isSignUp,
       password: '',
       confirmPassword: '',
-      fullName: ''
+      fullName: '',
+      phoneNumber: ''
     }));
   };
 
@@ -236,7 +250,7 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
               <Mail className="w-4 h-4" />
               <span>Email</span>
             </TabsTrigger>
-            <TabsTrigger value="phone" className="flex items-center space-x-2" disabled>
+            <TabsTrigger value="phone" className="flex items-center space-x-2">
               <Phone className="w-4 h-4" />
               <span>{t('phoneComingSoon')}</span>
             </TabsTrigger>
@@ -244,21 +258,32 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
 
           <TabsContent value="email" className="space-y-4 mt-4">
             {loginState.isSignUp && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">{t('fullName')}</label>
-                <Input
-                  type="text"
-                  placeholder={t('enterFullName')}
-                  value={loginState.fullName}
-                  onChange={(e) => setLoginState(prev => ({ ...prev, fullName: e.target.value }))}
-                  className="glass-effect"
-                  disabled={loginState.loading}
-                />
-              </div>
+              <>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">{t('fullName')}</label>
+                  <Input
+                    type="text"
+                    placeholder={t('enterFullName')}
+                    value={loginState.fullName}
+                    onChange={(e) => setLoginState(prev => ({ ...prev, fullName: e.target.value }))}
+                    className="glass-effect"
+                    disabled={loginState.loading}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">{t('phoneNumber')}</label>
+                  <CountryCodeSelector
+                    phoneNumber={loginState.phoneNumber}
+                    onPhoneNumberChange={(phone) => setLoginState(prev => ({ ...prev, phoneNumber: phone }))}
+                    disabled={loginState.loading}
+                  />
+                </div>
+              </>
             )}
             
             <div className="space-y-2">
-              <label className="text-sm font-medium">{t('emailAddress')}</label>
+              <label className="text-sm font-medium">{t('emailAddressField')}</label>
               <Input
                 type="email"
                 placeholder={t('enterEmail')}
@@ -313,12 +338,70 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
           </TabsContent>
 
           <TabsContent value="phone" className="space-y-4 mt-4">
-            <div className="p-4 bg-muted/50 rounded-lg text-center">
-              <Phone className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                {t('phoneComingSoon')}
-              </p>
+            {loginState.isSignUp && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">{t('fullName')}</label>
+                <Input
+                  type="text"
+                  placeholder={t('enterFullName')}
+                  value={loginState.fullName}
+                  onChange={(e) => setLoginState(prev => ({ ...prev, fullName: e.target.value }))}
+                  className="glass-effect"
+                  disabled={loginState.loading}
+                />
+              </div>
+            )}
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">{t('phoneNumber')}</label>
+              <CountryCodeSelector
+                phoneNumber={loginState.identifier}
+                onPhoneNumberChange={(phone) => setLoginState(prev => ({ ...prev, identifier: phone }))}
+                disabled={loginState.loading}
+              />
             </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">{t('password')}</label>
+              <div className="relative">
+                <Input
+                  type={loginState.showPassword ? 'text' : 'password'}
+                  placeholder={t('enterPassword')}
+                  value={loginState.password}
+                  onChange={(e) => setLoginState(prev => ({ ...prev, password: e.target.value }))}
+                  className="glass-effect pr-10"
+                  disabled={loginState.loading}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  onClick={togglePasswordVisibility}
+                  disabled={loginState.loading}
+                >
+                  {loginState.showPassword ? (
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {loginState.isSignUp && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">{t('confirmPassword')}</label>
+                <Input
+                  type={loginState.showPassword ? 'text' : 'password'}
+                  placeholder={t('confirmPasswordPlaceholder')}
+                  value={loginState.confirmPassword}
+                  onChange={(e) => setLoginState(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                  className="glass-effect"
+                  disabled={loginState.loading}
+                />
+              </div>
+            )}
           </TabsContent>
         </Tabs>
 

@@ -30,8 +30,6 @@ const translations = {
     viewMap: "View Trip Locations",
     suggestedPlaces: "Suggested Places to Visit",
     rateGuide: "Rate Your Guide",
-    registerJourney: "Register a New Journey",
-    
     // Tourist Experiences
     touristExperiences: "Tourist Experiences",
     previousTourists: "What Our Tourists Say",
@@ -40,6 +38,8 @@ const translations = {
     
     // Registration Form
     fullName: "Full Name",
+    phoneNumber: "Phone Number",
+    emailAddress: "Email Address",
     contactInfo: "Phone Number or Email (choose one)",
     nationality: "Nationality",
     specialNeeds: "Any special needs or medical conditions?",
@@ -57,6 +57,12 @@ const translations = {
     assignSchedule: "Assign Schedule",
     packageManagement: "Package Management",
     managePackages: "Manage Tourist Packages",
+    addTouristSchedule: "Add Tourist Schedule",
+    tourType: "Tour Type",
+    tourName: "Tour Name", 
+    tourLocation: "Tour Location",
+    tourDuration: "Tour Duration",
+    tourDescription: "Tour Description",
     guideNotes: "Guide Notes",
     addNotes: "Add Notes",
     setLocation: "Set Location",
@@ -197,7 +203,7 @@ const translations = {
     adminResponse: "Admin Response",
     assignGuide: "Assign Guide",
     tourAssignments: "Tour Assignments",
-    tourName: "Tour Name",
+    tourNameField: "Tour Name",
     startDate: "Start Date",
     endDate: "End Date",
     
@@ -225,7 +231,7 @@ const translations = {
     createTouristAccount: "Create Tourist Account",
     joinAlUla: "Join AlUla Journey today",
     welcomeBack: "Welcome back to AlUla Journey",
-    emailAddress: "Email Address",
+    emailAddressField: "Email Address",
     enterEmail: "your.email@example.com",
     enterPassword: "Enter your password",
     confirmPassword: "Confirm Password",
@@ -332,8 +338,6 @@ const translations = {
     viewMap: "عرض مواقع الرحلة",
     suggestedPlaces: "أماكن مقترحة للزيارة",
     rateGuide: "قيّم مرشدك",
-    registerJourney: "تسجيل رحلة جديدة",
-    
     // Tourist Experiences
     touristExperiences: "تجارب السياح",
     previousTourists: "ماذا يقول سياحنا",
@@ -342,6 +346,8 @@ const translations = {
     
     // Registration Form
     fullName: "الاسم الكامل",
+    phoneNumber: "رقم الهاتف",
+    emailAddress: "البريد الإلكتروني",
     contactInfo: "رقم الجوال أو البريد الإلكتروني (اختر أحدهما)",
     nationality: "الجنسية",
     specialNeeds: "هل لديك احتياجات أو حالات صحية خاصة؟",
@@ -359,6 +365,12 @@ const translations = {
     assignSchedule: "تعيين الجدولة",
     packageManagement: "إدارة الحزم",
     managePackages: "إدارة حزم السياح",
+    addTouristSchedule: "إضافة جدولة سائح",
+    tourType: "نوع الجولة",
+    tourName: "اسم الجولة",
+    tourLocation: "موقع الجولة", 
+    tourDuration: "مدة الجولة",
+    tourDescription: "وصف الجولة",
     guideNotes: "ملاحظات المرشد",
     addNotes: "إضافة ملاحظات",
     setLocation: "تحديد الموقع",
@@ -499,7 +511,7 @@ const translations = {
     adminResponse: "رد المدير",
     assignGuide: "تعيين مرشد",
     tourAssignments: "تكليفات الجولات",
-    tourName: "اسم الجولة",
+    tourNameField: "اسم الجولة",
     startDate: "تاريخ البداية",
     endDate: "تاريخ النهاية",
     
@@ -527,7 +539,7 @@ const translations = {
     createTouristAccount: "إنشاء حساب سائح",
     joinAlUla: "انضم إلى رحلة العُلا اليوم",
     welcomeBack: "مرحباً بعودتك إلى رحلة العُلا",
-    emailAddress: "عنوان البريد الإلكتروني",
+    emailAddressField: "عنوان البريد الإلكتروني",
     enterEmail: "your.email@example.com",
     enterPassword: "أدخل كلمة المرور",
     confirmPassword: "تأكيد كلمة المرور",

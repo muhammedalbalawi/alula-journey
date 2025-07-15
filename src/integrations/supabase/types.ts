@@ -487,6 +487,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           nationality: string | null
+          phone_number: string | null
           special_needs: string | null
           updated_at: string | null
           user_type: string
@@ -500,6 +501,7 @@ export type Database = {
           id: string
           is_active?: boolean | null
           nationality?: string | null
+          phone_number?: string | null
           special_needs?: string | null
           updated_at?: string | null
           user_type: string
@@ -513,6 +515,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           nationality?: string | null
+          phone_number?: string | null
           special_needs?: string | null
           updated_at?: string | null
           user_type?: string
@@ -655,6 +658,7 @@ export type Database = {
           latitude: number | null
           location_name: string | null
           longitude: number | null
+          share_with_world: boolean | null
           updated_at: string
           user_id: string
         }
@@ -669,6 +673,7 @@ export type Database = {
           latitude?: number | null
           location_name?: string | null
           longitude?: number | null
+          share_with_world?: boolean | null
           updated_at?: string
           user_id: string
         }
@@ -683,6 +688,7 @@ export type Database = {
           latitude?: number | null
           location_name?: string | null
           longitude?: number | null
+          share_with_world?: boolean | null
           updated_at?: string
           user_id?: string
         }

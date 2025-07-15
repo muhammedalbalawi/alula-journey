@@ -58,7 +58,7 @@ export const TouristView: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [touristId, setTouristId] = useState('');
   const [userSession, setUserSession] = useState<any>(null);
-  const [showRegistration, setShowRegistration] = useState(false);
+  
   const [showRating, setShowRating] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [showExperiences, setShowExperiences] = useState(false);
@@ -70,12 +70,6 @@ export const TouristView: React.FC = () => {
     date: undefined as Date | undefined,
     time: '',
     notes: ''
-  });
-  const [registrationData, setRegistrationData] = useState({
-    fullName: '',
-    contact: '',
-    nationality: '',
-    specialNeeds: ''
   });
   const [assignedGuide, setAssignedGuide] = useState<any>(null);
   const [tourAssignment, setTourAssignment] = useState<any>(null);
@@ -456,19 +450,6 @@ export const TouristView: React.FC = () => {
     }
   };
 
-  const handleRegistration = () => {
-    setShowRegistration(false);
-    toast({
-      title: t('success'),
-      description: t('registrationSuccess')
-    });
-    setRegistrationData({
-      fullName: '',
-      contact: '',
-      nationality: '',
-      specialNeeds: ''
-    });
-  };
 
   const handleRating = () => {
     setShowRating(false);
@@ -561,51 +542,6 @@ export const TouristView: React.FC = () => {
           <div className="flex justify-center">
             <div className="w-full max-w-md space-y-6 animate-slide-up">
               <TouristPasswordLogin onLoginSuccess={handleOTPLoginSuccess} />
-
-              {/* Registration Button */}
-              <Card className="glass-card hover:shadow-float transition-all duration-300 hover:-translate-y-1">
-                <CardContent className="pt-6">
-                  <Dialog open={showRegistration} onOpenChange={setShowRegistration}>
-                    <DialogTrigger asChild>
-                      <Button variant="outline" className="w-full flex items-center space-x-2 rtl:space-x-reverse glass-effect hover:shadow-desert transition-all duration-300">
-                        <Plus className="w-4 h-4" />
-                        <span>{t('registerJourney')}</span>
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-md">
-                      <DialogHeader>
-                        <DialogTitle>{t('registerJourney')}</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4 pt-4">
-                        <Input
-                          placeholder={t('fullName')}
-                          value={registrationData.fullName}
-                          onChange={(e) => setRegistrationData({...registrationData, fullName: e.target.value})}
-                        />
-                        <Input
-                          placeholder={t('contactInfo')}
-                          value={registrationData.contact}
-                          onChange={(e) => setRegistrationData({...registrationData, contact: e.target.value})}
-                        />
-                        <Input
-                          placeholder={t('nationality')}
-                          value={registrationData.nationality}
-                          onChange={(e) => setRegistrationData({...registrationData, nationality: e.target.value})}
-                        />
-                        <Textarea
-                          placeholder={t('specialNeeds')}
-                          value={registrationData.specialNeeds}
-                          onChange={(e) => setRegistrationData({...registrationData, specialNeeds: e.target.value})}
-                          className="min-h-[80px]"
-                        />
-                        <Button onClick={handleRegistration} className="w-full">
-                          {t('submit')}
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </CardContent>
-              </Card>
             </div>
           </div>
         </div>
