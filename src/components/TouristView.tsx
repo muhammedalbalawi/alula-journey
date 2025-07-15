@@ -73,6 +73,8 @@ export const TouristView: React.FC = () => {
   });
   const [selectedActivity, setSelectedActivity] = useState<any>(null);
   const [showActivityReschedule, setShowActivityReschedule] = useState(false);
+  const [guideRating, setGuideRating] = useState(0);
+  const [userGuideRating, setUserGuideRating] = useState<any>(null);
   const [assignedGuide, setAssignedGuide] = useState<any>(null);
   const [tourAssignment, setTourAssignment] = useState<any>(null);
   const [guideRequest, setGuideRequest] = useState<any>(null);
@@ -569,6 +571,123 @@ export const TouristView: React.FC = () => {
     }
   };
 
+  const handleGuideRating = async (rating: number) => {
+    if (!assignedGuide || !userSession?.user?.id) {
+      toast({
+        title: t('error'),
+        description: 'Please log in to rate your guide.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      // Check if user has already rated this guide
+      const { data: existingRating, error: fetchError } = await supabase
+        .from('guide_ratings')
+        .select('*')
+        .eq('tourist_id', userSession.user.id)
+        .eq('guide_id', assignedGuide.id)
+        .single();
+
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        throw fetchError;
+      }
+
+      if (existingRating) {
+        // Update existing rating
+        const { error: updateError } = await supabase
+          .from('guide_ratings')
+          .update({ 
+            rating: rating,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingRating.id);
+
+        if (updateError) throw updateError;
+      } else {
+        // Create new rating
+        const { error: insertError } = await supabase
+          .from('guide_ratings')
+          .insert({
+            tourist_id: userSession.user.id,
+            guide_id: assignedGuide.id,
+            rating: rating,
+            tour_assignment_id: tourAssignment?.id
+          });
+
+        if (insertError) throw insertError;
+      }
+
+      setGuideRating(rating);
+      
+      // Update guide's average rating
+      await updateGuideAverageRating(assignedGuide.id);
+      
+      toast({
+        title: t('success'),
+        description: `You rated your guide ${rating} star${rating > 1 ? 's' : ''}!`
+      });
+
+    } catch (error: any) {
+      console.error('Error submitting guide rating:', error);
+      toast({
+        title: t('error'),
+        description: 'Failed to submit rating. Please try again.',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const updateGuideAverageRating = async (guideId: string) => {
+    try {
+      // Calculate new average rating for the guide
+      const { data: ratings, error: ratingsError } = await supabase
+        .from('guide_ratings')
+        .select('rating')
+        .eq('guide_id', guideId);
+
+      if (ratingsError) throw ratingsError;
+
+      if (ratings && ratings.length > 0) {
+        const averageRating = ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length;
+        
+        // Update guide's rating in guides table
+        const { error: updateError } = await supabase
+          .from('guides')
+          .update({ rating: parseFloat(averageRating.toFixed(1)) })
+          .eq('id', guideId);
+
+        if (updateError) throw updateError;
+      }
+    } catch (error: any) {
+      console.error('Error updating guide average rating:', error);
+    }
+  };
+
+  const fetchUserGuideRating = async () => {
+    if (!assignedGuide || !userSession?.user?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('guide_ratings')
+        .select('rating')
+        .eq('tourist_id', userSession.user.id)
+        .eq('guide_id', assignedGuide.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      if (data) {
+        setGuideRating(data.rating);
+      }
+    } catch (error: any) {
+      console.error('Error fetching user guide rating:', error);
+    }
+  };
+
   const openWhatsApp = () => {
     window.open('https://wa.me/966581828132', '_blank');
   };
@@ -724,6 +843,31 @@ export const TouristView: React.FC = () => {
                 </div>
                 
                 <div className="flex flex-wrap gap-2">
+                  {/* Guide Rating Component */}
+                  <div className="bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-950/20 dark:to-amber-950/20 rounded-lg p-3 border border-yellow-200 dark:border-yellow-800 flex-1 min-w-[200px]">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-foreground">Rate Your Guide</span>
+                      <div className="flex items-center space-x-1">
+                        <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                        <span className="text-sm text-muted-foreground">{assignedGuide.rating || 0}/5</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-1 mb-2">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={`w-5 h-5 cursor-pointer transition-colors ${
+                            star <= (guideRating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300 hover:text-yellow-300'
+                          }`}
+                          onClick={() => handleGuideRating(star)}
+                        />
+                      ))}
+                    </div>
+                    {guideRating > 0 && (
+                      <p className="text-xs text-muted-foreground">Thank you for rating your guide!</p>
+                    )}
+                  </div>
+                  
                   <Button 
                     variant="outline" 
                     size="sm"
