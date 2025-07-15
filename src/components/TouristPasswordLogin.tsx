@@ -73,7 +73,7 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
       return false;
     }
 
-    if (loginState.isSignUp && !loginState.phoneNumber.trim()) {
+    if (loginState.isSignUp && loginState.method === 'phone' && !loginState.identifier.trim()) {
       toast({
         title: t('missingInfo'),
         description: 'Please enter your phone number.',
