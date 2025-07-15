@@ -201,6 +201,18 @@ export const GuideView: React.FC = () => {
           fetchAssignedTourists();
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'activities',
+          filter: `tour_guide_id=eq.${currentGuide?.id}`
+        },
+        () => {
+          fetchActivities();
+        }
+      )
       .subscribe();
 
     return () => {
@@ -436,11 +448,41 @@ export const GuideView: React.FC = () => {
       return;
     }
 
+    if (!selectedTourist) {
+      toast({
+        title: t('error'),
+        description: 'Please select a tourist first',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     try {
+      // Get the tour assignment for the selected tourist
+      const { data: assignment, error: assignmentError } = await supabase
+        .from('tour_assignments')
+        .select('id')
+        .eq('tourist_id', selectedTourist)
+        .eq('guide_id', currentGuide?.id)
+        .eq('status', 'active')
+        .single();
+
+      if (assignmentError) {
+        console.error('Assignment error:', assignmentError);
+        toast({
+          title: t('error'),
+          description: 'No active tour assignment found for this tourist',
+          variant: 'destructive'
+        });
+        return;
+      }
+
       const { data, error } = await supabase
         .from('activities')
         .insert({
           tour_guide_id: currentGuide?.id,
+          tourist_id: selectedTourist,
+          tour_assignment_id: assignment.id,
           activity_name: newActivity.activity,
           category: newActivity.category,
           location_name: newActivity.location,

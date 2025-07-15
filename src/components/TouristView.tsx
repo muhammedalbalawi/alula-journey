@@ -269,7 +269,8 @@ export const TouristView: React.FC = () => {
           {
             event: '*',
             schema: 'public',
-            table: 'activities'
+            table: 'activities',
+            filter: `tourist_id=eq.${userSession?.user?.id}`
           },
           () => {
             fetchTourActivities();
