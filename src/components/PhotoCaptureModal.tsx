@@ -54,70 +54,90 @@ export function PhotoCaptureModal({ children }: PhotoCaptureModalProps) {
   };
 
   const handleSubmit = async () => {
-    if (selectedPhoto && comment.trim()) {
-      try {
-        const { data: user } = await supabase.auth.getUser();
-        if (!user.user) throw new Error('Not authenticated');
+    if (!selectedPhoto || !comment.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please add a photo and comment',
+        variant: 'destructive'
+      });
+      return;
+    }
 
-        const fileExt = selectedPhoto.name.split('.').pop();
-        const fileName = `${Date.now()}.${fileExt}`;
-        const filePath = `${user.user.id}/${fileName}`;
-
-        // Upload file to storage
-        const { error: uploadError } = await supabase.storage
-          .from('tourist-photos')
-          .upload(filePath, selectedPhoto);
-
-        if (uploadError) throw uploadError;
-
-        // Save photo metadata to database
-        const { data: photoData, error: dbError } = await supabase
-          .from('tourist_photos')
-          .insert({
-            user_id: user.user.id,
-            file_path: filePath,
-            file_name: selectedPhoto.name,
-            file_size: selectedPhoto.size,
-            content_type: selectedPhoto.type,
-            caption: comment.trim(),
-            share_with_world: shareWithWorld
-          })
-          .select()
-          .single();
-
-        if (dbError) throw dbError;
-
-        // If user chose to share with world, also add to tourist_experiences
-        if (shareWithWorld && photoData) {
-          const { error: experienceError } = await supabase
-            .from('tourist_experiences')
-            .insert({
-              user_id: user.user.id,
-              photo_id: photoData.id,
-              comment: comment.trim(),
-              location_name: photoData.location_name,
-            });
-
-          if (experienceError) {
-            console.error('Error adding to tourist experiences:', experienceError);
-            // Don't throw here - photo was saved successfully
-          }
-        }
-
-        toast({
-          title: t('success'),
-          description: shareWithWorld ? 'Photo shared with the world successfully!' : 'Photo saved successfully!'
-        });
-        setOpen(false);
-        resetModal();
-      } catch (error) {
-        console.error('Error saving photo:', error);
+    try {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) {
         toast({
           title: 'Error',
-          description: 'Failed to save photo and comment',
+          description: 'You must be logged in to upload photos',
           variant: 'destructive'
         });
+        return;
       }
+
+      const fileExt = selectedPhoto.name.split('.').pop();
+      const fileName = `${Date.now()}.${fileExt}`;
+      const filePath = `${user.user.id}/${fileName}`;
+
+      // Upload file to storage
+      const { error: uploadError } = await supabase.storage
+        .from('tourist-photos')
+        .upload(filePath, selectedPhoto);
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw new Error(`Upload failed: ${uploadError.message}`);
+      }
+
+      // Save photo metadata to database
+      const { data: photoData, error: dbError } = await supabase
+        .from('tourist_photos')
+        .insert({
+          user_id: user.user.id,
+          file_path: filePath,
+          file_name: selectedPhoto.name,
+          file_size: selectedPhoto.size,
+          content_type: selectedPhoto.type,
+          caption: comment.trim(),
+          share_with_world: shareWithWorld
+        })
+        .select()
+        .single();
+
+      if (dbError) {
+        console.error('Database error:', dbError);
+        throw new Error(`Database error: ${dbError.message}`);
+      }
+
+      // If user chose to share with world, also add to tourist_experiences
+      if (shareWithWorld && photoData) {
+        const { error: experienceError } = await supabase
+          .from('tourist_experiences')
+          .insert({
+            user_id: user.user.id,
+            photo_id: photoData.id,
+            comment: comment.trim(),
+            location_name: photoData.location_name,
+          });
+
+        if (experienceError) {
+          console.error('Error adding to tourist experiences:', experienceError);
+          // Don't throw here - photo was saved successfully
+        }
+      }
+
+      toast({
+        title: t('success'),
+        description: shareWithWorld ? 'Photo shared with the world successfully!' : 'Photo saved successfully!'
+      });
+      setOpen(false);
+      resetModal();
+    } catch (error) {
+      console.error('Error saving photo:', error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to save photo and comment',
+        variant: 'destructive'
+      });
     }
   };
 

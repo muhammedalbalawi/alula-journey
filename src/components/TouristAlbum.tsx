@@ -52,6 +52,27 @@ export const TouristAlbum = () => {
 
   useEffect(() => {
     fetchPhotos();
+    
+    // Set up real-time subscription for photo updates
+    const channel = supabase
+      .channel('tourist_photos_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tourist_photos'
+        },
+        (payload) => {
+          console.log('Photo change detected:', payload);
+          fetchPhotos();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchPhotos = async () => {
