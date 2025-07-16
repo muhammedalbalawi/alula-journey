@@ -708,6 +708,50 @@ export type Database = {
           },
         ]
       }
+      tourist_experiences: {
+        Row: {
+          comment: string
+          created_at: string
+          destinations: string[] | null
+          id: string
+          location_name: string | null
+          photo_id: string
+          rating: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          destinations?: string[] | null
+          id?: string
+          location_name?: string | null
+          photo_id: string
+          rating?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          destinations?: string[] | null
+          id?: string
+          location_name?: string | null
+          photo_id?: string
+          rating?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tourist_experiences_photo_id_fkey"
+            columns: ["photo_id"]
+            isOneToOne: false
+            referencedRelation: "tourist_photos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tourist_photos: {
         Row: {
           caption: string | null

@@ -164,6 +164,7 @@ const translations = {
     capturePhoto: "Capture Your Moment",
     uploadOrTakePhoto: "Upload or Take a Photo",
     photoUploaded: "Photo uploaded successfully!",
+    shareWithWorld: "Share with the world",
     
     // Reschedule
     reschedule: "Reschedule",
@@ -473,6 +474,7 @@ const translations = {
     capturePhoto: "التقط لحظتك",
     uploadOrTakePhoto: "ارفع أو التقط صورة",
     photoUploaded: "تم رفع الصورة بنجاح!",
+    shareWithWorld: "شارك مع العالم",
     
     // Reschedule
     reschedule: "إعادة جدولة",

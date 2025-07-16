@@ -71,7 +71,7 @@ export function PhotoCaptureModal({ children }: PhotoCaptureModalProps) {
         if (uploadError) throw uploadError;
 
         // Save photo metadata to database
-        const { error: dbError } = await supabase
+        const { data: photoData, error: dbError } = await supabase
           .from('tourist_photos')
           .insert({
             user_id: user.user.id,
@@ -81,13 +81,32 @@ export function PhotoCaptureModal({ children }: PhotoCaptureModalProps) {
             content_type: selectedPhoto.type,
             caption: comment.trim(),
             share_with_world: shareWithWorld
-          });
+          })
+          .select()
+          .single();
 
         if (dbError) throw dbError;
 
+        // If user chose to share with world, also add to tourist_experiences
+        if (shareWithWorld && photoData) {
+          const { error: experienceError } = await supabase
+            .from('tourist_experiences')
+            .insert({
+              user_id: user.user.id,
+              photo_id: photoData.id,
+              comment: comment.trim(),
+              location_name: photoData.location_name,
+            });
+
+          if (experienceError) {
+            console.error('Error adding to tourist experiences:', experienceError);
+            // Don't throw here - photo was saved successfully
+          }
+        }
+
         toast({
           title: t('success'),
-          description: 'Photo and comment saved successfully!'
+          description: shareWithWorld ? 'Photo shared with the world successfully!' : 'Photo saved successfully!'
         });
         setOpen(false);
         resetModal();
