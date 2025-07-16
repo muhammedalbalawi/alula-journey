@@ -1303,7 +1303,7 @@ export const TouristView: React.FC = () => {
               <CardContent className="pt-6 space-y-3">
                 <Button onClick={openWhatsApp} className="w-full flex items-center space-x-2 rtl:space-x-reverse transition-all duration-200 hover:-translate-y-0.5" variant="desert">
                   <MessageCircle className="w-4 h-4" />
-                  <span>{t('contactGuide')}</span>
+                  <span>{t('contactUs')}</span>
                 </Button>
                 <Button variant="outline" className="w-full flex items-center space-x-2 rtl:space-x-reverse glass-effect hover:shadow-card transition-all duration-200">
                   <Download className="w-4 h-4" />
