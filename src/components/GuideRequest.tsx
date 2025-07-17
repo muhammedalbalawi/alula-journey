@@ -217,11 +217,11 @@ export function GuideRequest({ userId }: GuideRequestProps) {
                   </div>
 
                   {request.status === 'approved' && request.guides && (
-                    <div className="bg-green-50 dark:bg-green-950/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
-                      <p className="text-sm font-medium text-green-800 dark:text-green-200 mb-2">
+                    <div className="bg-accent/20 p-3 rounded-lg border border-accent/30">
+                      <p className="text-sm font-medium text-accent-foreground mb-2">
                         Assigned Guide:
                       </p>
-                      <div className="text-sm text-green-700 dark:text-green-300">
+                      <div className="text-sm text-accent-foreground/80">
                         <p><strong>Name:</strong> {request.guides.name}</p>
                         <p><strong>Email:</strong> {request.guides.email}</p>
                         <p><strong>Phone:</strong> {request.guides.phone}</p>

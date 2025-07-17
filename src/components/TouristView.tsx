@@ -817,14 +817,14 @@ export const TouristView: React.FC = () => {
           <CardContent>
             {assignedGuide ? (
               <div className="space-y-4">
-                <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-lg border border-green-200 dark:border-green-800">
+                <div className="p-4 bg-gradient-to-r from-accent/20 to-accent/10 rounded-lg border border-accent/30">
                   <div className="flex items-start justify-between">
                     <div className="space-y-3 flex-1">
                       <div>
                         <h3 className="text-lg font-semibold text-foreground mb-1">
                           {assignedGuide.name || 'Professional Guide'}
                         </h3>
-                        <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700">
+                        <Badge variant="outline" className="bg-accent/10 text-accent-foreground border-accent/30">
                           Assigned
                         </Badge>
                       </div>
@@ -868,7 +868,7 @@ export const TouristView: React.FC = () => {
                 
                 <div className="flex flex-wrap gap-2">
                   {/* Guide Rating Component */}
-                  <div className="bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-950/20 dark:to-amber-950/20 rounded-lg p-3 border border-yellow-200 dark:border-yellow-800 flex-1 min-w-[200px]">
+                  <div className="bg-gradient-to-r from-secondary/50 to-secondary/20 rounded-lg p-3 border border-secondary flex-1 min-w-[200px]">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium text-foreground">Rate Your Guide</span>
                       <div className="flex items-center space-x-1">
@@ -1051,7 +1051,7 @@ export const TouristView: React.FC = () => {
           <CardContent>
             {tourActivities.length === 0 ? (
               <div className="text-center py-8">
-                <div className="p-4 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                <div className="p-4 bg-gradient-to-r from-heritage-amber/20 to-heritage-amber/10 rounded-lg border border-heritage-amber/30">
                   <Table className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
                   <h3 className="text-lg font-semibold text-foreground mb-2">
                     No Activities Scheduled Yet

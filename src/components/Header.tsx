@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Globe, User, UserCheck } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 interface HeaderProps {
   currentView: 'tourist' | 'guide';
@@ -63,6 +64,9 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onViewChange }) => 
               <Globe className="w-4 h-4" />
               <span>{t('language')}</span>
             </Button>
+
+            {/* Theme Toggle */}
+            <ThemeToggle />
           </div>
         </div>
       </div>
