@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import TourGuide from "./pages/TourGuide";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
+import Confirmed from "./pages/Confirmed";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +21,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/guide" element={<TourGuide />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/confirmed" element={<Confirmed />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
