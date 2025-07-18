@@ -252,7 +252,7 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
             </TabsTrigger>
             <TabsTrigger value="phone" className="flex items-center space-x-2">
               <Phone className="w-4 h-4" />
-              <span>{t('phoneComingSoon')}</span>
+              <span>Phone</span>
             </TabsTrigger>
           </TabsList>
 
