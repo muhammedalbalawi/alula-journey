@@ -18,7 +18,8 @@ import {
   X,
   MessageSquare,
   UserPlus,
-  Car
+  Car,
+  RefreshCw
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DriverRegistration } from './DriverRegistration';
@@ -131,6 +132,11 @@ export const AdminView: React.FC = () => {
   // Edit guide states
   const [editingGuide, setEditingGuide] = useState<string | null>(null);
   const [editGuideData, setEditGuideData] = useState<any>(null);
+
+  // Reassignment states
+  const [reassignmentDialogOpen, setReassignmentDialogOpen] = useState(false);
+  const [reassignmentAssignmentId, setReassignmentAssignmentId] = useState<string>('');
+  const [reassignmentNewGuideId, setReassignmentNewGuideId] = useState<string>('');
 
   // Fetch data from database
   useEffect(() => {
@@ -542,6 +548,58 @@ export const AdminView: React.FC = () => {
     });
   };
 
+  const handleReassignGuide = async () => {
+    if (!reassignmentAssignmentId || !reassignmentNewGuideId) {
+      toast({
+        title: 'Error',
+        description: 'Please select a new guide',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('tour_assignments')
+        .update({ guide_id: reassignmentNewGuideId })
+        .eq('id', reassignmentAssignmentId);
+
+      if (error) throw error;
+
+      // Update local state for immediate UI response
+      setAssignments(prev => prev.map(assignment => 
+        assignment.id === reassignmentAssignmentId 
+          ? { ...assignment, guideId: reassignmentNewGuideId }
+          : assignment
+      ));
+
+      toast({
+        title: 'Success',
+        description: 'Tour guide reassigned successfully!'
+      });
+
+      // Reset dialog state
+      setReassignmentDialogOpen(false);
+      setReassignmentAssignmentId('');
+      setReassignmentNewGuideId('');
+
+      // Refresh data
+      fetchAssignments();
+    } catch (error: any) {
+      console.error('Error reassigning guide:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to reassign guide',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const openReassignmentDialog = (assignmentId: string) => {
+    setReassignmentAssignmentId(assignmentId);
+    setReassignmentDialogOpen(true);
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
@@ -783,14 +841,25 @@ export const AdminView: React.FC = () => {
                       </div>
                       <div className="flex flex-col items-end space-y-2">
                         {getStatusBadge(assignment.status)}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => removeAssignment(assignment.id)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
+                        <div className="flex space-x-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openReassignmentDialog(assignment.id)}
+                            className="text-blue-600 hover:text-blue-700"
+                            title="Reassign Guide"
+                          >
+                            <RefreshCw className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => removeAssignment(assignment.id)}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                     
@@ -1195,6 +1264,44 @@ export const AdminView: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Guide Reassignment Dialog */}
+        <Dialog open={reassignmentDialogOpen} onOpenChange={setReassignmentDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Reassign Tour Guide</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Select New Guide</label>
+                <Select value={reassignmentNewGuideId} onValueChange={setReassignmentNewGuideId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a new guide" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {guides.filter(g => g.status === 'available').map((guide) => (
+                      <SelectItem key={guide.id} value={guide.id}>
+                        {guide.name} - ⭐ {guide.rating} ({guide.specializations.join(', ')})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setReassignmentDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleReassignGuide}>
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Reassign Guide
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
