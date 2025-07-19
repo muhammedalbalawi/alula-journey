@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -137,6 +138,10 @@ export const AdminView: React.FC = () => {
   const [reassignmentDialogOpen, setReassignmentDialogOpen] = useState(false);
   const [reassignmentAssignmentId, setReassignmentAssignmentId] = useState<string>('');
   const [reassignmentNewGuideId, setReassignmentNewGuideId] = useState<string>('');
+  const [reassignmentTouristId, setReassignmentTouristId] = useState<string>('');
+
+  // Search functionality
+  const [searchTerm, setSearchTerm] = useState<string>('');
 
   // Fetch data from database
   useEffect(() => {
@@ -549,7 +554,7 @@ export const AdminView: React.FC = () => {
   };
 
   const handleReassignGuide = async () => {
-    if (!reassignmentAssignmentId || !reassignmentNewGuideId) {
+    if (!reassignmentNewGuideId || !reassignmentTouristId) {
       toast({
         title: 'Error',
         description: 'Please select a new guide',
@@ -559,46 +564,94 @@ export const AdminView: React.FC = () => {
     }
 
     try {
-      const { error } = await supabase
-        .from('tour_assignments')
-        .update({ guide_id: reassignmentNewGuideId })
-        .eq('id', reassignmentAssignmentId);
+      // Find existing assignment for this tourist
+      const existingAssignment = assignments.find(a => a.touristId === reassignmentTouristId);
+      
+      if (existingAssignment) {
+        // Update existing assignment
+        const { error } = await supabase
+          .from('tour_assignments')
+          .update({ guide_id: reassignmentNewGuideId })
+          .eq('id', existingAssignment.id);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      // Update local state for immediate UI response
-      setAssignments(prev => prev.map(assignment => 
-        assignment.id === reassignmentAssignmentId 
-          ? { ...assignment, guideId: reassignmentNewGuideId }
-          : assignment
-      ));
+        // Update local state
+        setAssignments(prev => prev.map(assignment => 
+          assignment.id === existingAssignment.id 
+            ? { ...assignment, guideId: reassignmentNewGuideId }
+            : assignment
+        ));
+      } else {
+        // Create new assignment if none exists
+        const { data, error } = await supabase
+          .from('tour_assignments')
+          .insert([{
+            tourist_id: reassignmentTouristId,
+            guide_id: reassignmentNewGuideId,
+            tour_name: 'AlUla Heritage Tour',
+            start_date: new Date().toISOString().split('T')[0],
+            end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            status: 'active'
+          }])
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        // Add to local state
+        const newAssignment: Assignment = {
+          id: data.id,
+          touristId: reassignmentTouristId,
+          guideId: reassignmentNewGuideId,
+          tourName: 'AlUla Heritage Tour',
+          startDate: data.start_date,
+          endDate: data.end_date,
+          status: 'active',
+          createdAt: new Date().toISOString()
+        };
+
+        setAssignments(prev => [...prev, newAssignment]);
+      }
 
       toast({
         title: 'Success',
-        description: 'Tour guide reassigned successfully!'
+        description: 'Tour guide assigned successfully!'
       });
 
       // Reset dialog state
       setReassignmentDialogOpen(false);
-      setReassignmentAssignmentId('');
+      setReassignmentTouristId('');
       setReassignmentNewGuideId('');
 
       // Refresh data
       fetchAssignments();
+      fetchGuideRequests();
     } catch (error: any) {
       console.error('Error reassigning guide:', error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to reassign guide',
+        description: error.message || 'Failed to assign guide',
         variant: 'destructive'
       });
     }
   };
 
-  const openReassignmentDialog = (assignmentId: string) => {
-    setReassignmentAssignmentId(assignmentId);
+  const openTouristReassignmentDialog = (touristId: string) => {
+    setReassignmentTouristId(touristId);
     setReassignmentDialogOpen(true);
   };
+
+  // Filter guide requests based on search term
+  const filteredGuideRequests = guideRequests.filter(request => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      request.profiles?.full_name?.toLowerCase().includes(searchLower) ||
+      request.profiles?.contact_info?.toLowerCase().includes(searchLower) ||
+      request.profiles?.nationality?.toLowerCase().includes(searchLower) ||
+      request.request_message?.toLowerCase().includes(searchLower)
+    );
+  });
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -845,7 +898,7 @@ export const AdminView: React.FC = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => openReassignmentDialog(assignment.id)}
+                            onClick={() => openTouristReassignmentDialog(assignment.touristId)}
                             className="text-blue-600 hover:text-blue-700"
                             title="Reassign Guide"
                           >
@@ -1145,17 +1198,27 @@ export const AdminView: React.FC = () => {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <MessageSquare className="w-5 h-5" />
-              <span>Guide Requests</span>
+              <span>Guide Requests & Tourist Management</span>
             </CardTitle>
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                placeholder="Search tourists by name, contact, nationality..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {guideRequests.length === 0 ? (
+              {filteredGuideRequests.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">
-                  No guide requests found.
+                  {searchTerm ? 'No tourists found matching your search.' : 'No guide requests found.'}
                 </p>
               ) : (
-                guideRequests.map((request) => (
+                filteredGuideRequests.map((request) => (
                   <Card key={request.id} className="border border-muted/50">
                     <CardContent className="pt-4">
                       <div className="space-y-4">
@@ -1179,32 +1242,74 @@ export const AdminView: React.FC = () => {
                               </div>
                             </div>
                           </div>
-                          {request.status === 'pending' && (
-                            <Badge variant="secondary" className="flex items-center">
-                              <Clock className="w-3 h-3 mr-1" />
-                              Pending
-                            </Badge>
-                          )}
-                          {request.status === 'approved' && (
-                            <Badge variant="default" className="bg-green-600 flex items-center">
-                              <CheckCircle className="w-3 h-3 mr-1" />
-                              Approved
-                            </Badge>
-                          )}
-                          {request.status === 'rejected' && (
-                            <Badge variant="destructive" className="flex items-center">
-                              <X className="w-3 h-3 mr-1" />
-                              Rejected
-                            </Badge>
-                          )}
+                          <div className="flex items-center space-x-2">
+                            {/* Reassign Guide Button */}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openTouristReassignmentDialog(request.tourist_id)}
+                              className="text-blue-600 hover:text-blue-700"
+                              title="Assign/Reassign Guide"
+                            >
+                              <RefreshCw className="w-3 h-3 mr-1" />
+                              {assignments.find(a => a.touristId === request.tourist_id) ? 'Reassign' : 'Assign'} Guide
+                            </Button>
+                            
+                            {request.status === 'pending' && (
+                              <Badge variant="secondary" className="flex items-center">
+                                <Clock className="w-3 h-3 mr-1" />
+                                Pending
+                              </Badge>
+                            )}
+                            {request.status === 'approved' && (
+                              <Badge variant="default" className="bg-green-600 flex items-center">
+                                <CheckCircle className="w-3 h-3 mr-1" />
+                                Approved
+                              </Badge>
+                            )}
+                            {request.status === 'rejected' && (
+                              <Badge variant="destructive" className="flex items-center">
+                                <X className="w-3 h-3 mr-1" />
+                                Rejected
+                              </Badge>
+                            )}
+                          </div>
                         </div>
+                        {/* Current Assignment Info */}
+                        {(() => {
+                          const currentAssignment = assignments.find(a => a.touristId === request.tourist_id);
+                          if (currentAssignment) {
+                            const assignedGuide = guides.find(g => g.id === currentAssignment.guideId);
+                            return (
+                              <div className="mt-3 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <p className="text-sm font-medium text-blue-800">Currently Assigned Guide:</p>
+                                    <p className="text-sm text-blue-600">
+                                      {assignedGuide?.name || 'Unknown Guide'} - {currentAssignment.tourName}
+                                    </p>
+                                    <p className="text-xs text-blue-500">
+                                      {currentAssignment.startDate} to {currentAssignment.endDate}
+                                    </p>
+                                  </div>
+                                  <Badge className="bg-blue-100 text-blue-800">
+                                    {currentAssignment.status}
+                                  </Badge>
+                                </div>
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
 
-                        <div>
-                          <p className="text-sm font-medium mb-1">Request Message:</p>
-                          <p className="text-sm text-muted-foreground bg-muted/30 p-3 rounded">
-                            {request.request_message}
-                          </p>
-                        </div>
+                        {request.request_message && (
+                          <div>
+                            <p className="text-sm font-medium mb-1">Request Message:</p>
+                            <p className="text-sm text-muted-foreground bg-muted/30 p-3 rounded">
+                              {request.request_message}
+                            </p>
+                          </div>
+                        )}
 
                         {request.status === 'approved' && request.guides && (
                           <div className="bg-accent/20 p-3 rounded-lg border border-accent/30">
@@ -1265,18 +1370,31 @@ export const AdminView: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Guide Reassignment Dialog */}
+        {/* Guide Assignment/Reassignment Dialog */}
         <Dialog open={reassignmentDialogOpen} onOpenChange={setReassignmentDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Reassign Tour Guide</DialogTitle>
+              <DialogTitle>
+                {assignments.find(a => a.touristId === reassignmentTouristId) ? 'Reassign Tour Guide' : 'Assign Tour Guide'}
+              </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
+              {/* Tourist Info */}
+              {(() => {
+                const tourist = filteredGuideRequests.find(r => r.tourist_id === reassignmentTouristId);
+                return tourist ? (
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="font-medium">{tourist.profiles?.full_name}</p>
+                    <p className="text-sm text-muted-foreground">{tourist.profiles?.contact_info}</p>
+                  </div>
+                ) : null;
+              })()}
+
               <div className="space-y-2">
-                <label className="text-sm font-medium">Select New Guide</label>
+                <label className="text-sm font-medium">Select Guide</label>
                 <Select value={reassignmentNewGuideId} onValueChange={setReassignmentNewGuideId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Choose a new guide" />
+                    <SelectValue placeholder="Choose a guide" />
                   </SelectTrigger>
                   <SelectContent>
                     {guides.filter(g => g.status === 'available').map((guide) => (
@@ -1290,13 +1408,17 @@ export const AdminView: React.FC = () => {
               <div className="flex justify-end space-x-2">
                 <Button 
                   variant="outline" 
-                  onClick={() => setReassignmentDialogOpen(false)}
+                  onClick={() => {
+                    setReassignmentDialogOpen(false);
+                    setReassignmentTouristId('');
+                    setReassignmentNewGuideId('');
+                  }}
                 >
                   Cancel
                 </Button>
                 <Button onClick={handleReassignGuide}>
                   <RefreshCw className="w-4 h-4 mr-2" />
-                  Reassign Guide
+                  {assignments.find(a => a.touristId === reassignmentTouristId) ? 'Reassign' : 'Assign'} Guide
                 </Button>
               </div>
             </div>
