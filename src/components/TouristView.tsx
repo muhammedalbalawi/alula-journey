@@ -269,41 +269,54 @@ export const TouristView: React.FC = () => {
           fetchGuideRequest();
         }
       )
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'activities',
-            filter: `tourist_id=eq.${userSession?.user?.id}`
-          },
-          () => {
-            fetchTourActivities();
-          }
-        )
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'guide_ratings',
-            filter: `tourist_id=eq.${userSession?.user?.id}`
-          },
-          () => {
-            fetchUserGuideRating();
-          }
-        )
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'guides'
-          },
-          () => {
-            fetchGuideRequest(); // This will also update the guide's rating display
-          }
-        )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tour_assignments',
+          filter: `tourist_id=eq.${userSession?.user?.id}`
+        },
+        () => {
+          fetchGuideRequest(); // This will refresh the assigned guide info
+          fetchTourAssignment(); // This will update tour assignment details
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'activities',
+          filter: `tourist_id=eq.${userSession?.user?.id}`
+        },
+        () => {
+          fetchTourActivities();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'guide_ratings',
+          filter: `tourist_id=eq.${userSession?.user?.id}`
+        },
+        () => {
+          fetchUserGuideRating();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'guides'
+        },
+        () => {
+          fetchGuideRequest(); // This will also update the guide's rating display
+        }
+      )
       .subscribe();
 
     return () => {
