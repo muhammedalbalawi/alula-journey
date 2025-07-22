@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { Header } from '@/components/Header';
 import { TouristView } from '@/components/TouristView';
@@ -7,23 +7,53 @@ import { AboutSection } from '@/components/AboutSection';
 import { Button } from '@/components/ui/button';
 import { Info, Settings, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { Session } from '@supabase/supabase-js';
 import alulaBackground from '@/assets/alula-background.jpg';
 
 type ViewType = 'tourist' | 'guide' | 'about';
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<ViewType>('tourist');
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setLoading(false);
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const renderView = () => {
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      );
+    }
+
     switch (currentView) {
       case 'tourist':
-        return <TouristView />;
+        return session ? <TouristView session={session} /> : <TouristView session={null} />;
       case 'guide':
         return <GuideView />;
       case 'about':
         return <AboutSection />;
       default:
-        return <TouristView />;
+        return session ? <TouristView session={session} /> : <TouristView session={null} />;
     }
   };
 

@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface TouristProfileProps {
-  userId: string;
+  session: { user: { id: string } };
 }
 
 interface ProfileData {
@@ -19,7 +19,8 @@ interface ProfileData {
   contact_info: string;
 }
 
-export function TouristProfile({ userId }: TouristProfileProps) {
+const TouristProfile: React.FC<TouristProfileProps> = ({ session }) => {
+  const userId = session.user.id;
   const { t } = useLanguage();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -248,4 +249,6 @@ export function TouristProfile({ userId }: TouristProfileProps) {
       </CardContent>
     </Card>
   );
-}
+};
+
+export { TouristProfile };

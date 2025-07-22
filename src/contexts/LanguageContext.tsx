@@ -25,6 +25,28 @@ const translations = {
     myProfile: "My Profile",
     myExperiences: "My Experiences",
     
+    // Schedule related
+    manageTourSchedules: "Manage your tour schedules and activities",
+    noScheduleAvailable: "No Schedule Available",
+    scheduleWillAppear: "Your tour schedule will appear here once created by your guide",
+    guideNotes: "Guide Notes",
+    minutes: "minutes",
+    refresh: "Refresh",
+    
+    // Package related
+    discoverTourPackages: "Discover and book amazing tour packages",
+    noPackagesAvailable: "No Packages Available",
+    packagesWillAppear: "Tour packages will appear here when available",
+    hours: "hours",
+    maxParticipants: "Max participants",
+    includedActivities: "Included Activities",
+    bookPackage: "Book Package",
+    more: "more",
+    
+    // Experience related
+    noExperiencesYet: "No Experiences Yet",
+    experiencesWillAppear: "Your shared experiences will appear here",
+    
     // Tourist View
     touristLogin: "Tourist Login",
     touristId: "Tourist ID",
@@ -70,7 +92,7 @@ const translations = {
     tourLocation: "Tour Location",
     tourDuration: "Tour Duration",
     tourDescription: "Tour Description",
-    guideNotes: "Guide Notes",
+    guideNotesField: "Guide Notes",
     addNotes: "Add Notes",
     setLocation: "Set Location",
     
@@ -341,6 +363,28 @@ const translations = {
     myProfile: "ملفي الشخصي", 
     myExperiences: "تجاربي",
     
+    // Schedule related
+    manageTourSchedules: "إدارة جداولك السياحية والأنشطة",
+    noScheduleAvailable: "لا توجد جداول متاحة",
+    scheduleWillAppear: "ستظهر جداولك السياحية هنا بمجرد إنشائها من قبل دليلك",
+    guideNotes: "ملاحظات المرشد",
+    minutes: "دقيقة",
+    refresh: "تحديث",
+    
+    // Package related
+    discoverTourPackages: "اكتشف واحجز باقات سياحية رائعة",
+    noPackagesAvailable: "لا توجد باقات متاحة",
+    packagesWillAppear: "ستظهر الباقات السياحية هنا عند توفرها",
+    hours: "ساعات",
+    maxParticipants: "العدد الأقصى للمشاركين",
+    includedActivities: "الأنشطة المشمولة",
+    bookPackage: "احجز الباقة",
+    more: "المزيد",
+    
+    // Experience related
+    noExperiencesYet: "لا توجد تجارب بعد",
+    experiencesWillAppear: "ستظهر تجاربك المشتركة هنا",
+    
     // Tourist View
     touristLogin: "تسجيل دخول السائح",
     touristId: "رقم السائح",
@@ -386,7 +430,7 @@ const translations = {
     tourLocation: "موقع الجولة", 
     tourDuration: "مدة الجولة",
     tourDescription: "وصف الجولة",
-    guideNotes: "ملاحظات المرشد",
+    guideNotesField: "ملاحظات المرشد",
     addNotes: "إضافة ملاحظات",
     setLocation: "تحديد الموقع",
     
