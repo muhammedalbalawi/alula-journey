@@ -119,13 +119,26 @@ export const TouristView: React.FC<TouristViewProps> = ({ userSession, onLogout 
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('tour_activities')
+        .from('activities')
         .select('*')
-        .eq('tourist_id', userSession?.user?.id)
-        .order('day_number', { ascending: true });
+        .eq('created_by', userSession?.user?.id)
+        .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setTourActivities(data || []);
+      // Transform the data to match TourActivity interface
+      const transformedData = data?.map((item, index) => ({
+        id: parseInt(item.id),
+        day_number: index + 1,
+        date: item.created_at,
+        activity_name: item.activity_name,
+        location: item.location_name || 'Location TBD',
+        time: '09:00',
+        description: item.description,
+        notes: '',
+        latitude: item.latitude,
+        longitude: item.longitude
+      })) || [];
+      setTourActivities(transformedData);
     } catch (error) {
       console.error('Error fetching tour activities:', error);
       toast({
@@ -159,9 +172,9 @@ export const TouristView: React.FC<TouristViewProps> = ({ userSession, onLogout 
   const fetchTouristProfile = async () => {
     try {
       const { data, error } = await supabase
-        .from('tourist_profiles')
+        .from('profiles')
         .select('*')
-        .eq('user_id', userSession?.user?.id)
+        .eq('id', userSession?.user?.id)
         .single();
 
       if (error && error.code !== 'PGRST116') {
@@ -170,7 +183,15 @@ export const TouristView: React.FC<TouristViewProps> = ({ userSession, onLogout 
       }
 
       if (data) {
-        setTouristProfile(data);
+        // Transform the data to match TouristProfile interface
+        const transformedProfile = {
+          id: data.id,
+          full_name: data.full_name || 'User',
+          gender: 'not_specified',
+          nationality: 'Not specified',
+          contact_info: userSession?.user?.phone || userSession?.user?.email || ''
+        };
+        setTouristProfile(transformedProfile);
       }
     } catch (error) {
       console.error('Error fetching tourist profile:', error);
@@ -412,12 +433,12 @@ export const TouristView: React.FC<TouristViewProps> = ({ userSession, onLogout 
                               </div>
                             </div>
                           </CardContent>
-                        </Card>
-                 )}
-                    </div>
-                  </div>
-                )))}
-              </div>
+                         </Card>
+                       ))}
+                     </div>
+                   </div>
+                 ))}
+               </div>
             ) : (
               <div className="text-center py-8">
                 <div className="p-4 bg-muted/20 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
