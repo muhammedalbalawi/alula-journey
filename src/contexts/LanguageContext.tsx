@@ -19,6 +19,12 @@ const translations = {
     guideView: "Guide View",
     language: "العربية",
     
+    // Sidebar Navigation
+    tourSchedules: "Tour Schedules",
+    packages: "Packages", 
+    myProfile: "My Profile",
+    myExperiences: "My Experiences",
+    
     // Tourist View
     touristLogin: "Tourist Login",
     touristId: "Tourist ID",
@@ -328,6 +334,12 @@ const translations = {
     touristView: "عرض السائح",
     guideView: "عرض المرشد",
     language: "English",
+    
+    // Sidebar Navigation
+    tourSchedules: "الجداول السياحية",
+    packages: "البكجات",
+    myProfile: "ملفي الشخصي", 
+    myExperiences: "تجاربي",
     
     // Tourist View
     touristLogin: "تسجيل دخول السائح",
