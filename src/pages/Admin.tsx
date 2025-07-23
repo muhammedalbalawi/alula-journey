@@ -1,4 +1,4 @@
-import { AdminView } from '@/components/AdminView';
+import { AdminDashboard } from '@/components/AdminDashboard';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -20,7 +20,7 @@ export default function Admin() {
         </Link>
       </div>
       
-      <AdminView />
+      <AdminDashboard />
     </div>
   );
 }

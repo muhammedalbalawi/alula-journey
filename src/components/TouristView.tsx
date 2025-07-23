@@ -863,18 +863,31 @@ export const TouristView: React.FC = () => {
                         </div>
                       </div>
 
-                      {assignedGuide.specializations && assignedGuide.specializations.length > 0 && (
-                        <div className="pt-2 border-t border-border/50">
-                          <p className="text-sm font-medium mb-2">Specializations:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {assignedGuide.specializations.map((spec: string, index: number) => (
-                              <Badge key={index} variant="outline" className="text-xs">
-                                {spec}
-                              </Badge>
-                            ))}
+                        {assignedGuide.languages && assignedGuide.languages.length > 0 && (
+                          <div className="pt-2 border-t border-border/50">
+                            <p className="text-sm font-medium mb-2">Languages:</p>
+                            <div className="flex flex-wrap gap-1">
+                              {assignedGuide.languages.map((lang: string, index: number) => (
+                                <Badge key={index} variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                                  {lang}
+                                </Badge>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
+
+                        {assignedGuide.specializations && assignedGuide.specializations.length > 0 && (
+                          <div className="pt-2 border-t border-border/50">
+                            <p className="text-sm font-medium mb-2">Specializations:</p>
+                            <div className="flex flex-wrap gap-1">
+                              {assignedGuide.specializations.map((spec: string, index: number) => (
+                                <Badge key={index} variant="outline" className="text-xs">
+                                  {spec}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                     </div>
                   </div>
                 </div>
