@@ -232,6 +232,17 @@ export const AdminView: React.FC = () => {
           fetchAssignments();
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'drivers'
+        },
+        () => {
+          fetchDrivers();
+        }
+      )
       .subscribe();
 
     return () => {

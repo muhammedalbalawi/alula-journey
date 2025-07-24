@@ -326,10 +326,17 @@ export type Database = {
       }
       guides: {
         Row: {
+          availability_status: string | null
+          bio: string | null
+          certifications: string[] | null
           created_at: string | null
           email: string
+          experience_years: number | null
           guide_id: string
+          hourly_rate: number | null
           id: string
+          languages: string[] | null
+          location: string | null
           name: string
           password: string
           phone: string
@@ -339,10 +346,17 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          availability_status?: string | null
+          bio?: string | null
+          certifications?: string[] | null
           created_at?: string | null
           email: string
+          experience_years?: number | null
           guide_id: string
+          hourly_rate?: number | null
           id?: string
+          languages?: string[] | null
+          location?: string | null
           name: string
           password: string
           phone: string
@@ -352,10 +366,17 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          availability_status?: string | null
+          bio?: string | null
+          certifications?: string[] | null
           created_at?: string | null
           email?: string
+          experience_years?: number | null
           guide_id?: string
+          hourly_rate?: number | null
           id?: string
+          languages?: string[] | null
+          location?: string | null
           name?: string
           password?: string
           phone?: string
