@@ -273,7 +273,9 @@ export type Database = {
       guide_requests: {
         Row: {
           admin_response: string | null
+          adults_count: number | null
           assigned_guide_id: string | null
+          children_count: number | null
           created_at: string | null
           id: string
           request_message: string | null
@@ -283,7 +285,9 @@ export type Database = {
         }
         Insert: {
           admin_response?: string | null
+          adults_count?: number | null
           assigned_guide_id?: string | null
+          children_count?: number | null
           created_at?: string | null
           id?: string
           request_message?: string | null
@@ -293,7 +297,9 @@ export type Database = {
         }
         Update: {
           admin_response?: string | null
+          adults_count?: number | null
           assigned_guide_id?: string | null
+          children_count?: number | null
           created_at?: string | null
           id?: string
           request_message?: string | null

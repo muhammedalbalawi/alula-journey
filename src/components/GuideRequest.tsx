@@ -3,7 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { UserCheck, Clock, CheckCircle, XCircle, Send } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { UserCheck, Clock, CheckCircle, XCircle, Send, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -18,6 +20,8 @@ interface GuideRequestData {
   assigned_guide_id?: string;
   admin_response?: string;
   created_at: string;
+  adults_count?: number;
+  children_count?: number;
   guides?: {
     name: string;
     email: string;
@@ -28,6 +32,8 @@ interface GuideRequestData {
 export function GuideRequest({ userId }: GuideRequestProps) {
   const [requests, setRequests] = useState<GuideRequestData[]>([]);
   const [newRequestMessage, setNewRequestMessage] = useState('');
+  const [adultsCount, setAdultsCount] = useState<number>(1);
+  const [childrenCount, setChildrenCount] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
@@ -116,7 +122,9 @@ export function GuideRequest({ userId }: GuideRequestProps) {
         .insert({
           tourist_id: userId,
           request_message: newRequestMessage.trim(),
-          status: 'pending'
+          status: 'pending',
+          adults_count: adultsCount,
+          children_count: childrenCount
         });
 
       if (error) throw error;
@@ -166,6 +174,53 @@ export function GuideRequest({ userId }: GuideRequestProps) {
         {canRequestNewGuide && (
           <div className="space-y-4 p-4 bg-muted/20 rounded-lg border-2 border-dashed border-muted-foreground/30">
             <h3 className="font-medium">Request a Tour Guide</h3>
+            
+            {/* Family Members Selection */}
+            <div className="space-y-4 p-4 bg-background/50 rounded-lg border border-muted">
+              <div className="flex items-center space-x-2 mb-3">
+                <Users className="w-4 h-4 text-primary" />
+                <h4 className="font-medium text-sm">Family Members</h4>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="adults" className="text-sm font-medium">Adults</Label>
+                  <Select value={adultsCount.toString()} onValueChange={(value) => setAdultsCount(parseInt(value))}>
+                    <SelectTrigger id="adults">
+                      <SelectValue placeholder="Select adults" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => (
+                        <SelectItem key={num} value={num.toString()}>
+                          {num} Adult{num > 1 ? 's' : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="children" className="text-sm font-medium">Children</Label>
+                  <Select value={childrenCount.toString()} onValueChange={(value) => setChildrenCount(parseInt(value))}>
+                    <SelectTrigger id="children">
+                      <SelectValue placeholder="Select children" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 11 }, (_, i) => i).map((num) => (
+                        <SelectItem key={num} value={num.toString()}>
+                          {num} {num === 1 ? 'Child' : 'Children'}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="text-xs text-muted-foreground bg-accent/10 p-2 rounded">
+                Total: {adultsCount + childrenCount} member{adultsCount + childrenCount !== 1 ? 's' : ''}
+              </div>
+            </div>
+
             <Textarea
               placeholder="Please describe your tour preferences, dates, and any special requirements..."
               value={newRequestMessage}
@@ -209,6 +264,24 @@ export function GuideRequest({ userId }: GuideRequestProps) {
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0 space-y-3">
+                  {/* Family Members Info */}
+                  {(request.adults_count || request.children_count) && (
+                    <div className="bg-background/50 p-3 rounded-lg border border-muted">
+                      <p className="text-sm font-medium mb-2 flex items-center">
+                        <Users className="w-4 h-4 mr-1" />
+                        Family Members:
+                      </p>
+                      <div className="text-sm text-muted-foreground">
+                        <span className="inline-block mr-4">
+                          Adults: {request.adults_count || 1}
+                        </span>
+                        <span className="inline-block">
+                          Children: {request.children_count || 0}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
                   <div>
                     <p className="text-sm font-medium mb-1">Your Message:</p>
                     <p className="text-sm text-muted-foreground bg-muted/30 p-2 rounded">

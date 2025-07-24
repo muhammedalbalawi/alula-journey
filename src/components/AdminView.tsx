@@ -67,6 +67,8 @@ interface GuideRequestAdmin {
   assigned_guide_id?: string;
   admin_response?: string;
   created_at: string;
+  adults_count?: number;
+  children_count?: number;
   profiles?: {
     full_name: string;
     contact_info: string;
@@ -1301,6 +1303,27 @@ export const AdminView: React.FC = () => {
                           }
                           return null;
                         })()}
+
+                        {/* Family Members Display */}
+                        {(request.adults_count || request.children_count) && (
+                          <div className="bg-background/50 p-3 rounded-lg border border-muted mb-3">
+                            <p className="text-sm font-medium mb-2 flex items-center">
+                              <Users className="w-4 h-4 mr-1" />
+                              Family Members
+                            </p>
+                            <div className="text-sm text-muted-foreground">
+                              <span className="inline-block mr-4">
+                                Adults: {request.adults_count || 1}
+                              </span>
+                              <span className="inline-block">
+                                Children: {request.children_count || 0}
+                              </span>
+                              <span className="inline-block ml-4 font-medium">
+                                Total: {(request.adults_count || 1) + (request.children_count || 0)} members
+                              </span>
+                            </div>
+                          </div>
+                        )}
 
                         {request.request_message && (
                           <div>
