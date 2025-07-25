@@ -213,11 +213,15 @@ export const GuideEditor: React.FC<GuideEditorProps> = ({
           .from('guides')
           .update(guideData)
           .eq('id', guide.id)
-          .select()
-          .single();
+          .select();
 
         if (error) throw error;
-        const updatedGuide = { ...formData, ...data } as Guide;
+        
+        if (!data || data.length === 0) {
+          throw new Error('Guide not found or update failed');
+        }
+        
+        const updatedGuide = { ...formData, ...data[0] } as Guide;
         onSave(updatedGuide);
         toast({
           title: 'Success',
@@ -230,15 +234,19 @@ export const GuideEditor: React.FC<GuideEditorProps> = ({
           .insert({
             ...guideData,
             guide_id: `guide_${Date.now()}`,
-            password: 'defaultpassword123', // You should generate a secure password
+            password: 'defaultpassword123',
             rating: 0,
             created_at: new Date().toISOString()
           })
-          .select()
-          .single();
+          .select();
 
         if (error) throw error;
-        const newGuide = { ...formData, ...data } as Guide;
+        
+        if (!data || data.length === 0) {
+          throw new Error('Failed to create guide');
+        }
+        
+        const newGuide = { ...formData, ...data[0] } as Guide;
         onSave(newGuide);
         toast({
           title: 'Success',
