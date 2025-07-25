@@ -50,16 +50,17 @@ const Index = () => {
             onViewChange={(view) => setCurrentView(view)}
           />
           
-          {/* Fixed Action Buttons */}
-          <div className="fixed bottom-6 right-6 z-50 flex flex-col space-y-2">
+          {/* Fixed Action Buttons - Mobile responsive */}
+          <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex flex-col space-y-2">
             <Link to="/admin">
               <Button
                 variant="outline"
                 size="sm"
-                className="shadow-float"
+                className="shadow-float w-10 h-10 sm:w-auto sm:h-auto sm:px-3"
                 title="Admin Dashboard"
               >
                 <Shield className="w-4 h-4" />
+                <span className="hidden sm:ml-2 sm:inline">Admin</span>
               </Button>
             </Link>
             {currentView === 'guide' && (
@@ -67,10 +68,11 @@ const Index = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="shadow-float"
+                  className="shadow-float w-10 h-10 sm:w-auto sm:h-auto sm:px-3"
                   title="Tour Guide Dashboard"
                 >
                   <Settings className="w-4 h-4" />
+                  <span className="hidden sm:ml-2 sm:inline">Guide</span>
                 </Button>
               </Link>
             )}
@@ -78,9 +80,11 @@ const Index = () => {
               variant={currentView === 'about' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setCurrentView(currentView === 'about' ? 'tourist' : 'about')}
-              className="shadow-float"
+              className="shadow-float w-10 h-10 sm:w-auto sm:h-auto sm:px-3"
+              title="About AlUla"
             >
               <Info className="w-4 h-4" />
+              <span className="hidden sm:ml-2 sm:inline">About</span>
             </Button>
           </div>
 

@@ -172,15 +172,21 @@ export function PackageManagement() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold flex items-center gap-2">
-          <Package className="w-6 h-6" />
-          Tour Packages Management
+    <div className="space-y-4 sm:space-y-6 p-2 sm:p-0">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-3 sm:space-y-0">
+        <h2 className="text-lg sm:text-2xl font-bold flex items-center gap-2">
+          <Package className="w-5 h-5 sm:w-6 sm:h-6" />
+          <span className="hidden sm:inline">Tour Packages Management</span>
+          <span className="sm:hidden">Packages</span>
         </h2>
-        <Button onClick={() => setIsFormOpen(true)} className="flex items-center gap-2">
+        <Button 
+          onClick={() => setIsFormOpen(true)} 
+          className="flex items-center gap-2 w-full sm:w-auto"
+          size="sm"
+        >
           <Plus className="w-4 h-4" />
-          Add New Package
+          <span className="hidden sm:inline">Add New Package</span>
+          <span className="sm:hidden">Add Package</span>
         </Button>
       </div>
 
@@ -193,24 +199,25 @@ export function PackageManagement() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="package_name">Package Name *</Label>
+                  <Label htmlFor="package_name" className="text-sm">Package Name *</Label>
                   <Input
                     id="package_name"
                     required
                     value={formData.package_name}
                     onChange={(e) => setFormData(prev => ({ ...prev, package_name: e.target.value }))}
+                    className="text-sm"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="difficulty_level">Difficulty Level</Label>
+                  <Label htmlFor="difficulty_level" className="text-sm">Difficulty Level</Label>
                   <Select 
                     value={formData.difficulty_level}
                     onValueChange={(value) => setFormData(prev => ({ ...prev, difficulty_level: value }))}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -339,50 +346,61 @@ export function PackageManagement() {
         </Card>
       )}
 
-      <div className="grid gap-4">
+      <div className="grid gap-3 sm:gap-4">
         {packages.map((pkg) => (
           <Card key={pkg.id}>
-            <CardContent className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="text-xl font-semibold">{pkg.package_name}</h3>
-                  <p className="text-muted-foreground">{pkg.description}</p>
+            <CardContent className="p-3 sm:p-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start mb-3 sm:mb-4 space-y-2 sm:space-y-0">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg sm:text-xl font-semibold truncate">{pkg.package_name}</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{pkg.description}</p>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => startEdit(pkg)}>
-                    <Edit className="w-4 h-4" />
+                <div className="flex gap-2 w-full sm:w-auto justify-end">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => startEdit(pkg)}
+                    className="flex-1 sm:flex-none"
+                  >
+                    <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="ml-1 sm:hidden">Edit</span>
                   </Button>
                   <Button 
                     variant="outline" 
                     size="sm" 
                     onClick={() => handleDelete(pkg.id!)}
-                    className="text-red-500 hover:text-red-700"
+                    className="text-red-500 hover:text-red-700 flex-1 sm:flex-none"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="ml-1 sm:hidden">Delete</span>
                   </Button>
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div>
-                  <span className="font-medium">Duration:</span> {pkg.duration_hours}h
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 text-xs sm:text-sm">
+                <div className="flex justify-between sm:block">
+                  <span className="font-medium">Duration:</span> 
+                  <span>{pkg.duration_hours}h</span>
                 </div>
-                <div>
-                  <span className="font-medium">Price:</span> {pkg.price} SAR
+                <div className="flex justify-between sm:block">
+                  <span className="font-medium">Price:</span> 
+                  <span>{pkg.price} SAR</span>
                 </div>
-                <div>
-                  <span className="font-medium">Max Participants:</span> {pkg.max_participants}
+                <div className="flex justify-between sm:block">
+                  <span className="font-medium">Max Participants:</span> 
+                  <span>{pkg.max_participants}</span>
                 </div>
-                <div>
-                  <Badge variant={pkg.status === 'active' ? 'default' : 'secondary'}>
+                <div className="flex justify-between sm:block">
+                  <span className="font-medium sm:hidden">Status:</span>
+                  <Badge variant={pkg.status === 'active' ? 'default' : 'secondary'} className="text-xs">
                     {pkg.status}
                   </Badge>
                 </div>
               </div>
               
               {pkg.included_activities.length > 0 && (
-                <div className="mt-4">
-                  <span className="font-medium text-sm">Included Activities:</span>
+                <div className="mt-3 sm:mt-4">
+                  <span className="font-medium text-xs sm:text-sm">Included Activities:</span>
                   <div className="flex flex-wrap gap-1 mt-2">
                     {pkg.included_activities.map((activity, index) => (
                       <Badge key={index} variant="outline" className="text-xs">
