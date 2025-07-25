@@ -41,7 +41,26 @@ export function PackageManagement() {
 
   useEffect(() => {
     fetchPackages();
+    setupRealtimeUpdates();
   }, []);
+
+  const setupRealtimeUpdates = () => {
+    const channel = supabase
+      .channel('packages-updates')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'packages' 
+      }, () => {
+        console.log('Package updated');
+        fetchPackages();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
 
   const fetchPackages = async () => {
     try {
@@ -62,17 +81,22 @@ export function PackageManagement() {
     
     try {
       if (editingPackage) {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('packages')
           .update(formData)
-          .eq('id', editingPackage.id);
+          .eq('id', editingPackage.id)
+          .select();
         
         if (error) throw error;
         toast({ title: "Package updated successfully" });
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('packages')
-          .insert([formData]);
+          .insert([{
+            ...formData,
+            created_by: (await supabase.auth.getUser()).data.user?.id
+          }])
+          .select();
         
         if (error) throw error;
         toast({ title: "Package created successfully" });
@@ -81,11 +105,12 @@ export function PackageManagement() {
       setIsFormOpen(false);
       setEditingPackage(null);
       resetForm();
-      fetchPackages();
-    } catch (error) {
-      console.error('Error saving package:', error);
+      // Don't need to call fetchPackages here since real-time will handle it
+    } catch (error: any) {
+      console.error('Error adding package:', error);
       toast({
         title: "Error saving package",
+        description: error.message || 'Failed to save package. Please try again.',
         variant: "destructive"
       });
     }
