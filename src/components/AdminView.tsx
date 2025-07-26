@@ -391,6 +391,22 @@ export const AdminView: React.FC = () => {
 
       if (error) throw error;
 
+      // Send assignment notification emails
+      try {
+        await supabase.functions.invoke('send-assignment-notification', {
+          body: {
+            touristId: selectedTourist,
+            guideId: selectedGuide,
+            tourName,
+            startDate,
+            endDate
+          }
+        });
+      } catch (emailError) {
+        console.error('Error sending notification emails:', emailError);
+        // Don't fail the assignment if email fails
+      }
+
       // Add to local state for immediate UI update
       const newAssignment: Assignment = {
         id: data.id,
@@ -414,7 +430,7 @@ export const AdminView: React.FC = () => {
 
       toast({
         title: 'Assignment Created',
-        description: 'Tour guide has been assigned successfully!'
+        description: 'Tour guide assigned successfully and notifications sent!'
       });
     } catch (error: any) {
       console.error('Error creating assignment:', error);
