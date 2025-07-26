@@ -88,26 +88,7 @@ export const AdminView: React.FC = () => {
   const [password, setPassword] = useState('');
   const { toast } = useToast();
 
-  const [tourists] = useState<Tourist[]>([
-    {
-      id: 'T001',
-      name: 'Ahmed Al-Rashid',
-      email: 'ahmed@email.com',
-      phone: '+966501234567',
-      nationality: 'Saudi Arabia',
-      status: 'active',
-      assignedGuide: 'G001'
-    },
-    {
-      id: 'T003',
-      name: 'Mohammed Hassan',
-      email: 'mohammed@email.com',
-      phone: '+966509876543',
-      nationality: 'Saudi Arabia',
-      status: 'assigned',
-      assignedGuide: 'G002'
-    }
-  ]);
+  const [tourists, setTourists] = useState<Tourist[]>([]);
 
   const [guides, setGuides] = useState<Guide[]>([]);
   const [guideRequests, setGuideRequests] = useState<GuideRequestAdmin[]>([]);
@@ -152,9 +133,50 @@ export const AdminView: React.FC = () => {
       fetchGuideRequests();
       fetchAssignments();
       fetchDrivers();
+      fetchTourists();
       setupRealtimeUpdates();
     }
   }, [isLoggedIn]);
+
+  const fetchTourists = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('guide_requests')
+        .select(`
+          tourist_id,
+          status,
+          profiles!tourist_id (
+            id,
+            full_name,
+            contact_info,
+            nationality,
+            user_type
+          )
+        `)
+        .eq('profiles.user_type', 'tourist');
+
+      if (error) throw error;
+      
+      const formattedTourists: Tourist[] = (data || []).map(item => ({
+        id: item.tourist_id,
+        name: item.profiles?.full_name || 'Tourist',
+        email: item.profiles?.contact_info || '',
+        phone: item.profiles?.contact_info || '',
+        nationality: item.profiles?.nationality || 'Unknown',
+        status: item.status === 'pending' ? 'pending' : 'assigned',
+        assignedGuide: ''
+      }));
+      
+      setTourists(formattedTourists);
+    } catch (error: any) {
+      console.error('Error fetching tourists:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch tourists',
+        variant: 'destructive'
+      });
+    }
+  };
 
   const fetchAssignments = async () => {
     try {
@@ -823,11 +845,14 @@ export const AdminView: React.FC = () => {
                     <SelectValue placeholder="Choose a tourist" />
                   </SelectTrigger>
                   <SelectContent>
-                    {tourists.filter(t => t.status === 'pending').map((tourist) => (
-                      <SelectItem key={tourist.id} value={tourist.id}>
-                        {tourist.name} ({tourist.nationality})
-                      </SelectItem>
-                    ))}
+                     {tourists.filter(t => t.status === 'pending').map((tourist) => (
+                       <SelectItem key={tourist.id} value={tourist.id}>
+                         <div className="flex flex-col text-left">
+                           <span className="font-medium">{tourist.name}</span>
+                           <span className="text-xs text-muted-foreground">{tourist.email}</span>
+                         </div>
+                       </SelectItem>
+                     ))}
                   </SelectContent>
                 </Select>
               </div>

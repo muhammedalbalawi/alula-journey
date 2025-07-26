@@ -118,6 +118,7 @@ export const GuideView: React.FC = () => {
           start_date,
           end_date,
           profiles!tourist_id (
+            id,
             full_name,
             contact_info,
             nationality,
@@ -276,6 +277,8 @@ export const GuideView: React.FC = () => {
   const mockTourists = assignedTourists.map(assignment => ({
     id: assignment.tourist_id,
     name: assignment.profiles?.full_name || 'Tourist',
+    email: assignment.profiles?.id || '', // Get email from auth user
+    contact_info: assignment.profiles?.contact_info || '',
     status: assignment.status === 'active' ? 'Active' : 'Pending'
   }));
 
@@ -874,11 +877,14 @@ export const GuideView: React.FC = () => {
                     <SelectValue placeholder={t('selectTourist')} />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockTourists.map((tourist) => (
-                      <SelectItem key={tourist.id} value={tourist.id}>
-                        {tourist.name} ({tourist.id})
-                      </SelectItem>
-                    ))}
+                     {mockTourists.map((tourist) => (
+                       <SelectItem key={tourist.id} value={tourist.id}>
+                         <div className="flex flex-col text-left">
+                           <span className="font-medium">{tourist.name}</span>
+                           <span className="text-xs text-muted-foreground">{tourist.contact_info}</span>
+                         </div>
+                       </SelectItem>
+                     ))}
                   </SelectContent>
                 </Select>
               </CardContent>
