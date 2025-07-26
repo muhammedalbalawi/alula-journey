@@ -181,6 +181,28 @@ export function TouristPasswordLogin({ onLoginSuccess }: TouristPasswordLoginPro
       if (error) throw error;
 
       if (data.user && data.session) {
+        // Create/update profile immediately after successful signup
+        const profileData = {
+          id: data.user.id,
+          user_type: 'tourist',
+          full_name: loginState.fullName.trim(),
+          phone_number: loginState.phoneNumber.trim(),
+          contact_info: loginState.method === 'phone' ? loginState.identifier : loginState.phoneNumber
+        };
+
+        try {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .upsert(profileData);
+
+          if (profileError) {
+            console.error('Error creating profile:', profileError);
+            // Don't block login for profile errors, just log
+          }
+        } catch (profileError) {
+          console.error('Profile creation failed:', profileError);
+        }
+
         toast({
           title: t('accountCreated'),
           description: t('welcomeTourist'),
