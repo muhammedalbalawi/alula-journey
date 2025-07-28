@@ -207,6 +207,17 @@ export const GuideView: React.FC = () => {
         {
           event: '*',
           schema: 'public',
+          table: 'profiles'
+        },
+        () => {
+          fetchAssignedTourists(); // Refresh when tourist profiles update
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
           table: 'activities',
           filter: `tour_guide_id=eq.${currentGuide?.id}`
         },

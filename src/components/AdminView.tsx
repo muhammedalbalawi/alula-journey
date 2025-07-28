@@ -230,6 +230,19 @@ export const AdminView: React.FC = () => {
         },
         () => {
           fetchGuideRequests();
+          fetchTourists(); // Refresh tourists when guide requests change
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles'
+        },
+        () => {
+          fetchTourists(); // Refresh tourists when new tourists register
+          fetchGuideRequests();
         }
       )
       .on(
@@ -858,7 +871,16 @@ export const AdminView: React.FC = () => {
                 <label className="text-sm font-medium">Select Tourist</label>
                 <Select value={selectedTourist} onValueChange={setSelectedTourist}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Choose a tourist" />
+                    <SelectValue placeholder="Choose a tourist">
+                      {selectedTourist ? (
+                        <div className="flex flex-col text-left">
+                          <span className="font-medium">{tourists.find(t => t.id === selectedTourist)?.name || 'Unknown Tourist'}</span>
+                          <span className="text-xs text-muted-foreground">{tourists.find(t => t.id === selectedTourist)?.email}</span>
+                        </div>
+                      ) : (
+                        "Choose a tourist"
+                      )}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                      {tourists.filter(t => t.status === 'pending').map((tourist) => (
