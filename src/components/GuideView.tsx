@@ -117,18 +117,21 @@ export const GuideView: React.FC = () => {
           tour_name,
           start_date,
           end_date,
-          profiles!tourist_id (
+          profiles!inner(
             id,
             full_name,
             contact_info,
             nationality,
-            gender
+            gender,
+            phone_number
           )
         `)
         .eq('guide_id', currentGuide?.id)
         .in('status', ['pending', 'active']);
 
       if (error) throw error;
+      
+      console.log('Fetched tourist assignments:', data);
       setAssignedTourists(data || []);
     } catch (error: any) {
       console.error('Error fetching assigned tourists:', error);
@@ -287,10 +290,13 @@ export const GuideView: React.FC = () => {
 
   const mockTourists = assignedTourists.map(assignment => ({
     id: assignment.tourist_id,
-    name: assignment.profiles?.full_name || 'Tourist',
-    email: assignment.profiles?.id || '', // Get email from auth user
-    contact_info: assignment.profiles?.contact_info || '',
-    status: assignment.status === 'active' ? 'Active' : 'Pending'
+    name: assignment.profiles?.full_name || 'Unknown Tourist',
+    email: assignment.profiles?.contact_info || 'No contact info',
+    contact_info: assignment.profiles?.phone_number || assignment.profiles?.contact_info || 'No contact info',
+    nationality: assignment.profiles?.nationality || 'Unknown',
+    status: assignment.status === 'active' ? 'Assigned' : 'Pending Assignment',
+    tourName: assignment.tour_name || 'AlUla Heritage Tour',
+    assignmentId: assignment.id
   }));
 
   const mockJourneyRequests: any[] = [];
@@ -942,7 +948,11 @@ export const GuideView: React.FC = () => {
                           <div className="flex items-center justify-between mb-4">
                             <div>
                               <h4 className="font-semibold">{tourist.name}</h4>
-                              <p className="text-sm text-muted-foreground">{tourist.id}</p>
+                              <p className="text-sm text-muted-foreground">{tourist.contact_info}</p>
+                              <p className="text-xs text-muted-foreground">{tourist.nationality}</p>
+                              <Badge variant="outline" className="mt-1 text-xs">
+                                {tourist.status}
+                              </Badge>
                             </div>
                             <div className="flex items-center space-x-2 rtl:space-x-reverse">
                               <span className="text-sm">{packageStates[tourist.id] ? t('packageEnabled') : t('packageDisabled')}</span>
@@ -1153,11 +1163,11 @@ export const GuideView: React.FC = () => {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-sm">{t('activeTourists')}</span>
-                    <Badge variant="secondary">2</Badge>
+                    <Badge variant="secondary">{mockTourists.filter(t => t.status.includes('Assigned')).length}</Badge>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm">{t('pendingRequests')}</span>
-                    <Badge variant="outline">2</Badge>
+                    <Badge variant="outline">{mockTourists.filter(t => t.status.includes('Pending')).length}</Badge>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm">{t('driverBookings')}</span>
@@ -1167,6 +1177,53 @@ export const GuideView: React.FC = () => {
                     <span className="text-sm">{t('averageRating')}</span>
                     <Badge variant="secondary">4.5 ⭐</Badge>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* All Tourists Section */}
+            <Card className="shadow-desert">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2 rtl:space-x-reverse">
+                  <Users className="w-5 h-5" />
+                  <span>All Tourists</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {mockTourists.length > 0 ? (
+                    mockTourists.map((tourist) => (
+                      <div key={tourist.id} className="p-4 border border-border rounded-lg bg-muted/20 hover:bg-muted/30 transition-colors">
+                        <div className="space-y-2">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-sm">{tourist.name}</h4>
+                              <p className="text-xs text-muted-foreground">{tourist.contact_info}</p>
+                              {tourist.nationality && (
+                                <p className="text-xs text-muted-foreground">{tourist.nationality}</p>
+                              )}
+                            </div>
+                            <Badge 
+                              variant={tourist.status.includes('Assigned') ? 'default' : 'outline'}
+                              className="text-xs ml-2"
+                            >
+                              {tourist.status}
+                            </Badge>
+                          </div>
+                          {tourist.tourName && (
+                            <div className="pt-2 border-t border-border/50">
+                              <p className="text-xs font-medium text-primary">{tourist.tourName}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8">
+                      <Users className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground">No tourists assigned yet</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
