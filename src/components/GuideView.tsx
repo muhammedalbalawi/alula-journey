@@ -874,7 +874,9 @@ export const GuideView: React.FC = () => {
               <CardContent>
                 <Select value={selectedTourist} onValueChange={setSelectedTourist}>
                   <SelectTrigger>
-                    <SelectValue placeholder={t('selectTourist')} />
+                    <SelectValue placeholder={t('selectTourist')}>
+                      {selectedTourist ? mockTourists.find(t => t.id === selectedTourist)?.name || t('selectTourist') : t('selectTourist')}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                      {mockTourists.map((tourist) => (
