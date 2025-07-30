@@ -140,39 +140,59 @@ export const AdminView: React.FC = () => {
 
   const fetchTourists = async () => {
     try {
-      const { data, error } = await supabase
-        .from('guide_requests')
+      // Get all tourist profiles directly from profiles table
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
         .select(`
-          tourist_id,
-          status,
-          profiles!tourist_id (
-            id,
-            full_name,
-            contact_info,
-            nationality,
-            user_type
-          )
+          id,
+          full_name,
+          contact_info,
+          phone_number,
+          nationality,
+          gender,
+          user_type,
+          created_at
         `)
-        .eq('profiles.user_type', 'tourist');
+        .eq('user_type', 'tourist')
+        .order('full_name', { ascending: true });
 
-      if (error) throw error;
-      
-      const formattedTourists: Tourist[] = (data || []).map(item => ({
-        id: item.tourist_id,
-        name: item.profiles?.full_name || 'Tourist',
-        email: item.profiles?.contact_info || '',
-        phone: item.profiles?.contact_info || '',
-        nationality: item.profiles?.nationality || 'Unknown',
-        status: item.status === 'pending' ? 'pending' : 'assigned',
-        assignedGuide: ''
+      if (profilesError) throw profilesError;
+
+      // Get tour assignments to determine status
+      const { data: assignmentsData, error: assignmentsError } = await supabase
+        .from('tour_assignments')
+        .select('tourist_id, status, guide_id, guides(name)')
+        .in('status', ['pending', 'active']);
+
+      if (assignmentsError) console.warn('Could not fetch assignments:', assignmentsError);
+
+      // Create a map of tourist assignments
+      const assignmentMap = (assignmentsData || []).reduce((acc, assignment) => {
+        acc[assignment.tourist_id] = {
+          status: assignment.status,
+          assignedGuide: assignment.guides?.name || 'Unknown Guide'
+        };
+        return acc;
+      }, {} as Record<string, { status: string; assignedGuide: string }>);
+
+      const formattedTourists: Tourist[] = (profilesData || []).map(profile => ({
+        id: profile.id,
+        name: profile.full_name || 'Unnamed Tourist',
+        email: profile.contact_info || '',
+        phone: profile.phone_number || profile.contact_info || '',
+        nationality: profile.nationality || 'Not specified',
+        status: assignmentMap[profile.id]?.status === 'active' ? 'assigned' : 
+                assignmentMap[profile.id]?.status === 'pending' ? 'pending' : 'active',
+        assignedGuide: assignmentMap[profile.id]?.assignedGuide || ''
       }));
-      
+
+      console.log('Fetched tourists:', formattedTourists);
       setTourists(formattedTourists);
     } catch (error: any) {
       console.error('Error fetching tourists:', error);
       toast({
         title: 'Error',
-        description: 'Failed to fetch tourists',
+        description: 'Failed to load tourists. Please try again.',
         variant: 'destructive'
       });
     }
@@ -229,6 +249,7 @@ export const AdminView: React.FC = () => {
           table: 'guide_requests'
         },
         () => {
+          console.log('Guide requests changed, refreshing...');
           fetchGuideRequests();
           fetchTourists(); // Refresh tourists when guide requests change
         }
@@ -240,20 +261,12 @@ export const AdminView: React.FC = () => {
           schema: 'public',
           table: 'profiles'
         },
-        () => {
-          fetchTourists(); // Refresh tourists when new tourists register
+        (payload) => {
+          console.log('Profile change detected:', payload);
+          if ((payload.new as any)?.user_type === 'tourist' || (payload.old as any)?.user_type === 'tourist') {
+            fetchTourists(); // Refresh tourists when new tourists register
+          }
           fetchGuideRequests();
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'guides'
-        },
-        () => {
-          fetchGuides();
         }
       )
       .on(
@@ -264,6 +277,8 @@ export const AdminView: React.FC = () => {
           table: 'tour_assignments'
         },
         () => {
+          console.log('Tour assignments changed, refreshing...');
+          fetchTourists(); // Refresh when assignments change
           fetchAssignments();
         }
       )
@@ -272,10 +287,11 @@ export const AdminView: React.FC = () => {
         {
           event: '*',
           schema: 'public',
-          table: 'drivers'
+          table: 'guides'
         },
         () => {
-          fetchDrivers();
+          console.log('Guides changed, refreshing...');
+          fetchGuides();
         }
       )
       .subscribe();
@@ -882,17 +898,33 @@ export const AdminView: React.FC = () => {
                       )}
                     </SelectValue>
                   </SelectTrigger>
-                  <SelectContent>
-                     {tourists.filter(t => t.status === 'pending').map((tourist) => (
-                       <SelectItem key={tourist.id} value={tourist.id}>
-                         <div className="flex flex-col text-left">
-                           <span className="font-medium">{tourist.name}</span>
-                           <span className="text-xs text-muted-foreground">{tourist.email}</span>
-                         </div>
+                   <SelectContent className="max-h-60 overflow-y-auto">
+                     {tourists.length > 0 ? (
+                       tourists.map((tourist) => (
+                         <SelectItem key={tourist.id} value={tourist.id}>
+                           <div className="flex flex-col text-left py-1">
+                             <span className="font-medium text-foreground">{tourist.name}</span>
+                             <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                               <span>{tourist.nationality}</span>
+                               <span>•</span>
+                               <span>{tourist.phone || tourist.email}</span>
+                               <Badge 
+                                 variant={tourist.status === 'assigned' ? 'default' : tourist.status === 'pending' ? 'secondary' : 'outline'}
+                                 className="ml-auto text-xs"
+                               >
+                                 {tourist.status}
+                               </Badge>
+                             </div>
+                           </div>
+                         </SelectItem>
+                       ))
+                     ) : (
+                       <SelectItem value="no-tourists" disabled>
+                         <span className="text-muted-foreground italic">No tourists available</span>
                        </SelectItem>
-                     ))}
-                  </SelectContent>
-                </Select>
+                      )}
+                   </SelectContent>
+                 </Select>
               </div>
 
               <div className="space-y-2">

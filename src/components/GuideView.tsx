@@ -108,64 +108,68 @@ export const GuideView: React.FC = () => {
 
   const fetchAssignedTourists = async () => {
     try {
-      // First try to get tourists assigned to this guide
-      const { data: assignedData, error: assignedError } = await supabase
-        .from('tour_assignments')
+      // Get all tourist profiles for better user experience
+      const { data: allTourists, error: touristError } = await supabase
+        .from('profiles')
         .select(`
           id,
-          tourist_id,
-          status,
-          tour_name,
-          start_date,
-          end_date,
-          profiles!inner(
-            id,
-            full_name,
-            contact_info,
-            nationality,
-            gender,
-            phone_number
-          )
+          full_name,
+          contact_info,
+          phone_number,
+          nationality,
+          gender,
+          user_type,
+          created_at
         `)
+        .eq('user_type', 'tourist')
+        .order('full_name', { ascending: true });
+
+      if (touristError) {
+        console.error('Error fetching tourist profiles:', touristError);
+        setAssignedTourists([]);
+        return;
+      }
+
+      // Get assignments to check current status
+      const { data: assignmentsData, error: assignmentsError } = await supabase
+        .from('tour_assignments')
+        .select('tourist_id, status, guide_id, tour_name, start_date, end_date')
         .eq('guide_id', currentGuide?.id)
         .in('status', ['pending', 'active']);
 
-      if (assignedError) {
-        console.error('Error fetching assigned tourists:', assignedError);
+      if (assignmentsError) {
+        console.warn('Could not fetch assignments:', assignmentsError);
       }
-      
-      console.log('Fetched tourist assignments:', assignedData);
-      
-      // If no assigned tourists, try to get all tourist profiles that could be assigned
-      if (!assignedData || assignedData.length === 0) {
-        const { data: allTourists, error: touristError } = await supabase
-          .from('profiles')
-          .select('id, full_name, contact_info, nationality, gender, phone_number')
-          .eq('user_type', 'tourist')
-          .limit(10);
 
-        if (touristError) {
-          console.error('Error fetching tourist profiles:', touristError);
-          setAssignedTourists([]);
-          return;
-        }
+      // Create assignment map for quick lookup
+      const assignmentMap = (assignmentsData || []).reduce((acc, assignment) => {
+        acc[assignment.tourist_id] = assignment;
+        return acc;
+      }, {} as Record<string, any>);
 
-        // Transform tourist profiles to match the expected format
-        const transformedTourists = (allTourists || []).map(tourist => ({
+      // Transform all tourists with assignment info
+      const transformedTourists = (allTourists || []).map(tourist => {
+        const assignment = assignmentMap[tourist.id];
+        return {
           id: `tourist-${tourist.id}`,
           tourist_id: tourist.id,
-          status: 'available',
-          tour_name: null,
-          start_date: null,
-          end_date: null,
-          profiles: tourist
-        }));
+          status: assignment ? assignment.status : 'available',
+          tour_name: assignment?.tour_name || null,
+          start_date: assignment?.start_date || null,
+          end_date: assignment?.end_date || null,
+          profiles: {
+            id: tourist.id,
+            full_name: tourist.full_name || 'Unnamed Tourist',
+            contact_info: tourist.contact_info || tourist.phone_number || 'No contact info',
+            phone_number: tourist.phone_number || tourist.contact_info || '',
+            nationality: tourist.nationality || 'Not specified',
+            gender: tourist.gender || 'Not specified'
+          }
+        };
+      });
 
-        console.log('Using available tourist profiles:', transformedTourists);
-        setAssignedTourists(transformedTourists);
-      } else {
-        setAssignedTourists(assignedData);
-      }
+      console.log('Fetched all tourist profiles with assignments:', transformedTourists);
+      setAssignedTourists(transformedTourists);
     } catch (error: any) {
       console.error('Error in fetchAssignedTourists:', error);
       setAssignedTourists([]);
@@ -929,16 +933,32 @@ export const GuideView: React.FC = () => {
                       {selectedTourist ? mockTourists.find(t => t.id === selectedTourist)?.name || t('selectTourist') : t('selectTourist')}
                     </SelectValue>
                   </SelectTrigger>
-                  <SelectContent>
-                     {mockTourists.map((tourist) => (
-                       <SelectItem key={tourist.id} value={tourist.id}>
-                         <div className="flex flex-col text-left">
-                           <span className="font-medium">{tourist.name}</span>
-                           <span className="text-xs text-muted-foreground">{tourist.contact_info}</span>
-                         </div>
+                   <SelectContent className="max-h-60 overflow-y-auto">
+                     {mockTourists.length > 0 ? (
+                       mockTourists.map((tourist) => (
+                         <SelectItem key={tourist.id} value={tourist.id}>
+                           <div className="flex flex-col text-left py-1">
+                             <span className="font-medium text-foreground">{tourist.name}</span>
+                             <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                               <span>{tourist.nationality}</span>
+                               <span>•</span>
+                               <span>{tourist.contact_info}</span>
+                               <Badge 
+                                 variant={tourist.status.includes('Assigned') ? 'default' : 'secondary'}
+                                 className="ml-auto text-xs"
+                               >
+                                 {tourist.status}
+                               </Badge>
+                             </div>
+                           </div>
+                         </SelectItem>
+                       ))
+                     ) : (
+                       <SelectItem value="no-tourists" disabled>
+                         <span className="text-muted-foreground italic">No tourists assigned yet</span>
                        </SelectItem>
-                     ))}
-                  </SelectContent>
+                     )}
+                   </SelectContent>
                 </Select>
               </CardContent>
             </Card>
