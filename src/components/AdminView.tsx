@@ -129,18 +129,27 @@ export const AdminView: React.FC = () => {
   // Fetch data from database
   useEffect(() => {
     if (isLoggedIn) {
+      console.log('Admin logged in, fetching all data...');
       fetchGuides();
       fetchGuideRequests();
       fetchAssignments();
       fetchDrivers();
-      fetchTourists();
+      fetchTourists(); // This will now fetch ALL tourists
       setupRealtimeUpdates();
+      
+      // Force a second fetch after a short delay to ensure all data is loaded
+      setTimeout(() => {
+        console.log('Secondary fetch to ensure all tourists are loaded...');
+        fetchTourists();
+      }, 1000);
     }
   }, [isLoggedIn]);
 
   const fetchTourists = async () => {
     try {
-      // Get all tourist profiles directly from profiles table
+      console.log('Starting to fetch all tourists from database...');
+      
+      // Get all tourist profiles directly from profiles table with no limits
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select(`
@@ -156,15 +165,25 @@ export const AdminView: React.FC = () => {
         .eq('user_type', 'tourist')
         .order('full_name', { ascending: true });
 
-      if (profilesError) throw profilesError;
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        throw profilesError;
+      }
 
-      // Get tour assignments to determine status
+      console.log('Raw profiles data from database:', profilesData);
+      console.log('Number of tourist profiles found:', profilesData?.length || 0);
+
+      // Get all tour assignments to determine status (no limits)
       const { data: assignmentsData, error: assignmentsError } = await supabase
         .from('tour_assignments')
         .select('tourist_id, status, guide_id, guides(name)')
         .in('status', ['pending', 'active']);
 
-      if (assignmentsError) console.warn('Could not fetch assignments:', assignmentsError);
+      if (assignmentsError) {
+        console.warn('Could not fetch assignments:', assignmentsError);
+      } else {
+        console.log('Tour assignments data:', assignmentsData);
+      }
 
       // Create a map of tourist assignments
       const assignmentMap = (assignmentsData || []).reduce((acc, assignment) => {
@@ -175,19 +194,36 @@ export const AdminView: React.FC = () => {
         return acc;
       }, {} as Record<string, { status: string; assignedGuide: string }>);
 
-      const formattedTourists: Tourist[] = (profilesData || []).map(profile => ({
-        id: profile.id,
-        name: profile.full_name || 'Unnamed Tourist',
-        email: profile.contact_info || '',
-        phone: profile.phone_number || profile.contact_info || '',
-        nationality: profile.nationality || 'Not specified',
-        status: assignmentMap[profile.id]?.status === 'active' ? 'assigned' : 
-                assignmentMap[profile.id]?.status === 'pending' ? 'pending' : 'active',
-        assignedGuide: assignmentMap[profile.id]?.assignedGuide || ''
-      }));
+      // Format ALL tourists with their exact names from signup
+      const formattedTourists: Tourist[] = (profilesData || []).map(profile => {
+        const assignmentStatus = assignmentMap[profile.id]?.status;
+        const status: 'active' | 'pending' | 'assigned' = 
+          assignmentStatus === 'active' ? 'assigned' : 
+          assignmentStatus === 'pending' ? 'pending' : 'active';
+        
+        const tourist = {
+          id: profile.id,
+          name: profile.full_name || 'Unnamed Tourist', // Exact name as entered during signup
+          email: profile.contact_info || '',
+          phone: profile.phone_number || profile.contact_info || '',
+          nationality: profile.nationality || 'Not specified',
+          status,
+          assignedGuide: assignmentMap[profile.id]?.assignedGuide || ''
+        };
+        console.log('Formatted tourist:', tourist);
+        return tourist;
+      });
 
-      console.log('Fetched tourists:', formattedTourists);
+      console.log('Final formatted tourists array:', formattedTourists);
+      console.log('Total tourists being set in state:', formattedTourists.length);
+      
       setTourists(formattedTourists);
+      
+      // Additional verification
+      setTimeout(() => {
+        console.log('Current tourists state after update:', formattedTourists.length);
+      }, 100);
+      
     } catch (error: any) {
       console.error('Error fetching tourists:', error);
       toast({
