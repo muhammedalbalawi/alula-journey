@@ -108,7 +108,8 @@ export const GuideView: React.FC = () => {
 
   const fetchAssignedTourists = async () => {
     try {
-      const { data, error } = await supabase
+      // First try to get tourists assigned to this guide
+      const { data: assignedData, error: assignedError } = await supabase
         .from('tour_assignments')
         .select(`
           id,
@@ -129,12 +130,45 @@ export const GuideView: React.FC = () => {
         .eq('guide_id', currentGuide?.id)
         .in('status', ['pending', 'active']);
 
-      if (error) throw error;
+      if (assignedError) {
+        console.error('Error fetching assigned tourists:', assignedError);
+      }
       
-      console.log('Fetched tourist assignments:', data);
-      setAssignedTourists(data || []);
+      console.log('Fetched tourist assignments:', assignedData);
+      
+      // If no assigned tourists, try to get all tourist profiles that could be assigned
+      if (!assignedData || assignedData.length === 0) {
+        const { data: allTourists, error: touristError } = await supabase
+          .from('profiles')
+          .select('id, full_name, contact_info, nationality, gender, phone_number')
+          .eq('user_type', 'tourist')
+          .limit(10);
+
+        if (touristError) {
+          console.error('Error fetching tourist profiles:', touristError);
+          setAssignedTourists([]);
+          return;
+        }
+
+        // Transform tourist profiles to match the expected format
+        const transformedTourists = (allTourists || []).map(tourist => ({
+          id: `tourist-${tourist.id}`,
+          tourist_id: tourist.id,
+          status: 'available',
+          tour_name: null,
+          start_date: null,
+          end_date: null,
+          profiles: tourist
+        }));
+
+        console.log('Using available tourist profiles:', transformedTourists);
+        setAssignedTourists(transformedTourists);
+      } else {
+        setAssignedTourists(assignedData);
+      }
     } catch (error: any) {
-      console.error('Error fetching assigned tourists:', error);
+      console.error('Error in fetchAssignedTourists:', error);
+      setAssignedTourists([]);
     }
   };
 
