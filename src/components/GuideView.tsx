@@ -1252,52 +1252,6 @@ export const GuideView: React.FC = () => {
               </CardContent>
             </Card>
 
-            {/* All Tourists Section */}
-            <Card className="shadow-desert">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 rtl:space-x-reverse">
-                  <Users className="w-5 h-5" />
-                  <span>All Tourists</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {mockTourists.length > 0 ? (
-                    mockTourists.map((tourist) => (
-                      <div key={tourist.id} className="p-4 border border-border rounded-lg bg-muted/20 hover:bg-muted/30 transition-colors">
-                        <div className="space-y-2">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-sm">{tourist.name}</h4>
-                              <p className="text-xs text-muted-foreground">{tourist.contact_info}</p>
-                              {tourist.nationality && (
-                                <p className="text-xs text-muted-foreground">{tourist.nationality}</p>
-                              )}
-                            </div>
-                            <Badge 
-                              variant={tourist.status.includes('Assigned') ? 'default' : 'outline'}
-                              className="text-xs ml-2"
-                            >
-                              {tourist.status}
-                            </Badge>
-                          </div>
-                          {tourist.tourName && (
-                            <div className="pt-2 border-t border-border/50">
-                              <p className="text-xs font-medium text-primary">{tourist.tourName}</p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-8">
-                      <Users className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-sm text-muted-foreground">No tourists assigned yet</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
 
