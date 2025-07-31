@@ -396,7 +396,7 @@ export const GuideView: React.FC = () => {
 
       // Set session variable for RLS policies
       try {
-        await supabase.rpc('set_guide_session', { 
+        await supabase.rpc('set_guide_session' as any, { 
           guide_uuid: data.id, 
           guide_identifier: data.guide_id 
         });
