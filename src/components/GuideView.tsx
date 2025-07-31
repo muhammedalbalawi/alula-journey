@@ -387,6 +387,9 @@ export const GuideView: React.FC = () => {
         return;
       }
 
+      // Set session variable for RLS policies
+      await supabase.rpc('set_guide_session', { guide_uuid: data.id, guide_identifier: data.guide_id });
+
       setCurrentGuide(data);
       setIsLoggedIn(true);
       toast({
