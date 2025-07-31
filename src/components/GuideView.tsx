@@ -108,6 +108,8 @@ export const GuideView: React.FC = () => {
 
   const fetchAssignedTourists = async () => {
     try {
+      console.log('Starting fetchAssignedTourists with guide:', currentGuide?.id);
+      
       // Get all tourist profiles for better user experience
       const { data: allTourists, error: touristError } = await supabase
         .from('profiles')
@@ -124,10 +126,11 @@ export const GuideView: React.FC = () => {
         .eq('user_type', 'tourist')
         .order('full_name', { ascending: true });
 
+      console.log('Tourist query result:', { allTourists, touristError });
+
       if (touristError) {
         console.error('Error fetching tourist profiles:', touristError);
-        setAssignedTourists([]);
-        return;
+        // Even if there's an error, continue to show existing assignments
       }
 
       // Get assignments to check current status
@@ -136,6 +139,8 @@ export const GuideView: React.FC = () => {
         .select('tourist_id, status, guide_id, tour_name, start_date, end_date')
         .eq('guide_id', currentGuide?.id)
         .in('status', ['pending', 'active']);
+
+      console.log('Assignments query result:', { assignmentsData, assignmentsError });
 
       if (assignmentsError) {
         console.warn('Could not fetch assignments:', assignmentsError);
@@ -168,7 +173,9 @@ export const GuideView: React.FC = () => {
         };
       });
 
-      console.log('Fetched all tourist profiles with assignments:', transformedTourists);
+      console.log('Final transformed tourists:', transformedTourists);
+      console.log('Number of tourists found:', transformedTourists.length);
+      
       setAssignedTourists(transformedTourists);
     } catch (error: any) {
       console.error('Error in fetchAssignedTourists:', error);
@@ -388,7 +395,14 @@ export const GuideView: React.FC = () => {
       }
 
       // Set session variable for RLS policies
-      await supabase.rpc('set_guide_session', { guide_uuid: data.id, guide_identifier: data.guide_id });
+      try {
+        await supabase.rpc('set_guide_session', { 
+          guide_uuid: data.id, 
+          guide_identifier: data.guide_id 
+        });
+      } catch (sessionError) {
+        console.warn('Could not set guide session:', sessionError);
+      }
 
       setCurrentGuide(data);
       setIsLoggedIn(true);

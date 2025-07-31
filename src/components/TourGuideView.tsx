@@ -313,6 +313,16 @@ export function TourGuideView() {
         return;
       }
 
+      // Set session variable for RLS policies
+      try {
+        await supabase.rpc('set_guide_session', { 
+          guide_uuid: data.id, 
+          guide_identifier: data.guide_id 
+        });
+      } catch (sessionError) {
+        console.warn('Could not set guide session:', sessionError);
+      }
+
       setCurrentGuideData(data);
       setIsLoggedIn(true);
       toast({

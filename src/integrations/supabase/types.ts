@@ -870,7 +870,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      set_guide_session: {
+        Args: { guide_uuid: string; guide_identifier: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
