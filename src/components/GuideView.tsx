@@ -110,71 +110,59 @@ export const GuideView: React.FC = () => {
     try {
       console.log('Starting fetchAssignedTourists with guide:', currentGuide?.id);
       
-      // Get all tourist profiles for better user experience
-      const { data: allTourists, error: touristError } = await supabase
-        .from('profiles')
-        .select(`
-          id,
-          full_name,
-          contact_info,
-          phone_number,
-          nationality,
-          gender,
-          user_type,
-          created_at
-        `)
-        .eq('user_type', 'tourist')
-        .order('full_name', { ascending: true });
-
-      console.log('Tourist query result:', { allTourists, touristError });
-
-      if (touristError) {
-        console.error('Error fetching tourist profiles:', touristError);
-        // Even if there's an error, continue to show existing assignments
-      }
-
-      // Get assignments to check current status
+      // Get only tourists assigned to this guide
       const { data: assignmentsData, error: assignmentsError } = await supabase
         .from('tour_assignments')
-        .select('tourist_id, status, guide_id, tour_name, start_date, end_date')
+        .select(`
+          tourist_id, 
+          status, 
+          guide_id, 
+          tour_name, 
+          start_date, 
+          end_date,
+          profiles:tourist_id (
+            id,
+            full_name,
+            contact_info,
+            phone_number,
+            nationality,
+            gender
+          )
+        `)
         .eq('guide_id', currentGuide?.id)
         .in('status', ['pending', 'active']);
 
       console.log('Assignments query result:', { assignmentsData, assignmentsError });
 
       if (assignmentsError) {
-        console.warn('Could not fetch assignments:', assignmentsError);
+        console.error('Error fetching assigned tourists:', assignmentsError);
+        setAssignedTourists([]);
+        return;
       }
 
-      // Create assignment map for quick lookup
-      const assignmentMap = (assignmentsData || []).reduce((acc, assignment) => {
-        acc[assignment.tourist_id] = assignment;
-        return acc;
-      }, {} as Record<string, any>);
-
-      // Transform all tourists with assignment info
-      const transformedTourists = (allTourists || []).map(tourist => {
-        const assignment = assignmentMap[tourist.id];
+      // Transform only assigned tourists
+      const transformedTourists = (assignmentsData || []).map(assignment => {
+        const tourist = assignment.profiles;
         return {
-          id: `tourist-${tourist.id}`,
-          tourist_id: tourist.id,
-          status: assignment ? assignment.status : 'available',
-          tour_name: assignment?.tour_name || null,
-          start_date: assignment?.start_date || null,
-          end_date: assignment?.end_date || null,
+          id: `tourist-${assignment.tourist_id}`,
+          tourist_id: assignment.tourist_id,
+          status: assignment.status,
+          tour_name: assignment.tour_name,
+          start_date: assignment.start_date,
+          end_date: assignment.end_date,
           profiles: {
-            id: tourist.id,
-            full_name: tourist.full_name || 'Unnamed Tourist',
-            contact_info: tourist.contact_info || tourist.phone_number || 'No contact info',
-            phone_number: tourist.phone_number || tourist.contact_info || '',
-            nationality: tourist.nationality || 'Not specified',
-            gender: tourist.gender || 'Not specified'
+            id: tourist?.id || assignment.tourist_id,
+            full_name: tourist?.full_name || 'Unnamed Tourist',
+            contact_info: tourist?.contact_info || tourist?.phone_number || 'No contact info',
+            phone_number: tourist?.phone_number || tourist?.contact_info || '',
+            nationality: tourist?.nationality || 'Not specified',
+            gender: tourist?.gender || 'Not specified'
           }
         };
       });
 
-      console.log('Final transformed tourists:', transformedTourists);
-      console.log('Number of tourists found:', transformedTourists.length);
+      console.log('Final assigned tourists:', transformedTourists);
+      console.log('Number of assigned tourists:', transformedTourists.length);
       
       setAssignedTourists(transformedTourists);
     } catch (error: any) {
