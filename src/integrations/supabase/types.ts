@@ -171,6 +171,48 @@ export type Database = {
         }
         Relationships: []
       }
+      driver_bookings: {
+        Row: {
+          booking_date: string
+          booking_time: string
+          created_at: string
+          destination: string
+          driver_id: string | null
+          id: string
+          pickup_location: string
+          special_requests: string | null
+          status: string
+          tourist_id: string
+          updated_at: string
+        }
+        Insert: {
+          booking_date: string
+          booking_time: string
+          created_at?: string
+          destination: string
+          driver_id?: string | null
+          id?: string
+          pickup_location: string
+          special_requests?: string | null
+          status?: string
+          tourist_id: string
+          updated_at?: string
+        }
+        Update: {
+          booking_date?: string
+          booking_time?: string
+          created_at?: string
+          destination?: string
+          driver_id?: string | null
+          id?: string
+          pickup_location?: string
+          special_requests?: string | null
+          status?: string
+          tourist_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       drivers: {
         Row: {
           car_color: string | null
