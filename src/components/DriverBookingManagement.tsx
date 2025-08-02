@@ -128,6 +128,43 @@ export const DriverBookingManagement: React.FC = () => {
   useEffect(() => {
     fetchBookings();
     fetchDrivers();
+
+    // Set up real-time subscription for driver bookings
+    const bookingsChannel = supabase
+      .channel('driver-bookings-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'driver_bookings'
+        },
+        () => {
+          fetchBookings();
+        }
+      )
+      .subscribe();
+
+    // Set up real-time subscription for drivers
+    const driversChannel = supabase
+      .channel('drivers-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'drivers'
+        },
+        () => {
+          fetchDrivers();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(bookingsChannel);
+      supabase.removeChannel(driversChannel);
+    };
   }, []);
 
   const handleAssignDriver = async (bookingId: string, driverId: string) => {
