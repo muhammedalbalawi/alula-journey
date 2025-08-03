@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DriverRegistration } from './DriverRegistration';
+import { DriverBookingManagement } from './DriverBookingManagement';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -1534,6 +1535,9 @@ export const AdminView: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Driver Booking Management */}
+        <DriverBookingManagement />
 
         {/* Guide Assignment/Reassignment Dialog */}
         <Dialog open={reassignmentDialogOpen} onOpenChange={setReassignmentDialogOpen}>

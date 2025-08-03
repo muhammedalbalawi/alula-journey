@@ -18,7 +18,8 @@ import {
   Mail,
   Plus,
   CalendarIcon,
-  Package
+  Package,
+  Car
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { PackageManagement } from './PackageManagement';
@@ -76,6 +77,8 @@ export function TourGuideView() {
   const [assignedTourists, setAssignedTourists] = useState<AssignedTourist[]>([]);
   const [notifications, setNotifications] = useState<RescheduleRequest[]>([]);
   const [tourActivities, setTourActivities] = useState<any[]>([]);
+  const [driverBookings, setDriverBookings] = useState<any[]>([]);
+  const [availableDrivers, setAvailableDrivers] = useState<any[]>([]);
 
   const [selectedRequest, setSelectedRequest] = useState<RescheduleRequest | null>(null);
   const [responseMessage, setResponseMessage] = useState('');
@@ -153,6 +156,8 @@ export function TourGuideView() {
       fetchAssignedTourists();
       fetchTourActivities();
       fetchRescheduleRequests();
+      fetchDriverBookings();
+      fetchAvailableDrivers();
       setupRealtimeUpdates();
     }
   }, [isLoggedIn, currentGuideData]);
@@ -250,6 +255,86 @@ export function TourGuideView() {
     }
   };
 
+  const fetchDriverBookings = async () => {
+    try {
+      // Get tourist IDs for this guide's assigned tourists
+      const touristIds = assignedTourists.map(t => t.tourist_id);
+      
+      if (touristIds.length === 0) {
+        setDriverBookings([]);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('driver_bookings')
+        .select(`
+          *,
+          profiles:tourist_id (
+            full_name,
+            contact_info
+          )
+        `)
+        .in('tourist_id', touristIds)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setDriverBookings(data || []);
+    } catch (error: any) {
+      console.error('Error fetching driver bookings:', error);
+    }
+  };
+
+  const fetchAvailableDrivers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('drivers')
+        .select('*')
+        .eq('status', 'available')
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      setAvailableDrivers(data || []);
+    } catch (error: any) {
+      console.error('Error fetching available drivers:', error);
+    }
+  };
+
+  const assignDriver = async (bookingId: string, driverId: string) => {
+    try {
+      const { error: bookingError } = await supabase
+        .from('driver_bookings')
+        .update({ 
+          driver_id: driverId,
+          status: 'assigned'
+        })
+        .eq('id', bookingId);
+
+      if (bookingError) throw bookingError;
+
+      const { error: driverError } = await supabase
+        .from('drivers')
+        .update({ status: 'busy' })
+        .eq('id', driverId);
+
+      if (driverError) throw driverError;
+
+      toast({
+        title: 'Success',
+        description: 'Driver assigned successfully!'
+      });
+
+      fetchDriverBookings();
+      fetchAvailableDrivers();
+    } catch (error: any) {
+      console.error('Error assigning driver:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to assign driver. Please try again.',
+        variant: 'destructive'
+      });
+    }
+  };
+
   const setupRealtimeUpdates = () => {
     const channel = supabase
       .channel('guide-updates')
@@ -286,6 +371,28 @@ export function TourGuideView() {
         },
         () => {
           fetchRescheduleRequests();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'driver_bookings'
+        },
+        () => {
+          fetchDriverBookings();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'drivers'
+        },
+        () => {
+          fetchAvailableDrivers();
         }
       )
       .subscribe();
@@ -744,6 +851,79 @@ export function TourGuideView() {
                     </div>
                   );
                 })
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Driver Booking Requests */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Car className="w-5 h-5" />
+              <span>Driver Booking Requests</span>
+              {driverBookings.filter(b => b.status === 'pending').length > 0 && (
+                <Badge variant="destructive">{driverBookings.filter(b => b.status === 'pending').length}</Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {driverBookings.length === 0 ? (
+                <p className="text-center text-gray-500 py-8">No driver booking requests</p>
+              ) : (
+                driverBookings.map((booking) => (
+                  <div key={booking.id} className="border rounded-lg p-4 space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-2 flex-1">
+                        <div className="flex items-center space-x-3">
+                          <h3 className="font-semibold">{booking.profiles?.full_name || 'Tourist'}</h3>
+                          <Badge variant={booking.status === 'pending' ? 'outline' : 'default'}>
+                            {booking.status}
+                          </Badge>
+                        </div>
+                        <div className="text-sm text-gray-600 space-y-1">
+                          <div className="flex items-center space-x-2">
+                            <Calendar className="w-4 h-4" />
+                            <span>{booking.booking_date} at {booking.booking_time}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <MapPin className="w-4 h-4" />
+                            <span>From: {booking.pickup_location}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <MapPin className="w-4 h-4" />
+                            <span>To: {booking.destination}</span>
+                          </div>
+                          {booking.special_requests && (
+                            <p className="text-sm">Special request: {booking.special_requests}</p>
+                          )}
+                        </div>
+                      </div>
+                      {booking.status === 'pending' && (
+                        <div className="flex flex-col space-y-2 min-w-[200px]">
+                          <Select onValueChange={(driverId) => assignDriver(booking.id, driverId)}>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select driver" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableDrivers.map((driver) => (
+                                <SelectItem key={driver.id} value={driver.id}>
+                                  {driver.name} - {driver.car_model}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                      {booking.status === 'assigned' && (
+                        <Badge variant="default" className="ml-2">
+                          Driver Assigned
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                ))
               )}
             </div>
           </CardContent>

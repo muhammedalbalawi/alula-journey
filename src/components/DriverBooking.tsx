@@ -13,6 +13,7 @@ import { CalendarIcon, Clock, Car } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
 export const DriverBooking: React.FC = () => {
   const { t } = useLanguage();
@@ -20,7 +21,9 @@ export const DriverBooking: React.FC = () => {
   const [date, setDate] = useState<Date>();
   const [time, setTime] = useState('');
   const [pickupLocation, setPickupLocation] = useState('');
+  const [destination, setDestination] = useState('');
   const [specialRequest, setSpecialRequest] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const timeSlots = [
     '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
@@ -29,27 +32,67 @@ export const DriverBooking: React.FC = () => {
     '17:00', '17:30', '18:00', '18:30', '19:00', '19:30'
   ];
 
-  const handleBooking = () => {
-    if (!date || !time) {
+  const handleBooking = async () => {
+    if (!date || !time || !pickupLocation || !destination) {
       toast({
         title: t('error'),
-        description: 'Please select date and time',
+        description: 'Please fill in all required fields',
         variant: 'destructive'
       });
       return;
     }
 
-    setShowBooking(false);
-    toast({
-      title: t('success'),
-      description: t('driverBookingSuccess')
-    });
+    setIsSubmitting(true);
     
-    // Reset form
-    setDate(undefined);
-    setTime('');
-    setPickupLocation('');
-    setSpecialRequest('');
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: t('error'),
+          description: 'You must be logged in to book a driver',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      const { error } = await supabase
+        .from('driver_bookings')
+        .insert({
+          tourist_id: user.id,
+          pickup_location: pickupLocation,
+          destination: destination,
+          booking_date: date.toISOString().split('T')[0],
+          booking_time: time,
+          special_requests: specialRequest || null,
+          status: 'pending'
+        });
+
+      if (error) throw error;
+
+      setShowBooking(false);
+      toast({
+        title: t('success'),
+        description: 'Driver booking request submitted successfully! Admin and guides will review your request.'
+      });
+      
+      // Reset form
+      setDate(undefined);
+      setTime('');
+      setPickupLocation('');
+      setDestination('');
+      setSpecialRequest('');
+    } catch (error: any) {
+      console.error('Error booking driver:', error);
+      toast({
+        title: t('error'),
+        description: 'Failed to submit booking request. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -121,11 +164,26 @@ export const DriverBooking: React.FC = () => {
               </div>
 
               {/* Pickup Location */}
-              <Input
-                placeholder={t('pickupLocation')}
-                value={pickupLocation}
-                onChange={(e) => setPickupLocation(e.target.value)}
-              />
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Pickup Location *</label>
+                <Input
+                  placeholder={t('pickupLocation')}
+                  value={pickupLocation}
+                  onChange={(e) => setPickupLocation(e.target.value)}
+                  required
+                />
+              </div>
+
+              {/* Destination */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Destination *</label>
+                <Input
+                  placeholder="Enter destination"
+                  value={destination}
+                  onChange={(e) => setDestination(e.target.value)}
+                  required
+                />
+              </div>
 
               {/* Special Request */}
               <Textarea
@@ -135,8 +193,8 @@ export const DriverBooking: React.FC = () => {
                 className="min-h-[80px]"
               />
 
-              <Button onClick={handleBooking} className="w-full">
-                {t('confirmBooking')}
+              <Button onClick={handleBooking} className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? 'Submitting...' : t('confirmBooking')}
               </Button>
             </div>
           </DialogContent>

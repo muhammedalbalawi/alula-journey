@@ -88,6 +88,8 @@ export const GuideView: React.FC = () => {
       fetchAssignedTourists();
       fetchActivities();
       fetchTouristPackages();
+      fetchDriverBookings();
+      fetchAvailableDrivers();
       setupRealtimeUpdates();
     }
   }, [isLoggedIn, currentGuide]);
@@ -103,6 +105,50 @@ export const GuideView: React.FC = () => {
       setTouristPackages(data || []);
     } catch (error: any) {
       console.error('Error fetching packages:', error);
+    }
+  };
+
+  const fetchDriverBookings = async () => {
+    try {
+      // Get tourist IDs for this guide's assigned tourists
+      const touristIds = assignedTourists.map(t => t.tourist_id);
+      
+      if (touristIds.length === 0) {
+        setDriverBookings([]);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('driver_bookings')
+        .select(`
+          *,
+          profiles:tourist_id (
+            full_name,
+            contact_info
+          )
+        `)
+        .in('tourist_id', touristIds)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setDriverBookings(data || []);
+    } catch (error: any) {
+      console.error('Error fetching driver bookings:', error);
+    }
+  };
+
+  const fetchAvailableDrivers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('drivers')
+        .select('*')
+        .eq('status', 'available')
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      setAvailableDrivers(data || []);
+    } catch (error: any) {
+      console.error('Error fetching available drivers:', error);
     }
   };
 
@@ -261,6 +307,28 @@ export const GuideView: React.FC = () => {
           fetchActivities();
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'driver_bookings'
+        },
+        () => {
+          fetchDriverBookings();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'drivers'
+        },
+        () => {
+          fetchAvailableDrivers();
+        }
+      )
       .subscribe();
 
     return () => {
@@ -332,10 +400,10 @@ export const GuideView: React.FC = () => {
     assignmentId: assignment.id
   }));
 
+  const [driverBookings, setDriverBookings] = useState<any[]>([]);
+  const [availableDrivers, setAvailableDrivers] = useState<any[]>([]);
+
   const mockJourneyRequests: any[] = [];
-
-  const mockDriverBookings: any[] = [];
-
   const mockRatings: any[] = [];
 
   const allLocations = itinerary.map(item => ({
@@ -418,11 +486,40 @@ export const GuideView: React.FC = () => {
     });
   };
 
-  const assignDriver = (bookingId: string) => {
-    toast({
-      title: t('success'),
-      description: 'Driver assigned successfully!'
-    });
+  const assignDriver = async (bookingId: string, driverId: string) => {
+    try {
+      const { error: bookingError } = await supabase
+        .from('driver_bookings')
+        .update({ 
+          driver_id: driverId,
+          status: 'assigned'
+        })
+        .eq('id', bookingId);
+
+      if (bookingError) throw bookingError;
+
+      const { error: driverError } = await supabase
+        .from('drivers')
+        .update({ status: 'busy' })
+        .eq('id', driverId);
+
+      if (driverError) throw driverError;
+
+      toast({
+        title: t('success'),
+        description: 'Driver assigned successfully!'
+      });
+
+      fetchDriverBookings();
+      fetchAvailableDrivers();
+    } catch (error: any) {
+      console.error('Error assigning driver:', error);
+      toast({
+        title: t('error'),
+        description: 'Failed to assign driver. Please try again.',
+        variant: 'destructive'
+      });
+    }
   };
 
   const togglePackage = (touristId: string) => {
@@ -1104,34 +1201,62 @@ export const GuideView: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {mockDriverBookings.map((booking) => (
-                    <div key={booking.id} className="p-4 border border-border rounded-lg">
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-2">
-                          <h4 className="font-semibold">{booking.touristName}</h4>
-                          <div className="text-sm text-muted-foreground space-y-1">
-                            <p className="flex items-center space-x-2 rtl:space-x-reverse">
-                              <CalendarIcon className="w-3 h-3" />
-                              <span>{booking.date} at {booking.time}</span>
-                            </p>
-                            {booking.pickupLocation && (
+                  {driverBookings.length === 0 ? (
+                    <p className="text-center text-gray-500 py-8">No driver booking requests</p>
+                  ) : (
+                    driverBookings.map((booking) => (
+                      <div key={booking.id} className="p-4 border border-border rounded-lg">
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-2 flex-1">
+                            <div className="flex items-center space-x-3">
+                              <h4 className="font-semibold">{booking.profiles?.full_name || 'Tourist'}</h4>
+                              <Badge variant={booking.status === 'pending' ? 'outline' : 'default'}>
+                                {booking.status}
+                              </Badge>
+                            </div>
+                            <div className="text-sm text-muted-foreground space-y-1">
+                              <p className="flex items-center space-x-2 rtl:space-x-reverse">
+                                <CalendarIcon className="w-3 h-3" />
+                                <span>{booking.booking_date} at {booking.booking_time}</span>
+                              </p>
                               <p className="flex items-center space-x-2 rtl:space-x-reverse">
                                 <MapPin className="w-3 h-3" />
-                                <span>{booking.pickupLocation}</span>
+                                <span>From: {booking.pickup_location}</span>
                               </p>
-                            )}
-                            {booking.specialRequest && (
-                              <p className="text-sm">Special request: {booking.specialRequest}</p>
-                            )}
+                              <p className="flex items-center space-x-2 rtl:space-x-reverse">
+                                <MapPin className="w-3 h-3" />
+                                <span>To: {booking.destination}</span>
+                              </p>
+                              {booking.special_requests && (
+                                <p className="text-sm">Special request: {booking.special_requests}</p>
+                              )}
+                            </div>
                           </div>
+                          {booking.status === 'pending' && (
+                            <div className="flex flex-col space-y-2 min-w-[200px]">
+                              <Select onValueChange={(driverId) => assignDriver(booking.id, driverId)}>
+                                <SelectTrigger className="w-full">
+                                  <SelectValue placeholder="Select driver" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {availableDrivers.map((driver) => (
+                                    <SelectItem key={driver.id} value={driver.id}>
+                                      {driver.name} - {driver.car_model}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          )}
+                          {booking.status === 'assigned' && (
+                            <Badge variant="default" className="ml-2">
+                              Driver Assigned
+                            </Badge>
+                          )}
                         </div>
-                        <Button size="sm" onClick={() => assignDriver(booking.id)}>
-                          <CheckCircle className="w-4 h-4 mr-2" />
-                          {t('assignDriver')}
-                        </Button>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
