@@ -33,7 +33,8 @@ import {
   Castle,
   Zap,
   UserCircle,
-  Trash2
+  Trash2,
+  LogOut
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
@@ -477,6 +478,23 @@ export const GuideView: React.FC = () => {
     } finally {
       setIsLoggingIn(false);
     }
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setCurrentGuide(null);
+    setGuideId('');
+    setPassword('');
+    setAssignedTourists([]);
+    setItinerary([]);
+    setTouristPackages([]);
+    setDriverBookings([]);
+    setAvailableDrivers([]);
+    
+    toast({
+      title: t('success'),
+      description: 'Logged out successfully'
+    });
   };
 
   const assignSchedule = (requestId: string) => {
@@ -1006,6 +1024,19 @@ export const GuideView: React.FC = () => {
             </div>
           </DialogContent>
         </Dialog>
+      </div>
+
+      {/* Logout Button - Top Right */}
+      <div className="fixed top-6 right-6 z-50">
+        <Button
+          variant="outline"
+          size="sm"
+          className="shadow-lg hover-scale"
+          onClick={handleLogout}
+        >
+          <LogOut className="w-4 h-4 mr-2" />
+          Logout
+        </Button>
       </div>
 
       <div className="container mx-auto max-w-7xl space-y-6 px-safe-area-inset-x">
