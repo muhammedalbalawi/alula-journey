@@ -91,6 +91,7 @@ export const GuideView: React.FC = () => {
       fetchTouristPackages();
       fetchDriverBookings();
       fetchAvailableDrivers();
+      fetchJourneyRequests();
       setupRealtimeUpdates();
     }
   }, [isLoggedIn, currentGuide]);
@@ -403,8 +404,8 @@ export const GuideView: React.FC = () => {
 
   const [driverBookings, setDriverBookings] = useState<any[]>([]);
   const [availableDrivers, setAvailableDrivers] = useState<any[]>([]);
+  const [journeyRequests, setJourneyRequests] = useState<any[]>([]);
 
-  const mockJourneyRequests: any[] = [];
   const mockRatings: any[] = [];
 
   const allLocations = itinerary.map(item => ({
@@ -497,11 +498,78 @@ export const GuideView: React.FC = () => {
     });
   };
 
-  const assignSchedule = (requestId: string) => {
-    toast({
-      title: t('success'),
-      description: 'Schedule assigned successfully!'
-    });
+  const fetchJourneyRequests = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('guide_requests')
+        .select(`
+          *,
+          profiles:tourist_id (
+            full_name,
+            contact_info,
+            nationality,
+            special_needs
+          )
+        `)
+        .eq('status', 'pending');
+
+      if (error) throw error;
+      setJourneyRequests(data || []);
+    } catch (error) {
+      console.error('Error fetching journey requests:', error);
+    }
+  };
+
+  const assignSchedule = async (requestId: string) => {
+    try {
+      const request = journeyRequests.find(r => r.id === requestId);
+      if (!request) return;
+
+      // Create tour assignment
+      const { error: assignmentError } = await supabase
+        .from('tour_assignments')
+        .insert({
+          tourist_id: request.tourist_id,
+          guide_id: currentGuide?.id,
+          tour_name: 'AlUla Heritage Tour',
+          start_date: new Date().toISOString().split('T')[0],
+          status: 'active'
+        });
+
+      if (assignmentError) throw assignmentError;
+
+      // Update tourist status to 'assigned'
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ user_type: 'assigned_tourist' })
+        .eq('id', request.tourist_id);
+
+      if (profileError) throw profileError;
+
+      // Update guide request status
+      const { error: requestError } = await supabase
+        .from('guide_requests')
+        .update({ status: 'approved', assigned_guide_id: currentGuide?.id })
+        .eq('id', requestId);
+
+      if (requestError) throw requestError;
+
+      toast({
+        title: t('success'),
+        description: 'Tourist assigned successfully'
+      });
+
+      // Refresh all data to update currently assigned tourists
+      fetchJourneyRequests();
+      fetchAssignedTourists();
+    } catch (error) {
+      console.error('Error assigning tourist:', error);
+      toast({
+        title: t('error'),
+        description: 'Failed to assign tourist',
+        variant: 'destructive'
+      });
+    }
   };
 
   const assignDriver = async (bookingId: string, driverId: string) => {
@@ -1302,15 +1370,15 @@ export const GuideView: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {mockJourneyRequests.map((request) => (
+                  {journeyRequests.map((request) => (
                     <div key={request.id} className="p-4 border border-border rounded-lg">
                       <div className="flex items-start justify-between">
                         <div className="space-y-2">
-                          <h4 className="font-semibold">{request.fullName}</h4>
-                          <p className="text-sm text-muted-foreground">{request.contact}</p>
-                          <p className="text-sm text-muted-foreground">Nationality: {request.nationality}</p>
-                          {request.specialNeeds && (
-                            <p className="text-sm text-muted-foreground">Special needs: {request.specialNeeds}</p>
+                          <h4 className="font-semibold">{request.profiles?.full_name || 'Unknown'}</h4>
+                          <p className="text-sm text-muted-foreground">{request.profiles?.contact_info || 'No contact'}</p>
+                          <p className="text-sm text-muted-foreground">Nationality: {request.profiles?.nationality || 'Unknown'}</p>
+                          {request.profiles?.special_needs && (
+                            <p className="text-sm text-muted-foreground">Special needs: {request.profiles.special_needs}</p>
                           )}
                         </div>
                         <Button size="sm" onClick={() => assignSchedule(request.id)}>
