@@ -1226,7 +1226,7 @@ export const TouristView: React.FC = () => {
                         <IconComponent className="w-5 h-5 text-primary" />
                       </div>
                       <span className="bg-gradient-to-r from-primary to-heritage-amber bg-clip-text text-transparent">
-                        {t(`categories.${category}.name`)}
+                        events
                       </span>
                     </CardTitle>
                   </CardHeader>
