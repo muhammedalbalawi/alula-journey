@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 interface MapLocation {
   id: string;
   name: string;
-  category: 'heritage' | 'attraction' | 'adventure';
+  category: 'heritage' | 'attraction' | 'adventure' | 'events';
   coordinates: { lat: number; lng: number };
   description?: string;
   notes?: string;
@@ -100,7 +100,8 @@ export const GoogleMaps: React.FC<GoogleMapsProps> = ({
     const icons = {
       heritage: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
       attraction: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
-      adventure: 'https://maps.google.com/mapfiles/ms/icons/green-dot.png'
+      adventure: 'https://maps.google.com/mapfiles/ms/icons/green-dot.png',
+      events: 'https://maps.google.com/mapfiles/ms/icons/purple-dot.png'
     };
     return icons[category as keyof typeof icons] || icons.attraction;
   };

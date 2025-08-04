@@ -1142,6 +1142,7 @@ export function TourGuideView() {
                 <option value="heritage">Heritage Sites</option>
                 <option value="attraction">Attraction Places</option>
                 <option value="adventure">Adventure Activities</option>
+                <option value="events">Events</option>
               </select>
               <Textarea
                 placeholder="Description (optional)"
@@ -1206,6 +1207,7 @@ export function TourGuideView() {
                 <option value="heritage">Heritage Sites</option>
                 <option value="attraction">Attraction Places</option>
                 <option value="adventure">Adventure Activities</option>
+                <option value="events">Events</option>
               </select>
               <Input
                 placeholder={t('tourDuration') + " (minutes)"}

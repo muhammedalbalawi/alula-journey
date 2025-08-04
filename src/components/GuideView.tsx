@@ -34,7 +34,8 @@ import {
   Zap,
   UserCircle,
   Trash2,
-  LogOut
+  LogOut,
+  CalendarDays
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
@@ -411,7 +412,7 @@ export const GuideView: React.FC = () => {
   const allLocations = itinerary.map(item => ({
     id: item.id,
     name: item.activity,
-    category: item.category as 'heritage' | 'attraction' | 'adventure',
+    category: item.category as 'heritage' | 'attraction' | 'adventure' | 'events',
     coordinates: item.coordinates,
     description: item.activity,
     notes: item.notes
@@ -420,7 +421,8 @@ export const GuideView: React.FC = () => {
   const categorizedItinerary = {
     heritage: itinerary.filter(item => item.category === 'heritage'),
     attraction: itinerary.filter(item => item.category === 'attraction'),
-    adventure: itinerary.filter(item => item.category === 'adventure')
+    adventure: itinerary.filter(item => item.category === 'adventure'),
+    events: itinerary.filter(item => item.category === 'events')
   };
 
   const handleLogin = async () => {
@@ -840,6 +842,7 @@ export const GuideView: React.FC = () => {
       case 'heritage': return Castle;
       case 'attraction': return Mountain;
       case 'adventure': return Zap;
+      case 'events': return CalendarDays;
       default: return MapPin;
     }
   };
@@ -849,6 +852,7 @@ export const GuideView: React.FC = () => {
       case 'heritage': return t('heritageSites') || 'Heritage Sites';
       case 'attraction': return t('attractionPlaces') || 'Attraction Places';
       case 'adventure': return t('adventurousExperiences') || 'Adventurous Experiences';
+      case 'events': return t('events') || 'Events';
       default: return 'Activities';
     }
   };
@@ -942,6 +946,12 @@ export const GuideView: React.FC = () => {
                         <div className="flex items-center space-x-2 rtl:space-x-reverse">
                           <Zap className="w-4 h-4" />
                           <span>{t('adventurousExperiences') || 'Adventurous Experiences'}</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="events">
+                        <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                          <CalendarDays className="w-4 h-4" />
+                          <span>{t('events') || 'Events'}</span>
                         </div>
                       </SelectItem>
                     </SelectContent>
@@ -1555,6 +1565,12 @@ export const GuideView: React.FC = () => {
                       <div className="flex items-center space-x-2">
                         <Zap className="w-4 h-4" />
                         <span>Adventurous Experiences</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="events">
+                      <div className="flex items-center space-x-2">
+                        <CalendarDays className="w-4 h-4" />
+                        <span>Events</span>
                       </div>
                     </SelectItem>
                   </SelectContent>

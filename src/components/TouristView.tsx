@@ -40,7 +40,8 @@ import {
   Edit,
   Save,
   X,
-  Flag
+  Flag,
+  CalendarDays
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
@@ -95,14 +96,15 @@ export const TouristView: React.FC = () => {
     description: activity.description || activity.activity_name,
     notes: activity.notes || 'Contact your guide for more information.',
     coordinates: { lat: activity.latitude || 26.6084, lng: activity.longitude || 37.8456 },
-    category: activity.category as 'heritage' | 'attraction' | 'adventure'
+    category: activity.category as 'heritage' | 'attraction' | 'adventure' | 'events'
   }));
 
   // Categorized destinations
   const destinations = {
     heritage: allLocations.filter(d => d.category === 'heritage'),
     attraction: allLocations.filter(d => d.category === 'attraction'),
-    adventure: allLocations.filter(d => d.category === 'adventure')
+    adventure: allLocations.filter(d => d.category === 'adventure'),
+    events: allLocations.filter(d => d.category === 'events')
   };
 
   const handleOTPLoginSuccess = (userId: string, session: any) => {
@@ -738,7 +740,8 @@ export const TouristView: React.FC = () => {
     const icons = {
       heritage: Landmark,
       attraction: Camera,
-      adventure: Mountain
+      adventure: Mountain,
+      events: CalendarDays
     };
     return icons[category as keyof typeof icons] || Camera;
   };
