@@ -696,41 +696,12 @@ export const GuideView: React.FC = () => {
       return;
     }
 
-    if (!selectedTourist) {
-      toast({
-        title: t('error'),
-        description: 'Please select a tourist first',
-        variant: 'destructive'
-      });
-      return;
-    }
-
     try {
-      // Get the tour assignment for the selected tourist
-      const { data: assignment, error: assignmentError } = await supabase
-        .from('tour_assignments')
-        .select('id')
-        .eq('tourist_id', selectedTourist)
-        .eq('guide_id', currentGuide?.id)
-        .eq('status', 'active')
-        .single();
-
-      if (assignmentError) {
-        console.error('Assignment error:', assignmentError);
-        toast({
-          title: t('error'),
-          description: 'No active tour assignment found for this tourist',
-          variant: 'destructive'
-        });
-        return;
-      }
-
+      // Create activity without requiring a specific tourist assignment
       const { data, error } = await supabase
         .from('activities')
         .insert({
           tour_guide_id: currentGuide?.id,
-          tourist_id: selectedTourist,
-          tour_assignment_id: assignment.id,
           activity_name: newActivity.activity,
           category: newActivity.category,
           location_name: newActivity.location,
@@ -746,23 +717,6 @@ export const GuideView: React.FC = () => {
 
       if (error) throw error;
 
-      // Add to local state immediately
-      const newItem = {
-        id: data.id,
-        day: itinerary.length + 1,
-        date: newActivity.date,
-        activity: newActivity.activity,
-        location: newActivity.location,
-        time: `${newActivity.startTime} - ${newActivity.endTime}`,
-        category: newActivity.category,
-        coordinates: { lat: 26.6084, lng: 37.8456 },
-        notes: newActivity.notes,
-        duration: newActivity.duration,
-        startTime: newActivity.startTime,
-        endTime: newActivity.endTime
-      };
-
-      setItinerary(prev => [...prev, newItem]);
       setShowAddActivityDialog(false);
       
       // Reset form
@@ -779,13 +733,15 @@ export const GuideView: React.FC = () => {
 
       toast({
         title: t('success'),
-        description: 'New activity added successfully!'
+        description: 'Activity added successfully!'
       });
-    } catch (error: any) {
+
+      // Real-time update will refresh the list automatically
+    } catch (error) {
       console.error('Error adding activity:', error);
       toast({
         title: t('error'),
-        description: 'Failed to add activity. Please try again.',
+        description: 'Failed to add activity',
         variant: 'destructive'
       });
     }
