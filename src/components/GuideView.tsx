@@ -1525,9 +1525,15 @@ export const GuideView: React.FC = () => {
                       selected={newActivity.date ? new Date(newActivity.date) : undefined}
                       onSelect={(date) => {
                         if (date) {
+                          // Format date as YYYY-MM-DD in local timezone to avoid off-by-one errors
+                          const year = date.getFullYear();
+                          const month = String(date.getMonth() + 1).padStart(2, '0');
+                          const day = String(date.getDate()).padStart(2, '0');
+                          const formattedDate = `${year}-${month}-${day}`;
+                          
                           setNewActivity(prev => ({
                             ...prev,
-                            date: date.toISOString().split('T')[0]
+                            date: formattedDate
                           }));
                         }
                       }}
@@ -1601,22 +1607,18 @@ export const GuideView: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Start Time</label>
-                  <div className="flex space-x-2">
-                    <Input
-                      type="time"
-                      value={newActivity.startTime}
-                      onChange={(e) => {
-                        const startTime = e.target.value;
-                        const endTime = calculateEndTime(startTime, newActivity.duration);
-                        setNewActivity(prev => ({ 
-                          ...prev, 
-                          startTime,
-                          endTime
-                        }));
-                      }}
-                      className="flex-1"
-                    />
-                  </div>
+                  <TimePicker
+                    value={newActivity.startTime}
+                    onChange={(time) => {
+                      const startTime = time;
+                      const endTime = calculateEndTime(startTime, newActivity.duration);
+                      setNewActivity(prev => ({ 
+                        ...prev, 
+                        startTime,
+                        endTime
+                      }));
+                    }}
+                  />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Duration (minutes)</label>

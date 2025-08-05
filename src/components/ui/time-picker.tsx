@@ -46,35 +46,35 @@ export const TimePicker: React.FC<TimePickerProps> = ({ value, onChange }) => {
   };
 
   return (
-    <div className="flex items-center space-x-2 rtl:space-x-reverse">
+    <div className="flex items-center space-x-2 rtl:space-x-reverse w-full max-w-xs">
       <Select
         value={hour12.toString()}
         onValueChange={(h) => updateTime(h, minute, period)}
       >
-        <SelectTrigger className="w-16">
+        <SelectTrigger className="w-16 md:w-20 h-10 text-center">
           <SelectValue />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="z-50">
           {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
-            <SelectItem key={h} value={h.toString()}>
-              {h}
+            <SelectItem key={h} value={h.toString()} className="text-center">
+              {h.toString().padStart(2, '0')}
             </SelectItem>
           ))}
         </SelectContent>
       </Select>
       
-      <span>:</span>
+      <span className="text-lg font-medium">:</span>
       
       <Select
         value={minute}
         onValueChange={(m) => updateTime(hour12.toString(), m, period)}
       >
-        <SelectTrigger className="w-16">
+        <SelectTrigger className="w-16 md:w-20 h-10 text-center">
           <SelectValue />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="z-50">
           {['00', '15', '30', '45'].map((m) => (
-            <SelectItem key={m} value={m}>
+            <SelectItem key={m} value={m} className="text-center">
               {m}
             </SelectItem>
           ))}
@@ -85,14 +85,14 @@ export const TimePicker: React.FC<TimePickerProps> = ({ value, onChange }) => {
         value={period}
         onValueChange={(p) => updateTime(hour12.toString(), minute, p)}
       >
-        <SelectTrigger className="w-20">
+        <SelectTrigger className="w-16 md:w-20 h-10 text-center">
           <SelectValue />
         </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="AM">
+        <SelectContent className="z-50">
+          <SelectItem value="AM" className="text-center">
             {language === 'ar' ? 'صباح' : 'AM'}
           </SelectItem>
-          <SelectItem value="PM">
+          <SelectItem value="PM" className="text-center">
             {language === 'ar' ? 'مساء' : 'PM'}
           </SelectItem>
         </SelectContent>
