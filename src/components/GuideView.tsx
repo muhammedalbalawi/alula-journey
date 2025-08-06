@@ -84,6 +84,70 @@ export const GuideView: React.FC = () => {
 
   const [assignedTourists, setAssignedTourists] = useState<any[]>([]);
 
+  // Activity management functions
+  const handleRescheduleActivity = async (activityId: string, newDate: Date | null, newTime: string | null) => {
+    try {
+      const updateData: any = {};
+      
+      if (newDate) {
+        const year = newDate.getFullYear();
+        const month = String(newDate.getMonth() + 1).padStart(2, '0');
+        const day = String(newDate.getDate()).padStart(2, '0');
+        updateData.scheduled_date = `${year}-${month}-${day}`;
+      }
+      
+      if (newTime) {
+        updateData.scheduled_time = newTime;
+      }
+
+      const { error } = await supabase
+        .from('activities')
+        .update(updateData)
+        .eq('id', activityId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'Activity rescheduled successfully'
+      });
+
+      fetchActivities();
+    } catch (error) {
+      console.error('Error rescheduling activity:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to reschedule activity',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleRemoveActivity = async (activityId: string) => {
+    try {
+      const { error } = await supabase
+        .from('activities')
+        .delete()
+        .eq('id', activityId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'Activity removed successfully'
+      });
+
+      fetchActivities();
+    } catch (error) {
+      console.error('Error removing activity:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to remove activity',
+        variant: 'destructive'
+      });
+    }
+  };
+
   // Fetch assigned tourists when logged in
   useEffect(() => {
     if (isLoggedIn && currentGuide) {
@@ -1129,6 +1193,146 @@ export const GuideView: React.FC = () => {
                 </Select>
               </CardContent>
             </Card>
+
+            {/* Tourist Schedule Management */}
+            {selectedTourist && (
+              <Card className="shadow-desert">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                      <CalendarIcon className="w-5 h-5" />
+                      <span>Tourist Schedule</span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowAddActivityDialog(true)}
+                      className="flex items-center space-x-2"
+                    >
+                      <CalendarIcon className="w-4 h-4" />
+                      <span>Add Activity</span>
+                    </Button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {itinerary.length > 0 ? (
+                      itinerary
+                        .filter(activity => {
+                          const tourist = mockTourists.find(t => t.id === selectedTourist);
+                          return tourist && (activity.tourist_id === tourist.id || activity.tour_guide_id === currentGuide?.id);
+                        })
+                        .map((activity, index) => (
+                        <div key={activity.id} className="p-4 border border-border rounded-lg bg-muted/30">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-3 mb-2">
+                                <Badge variant="outline" className="text-xs">
+                                  Day {index + 1}
+                                </Badge>
+                                <span className="text-sm text-muted-foreground">
+                                  {format(new Date(activity.scheduled_date), "PPP")}
+                                </span>
+                                <span className="text-sm text-muted-foreground">
+                                  {activity.scheduled_time}
+                                </span>
+                              </div>
+                              <h4 className="font-medium text-lg mb-1">{activity.activity_name}</h4>
+                              <div className="flex items-center space-x-2 text-sm text-muted-foreground mb-2">
+                                <MapPin className="w-4 h-4" />
+                                <span>{activity.location_name}</span>
+                              </div>
+                              {activity.duration_minutes && (
+                                <div className="flex items-center space-x-2 text-sm text-muted-foreground mb-2">
+                                  <Clock className="w-4 h-4" />
+                                  <span>{activity.duration_minutes} minutes</span>
+                                </div>
+                              )}
+                              {activity.notes && (
+                                <p className="text-sm text-muted-foreground mt-2">{activity.notes}</p>
+                              )}
+                              <div className="flex items-center space-x-2 mt-2">
+                                <Badge variant="secondary" className="text-xs">
+                                  {activity.category}
+                                </Badge>
+                                <Badge 
+                                  variant={activity.status === 'completed' ? 'default' : 'outline'} 
+                                  className="text-xs"
+                                >
+                                  {activity.status}
+                                </Badge>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2 ml-4">
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button variant="outline" size="sm">
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-md">
+                                  <DialogHeader>
+                                    <DialogTitle>Reschedule Activity</DialogTitle>
+                                  </DialogHeader>
+                                  <div className="space-y-4 pt-4">
+                                    <div className="space-y-2">
+                                      <label className="text-sm font-medium">New Date</label>
+                                      <Popover>
+                                        <PopoverTrigger asChild>
+                                          <Button variant="outline" className="w-full justify-start">
+                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                            Select new date
+                                          </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0">
+                                          <Calendar
+                                            mode="single"
+                                            onSelect={(date) => {
+                                              if (date) {
+                                                handleRescheduleActivity(activity.id, date, null);
+                                              }
+                                            }}
+                                            initialFocus
+                                            className="pointer-events-auto"
+                                          />
+                                        </PopoverContent>
+                                      </Popover>
+                                    </div>
+                                    <div className="space-y-2">
+                                      <label className="text-sm font-medium">New Time</label>
+                                      <TimePicker
+                                        value="09:00"
+                                        onChange={(time) => {
+                                          handleRescheduleActivity(activity.id, null, time);
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleRemoveActivity(activity.id)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <CalendarIcon className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                        <p>No activities scheduled yet</p>
+                        <p className="text-sm">Add activities to create the tourist's schedule</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Google Maps for Guides */}
             {selectedTourist && (

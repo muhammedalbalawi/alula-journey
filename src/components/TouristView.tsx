@@ -234,8 +234,17 @@ export const TouristView: React.FC = () => {
 
   const fetchTourActivities = async () => {
     try {
-      if (!tourAssignment?.id) return;
-      await fetchTourActivitiesForAssignment(tourAssignment.id);
+      // Get activities from assigned guide
+      if (!assignedGuide) return;
+      
+      const { data, error } = await supabase
+        .from('activities')
+        .select('*')
+        .eq('tour_guide_id', assignedGuide.id)
+        .order('scheduled_date', { ascending: true });
+
+      if (error) throw error;
+      setTourActivities(data || []);
     } catch (error: any) {
       console.error('Error fetching tour activities:', error);
     }
@@ -243,10 +252,13 @@ export const TouristView: React.FC = () => {
 
   const fetchTourActivitiesForAssignment = async (assignmentId: string) => {
     try {
+      // Get activities from assigned guide for this tourist
+      if (!assignedGuide) return;
+      
       const { data, error } = await supabase
         .from('activities')
         .select('*')
-        .eq('tour_assignment_id', assignmentId)
+        .eq('tour_guide_id', assignedGuide.id)
         .order('scheduled_date', { ascending: true });
 
       if (error) throw error;
