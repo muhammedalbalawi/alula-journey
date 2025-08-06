@@ -761,11 +761,12 @@ export const GuideView: React.FC = () => {
     }
 
     try {
-      // Create activity without requiring a specific tourist assignment
+      // Create activity and assign to currently selected tourist
       const { data, error } = await supabase
         .from('activities')
         .insert({
           tour_guide_id: currentGuide?.id,
+          tourist_id: selectedTourist || null, // Assign to currently selected tourist
           activity_name: newActivity.activity,
           category: newActivity.category,
           location_name: newActivity.location,
