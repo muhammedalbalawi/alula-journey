@@ -872,7 +872,7 @@ export const GuideView: React.FC = () => {
       case 'heritage': return t('heritageSites') || 'Heritage Sites';
       case 'attraction': return t('attractionPlaces') || 'Attraction Places';
       case 'adventure': return t('adventurousExperiences') || 'Adventurous Experiences';
-      case 'events': return t('events') || 'Events';
+      case 'events': return t('events') || 'events';
       default: return 'Activities';
     }
   };
@@ -971,7 +971,7 @@ export const GuideView: React.FC = () => {
                       <SelectItem value="events">
                         <div className="flex items-center space-x-2 rtl:space-x-reverse">
                           <CalendarDays className="w-4 h-4" />
-                          <span>{t('events') || 'Events'}</span>
+                          <span>{t('events') || 'events'}</span>
                         </div>
                       </SelectItem>
                     </SelectContent>
@@ -1736,7 +1736,7 @@ export const GuideView: React.FC = () => {
                     <SelectItem value="events">
                       <div className="flex items-center space-x-2">
                         <CalendarDays className="w-4 h-4" />
-                        <span>Events</span>
+                        <span>events</span>
                       </div>
                     </SelectItem>
                   </SelectContent>
