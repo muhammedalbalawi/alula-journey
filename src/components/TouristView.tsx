@@ -234,13 +234,14 @@ export const TouristView: React.FC = () => {
 
   const fetchTourActivities = async () => {
     try {
-      // Get activities from assigned guide
-      if (!assignedGuide) return;
+      // Get activities from assigned guide for this specific tourist
+      if (!assignedGuide || !userSession?.user?.id) return;
       
       const { data, error } = await supabase
         .from('activities')
         .select('*')
         .eq('tour_guide_id', assignedGuide.id)
+        .eq('tourist_id', userSession.user.id)
         .order('scheduled_date', { ascending: true });
 
       if (error) throw error;
@@ -252,13 +253,14 @@ export const TouristView: React.FC = () => {
 
   const fetchTourActivitiesForAssignment = async (assignmentId: string) => {
     try {
-      // Get activities from assigned guide for this tourist
-      if (!assignedGuide) return;
+      // Get activities from assigned guide for this specific tourist
+      if (!assignedGuide || !userSession?.user?.id) return;
       
       const { data, error } = await supabase
         .from('activities')
         .select('*')
         .eq('tour_guide_id', assignedGuide.id)
+        .eq('tourist_id', userSession.user.id)
         .order('scheduled_date', { ascending: true });
 
       if (error) throw error;
