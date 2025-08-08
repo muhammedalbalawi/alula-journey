@@ -215,12 +215,15 @@ export const TouristView: React.FC = () => {
 
   const fetchTourAssignment = async () => {
     try {
+      // Get assignment information from activities table
       const { data, error } = await supabase
-        .from('tour_assignments')
+        .from('activities')
         .select('*')
         .eq('tourist_id', userSession?.user?.id)
-        .eq('status', 'active')
-        .single();
+        .eq('assignment_status', 'active')
+        .not('tour_name', 'is', null)
+        .limit(1)
+        .maybeSingle();
 
       if (error && error.code !== 'PGRST116') throw error;
       setTourAssignment(data);
@@ -304,7 +307,7 @@ export const TouristView: React.FC = () => {
         {
           event: '*',
           schema: 'public',
-          table: 'tour_assignments',
+          table: 'activities',
           filter: `tourist_id=eq.${userSession?.user?.id}`
         },
         () => {

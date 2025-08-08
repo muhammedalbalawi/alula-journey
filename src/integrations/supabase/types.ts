@@ -18,11 +18,13 @@ export type Database = {
         Row: {
           activity_id: string | null
           activity_name: string
+          assignment_status: string | null
           category: string | null
           created_at: string | null
           created_by: string | null
           description: string | null
           duration_minutes: number | null
+          end_date: string | null
           id: string
           latitude: number | null
           location_name: string
@@ -30,20 +32,24 @@ export type Database = {
           notes: string | null
           scheduled_date: string
           scheduled_time: string
+          start_date: string | null
           status: string | null
           tour_assignment_id: string | null
           tour_guide_id: string | null
+          tour_name: string | null
           tourist_id: string | null
           updated_at: string | null
         }
         Insert: {
           activity_id?: string | null
           activity_name: string
+          assignment_status?: string | null
           category?: string | null
           created_at?: string | null
           created_by?: string | null
           description?: string | null
           duration_minutes?: number | null
+          end_date?: string | null
           id?: string
           latitude?: number | null
           location_name: string
@@ -51,20 +57,24 @@ export type Database = {
           notes?: string | null
           scheduled_date: string
           scheduled_time: string
+          start_date?: string | null
           status?: string | null
           tour_assignment_id?: string | null
           tour_guide_id?: string | null
+          tour_name?: string | null
           tourist_id?: string | null
           updated_at?: string | null
         }
         Update: {
           activity_id?: string | null
           activity_name?: string
+          assignment_status?: string | null
           category?: string | null
           created_at?: string | null
           created_by?: string | null
           description?: string | null
           duration_minutes?: number | null
+          end_date?: string | null
           id?: string
           latitude?: number | null
           location_name?: string
@@ -72,9 +82,11 @@ export type Database = {
           notes?: string | null
           scheduled_date?: string
           scheduled_time?: string
+          start_date?: string | null
           status?: string | null
           tour_assignment_id?: string | null
           tour_guide_id?: string | null
+          tour_name?: string | null
           tourist_id?: string | null
           updated_at?: string | null
         }
@@ -909,7 +921,28 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      tour_assignments_view: {
+        Row: {
+          created_at: string | null
+          end_date: string | null
+          guide_id: string | null
+          id: string | null
+          start_date: string | null
+          status: string | null
+          tour_name: string | null
+          tourist_id: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activities_tour_guide_id_fkey"
+            columns: ["guide_id"]
+            isOneToOne: false
+            referencedRelation: "guides"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       set_guide_session: {

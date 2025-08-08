@@ -344,8 +344,8 @@ export const GuideView: React.FC = () => {
         {
           event: '*',
           schema: 'public',
-          table: 'tour_assignments',
-          filter: `guide_id=eq.${currentGuide?.id}`
+          table: 'activities',
+          filter: `tour_guide_id=eq.${currentGuide?.id}`
         },
         () => {
           fetchAssignedTourists();
@@ -591,15 +591,22 @@ export const GuideView: React.FC = () => {
       const request = journeyRequests.find(r => r.id === requestId);
       if (!request) return;
 
-      // Create tour assignment
+      // Create new activity record that represents tour assignment
       const { error: assignmentError } = await supabase
-        .from('tour_assignments')
+        .from('activities')
         .insert({
           tourist_id: request.tourist_id,
-          guide_id: currentGuide?.id,
+          tour_guide_id: currentGuide?.id,
           tour_name: 'AlUla Heritage Tour',
           start_date: new Date().toISOString().split('T')[0],
-          status: 'active'
+          assignment_status: 'active',
+          activity_name: 'Tour Assignment',
+          location_name: 'AlUla',
+          category: 'heritage',
+          scheduled_date: new Date().toISOString().split('T')[0],
+          scheduled_time: '09:00:00',
+          duration_minutes: 480,
+          status: 'planned'
         });
 
       if (assignmentError) throw assignmentError;

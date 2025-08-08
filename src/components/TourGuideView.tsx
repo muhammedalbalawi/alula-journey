@@ -58,7 +58,7 @@ interface RescheduleRequest {
 interface AssignedTourist {
   id: string;
   tourist_id: string;
-  status: string;
+  assignment_status: string;
   created_at: string;
   profiles: {
     full_name: string;
@@ -165,27 +165,52 @@ export function TourGuideView() {
   const fetchAssignedTourists = async () => {
     try {
       const { data, error } = await supabase
-        .from('tour_assignments')
+        .from('activities')
         .select(`
           id,
           tourist_id,
-          status,
-          created_at,
+          assignment_status,
+          tour_guide_id,
           tour_name,
           start_date,
           end_date,
-          profiles!tourist_id (
-            full_name,
-            contact_info,
-            nationality,
-            gender
-          )
+          created_at
         `)
-        .eq('guide_id', currentGuideData?.id)
-        .in('status', ['pending', 'active']);
+        .eq('tour_guide_id', currentGuideData?.id)
+        .eq('assignment_status', 'active')
+        .not('tour_name', 'is', null);
 
       if (error) throw error;
-      setAssignedTourists((data || []) as AssignedTourist[]);
+      
+      // Get unique tourists and fetch their profiles separately
+      const uniqueTouristIds = [...new Set(data?.map(a => a.tourist_id) || [])];
+      
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, full_name, contact_info, nationality, gender')
+        .in('id', uniqueTouristIds);
+        
+      // Map profiles to activities
+      const activitiesWithProfiles = data?.map(activity => ({
+        ...activity,
+        profiles: profilesData?.find(p => p.id === activity.tourist_id) || {
+          full_name: 'Tourist',
+          contact_info: '',
+          nationality: '',
+          gender: ''
+        }
+      })) || [];
+      
+      // Remove duplicates based on tourist_id  
+      const uniqueAssignments = activitiesWithProfiles.reduce((acc: any[], assignment: any) => {
+        const exists = acc.find(a => a.tourist_id === assignment.tourist_id);
+        if (!exists) {
+          acc.push(assignment);
+        }
+        return acc;
+      }, []);
+      
+      setAssignedTourists(uniqueAssignments as AssignedTourist[]);
     } catch (error: any) {
       console.error('Error fetching assigned tourists:', error);
     }
@@ -343,8 +368,8 @@ export function TourGuideView() {
         {
           event: '*',
           schema: 'public',
-          table: 'tour_assignments',
-          filter: `guide_id=eq.${currentGuideData?.id}`
+          table: 'activities',
+          filter: `tour_guide_id=eq.${currentGuideData?.id}`
         },
         () => {
           fetchAssignedTourists();

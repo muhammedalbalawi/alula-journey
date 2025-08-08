@@ -174,11 +174,12 @@ export const AdminView: React.FC = () => {
       console.log('Raw profiles data from database:', profilesData);
       console.log('Number of tourist profiles found:', profilesData?.length || 0);
 
-      // Get all tour assignments to determine status (no limits)
+      // Get all tour assignments from activities table to determine status (no limits)
       const { data: assignmentsData, error: assignmentsError } = await supabase
-        .from('tour_assignments')
-        .select('tourist_id, status, guide_id, guides(name)')
-        .in('status', ['pending', 'active']);
+        .from('activities')
+        .select('tourist_id, assignment_status, tour_guide_id')
+        .in('assignment_status', ['pending', 'active'])
+        .not('tour_name', 'is', null);
 
       if (assignmentsError) {
         console.warn('Could not fetch assignments:', assignmentsError);
@@ -189,8 +190,8 @@ export const AdminView: React.FC = () => {
       // Create a map of tourist assignments
       const assignmentMap = (assignmentsData || []).reduce((acc, assignment) => {
         acc[assignment.tourist_id] = {
-          status: assignment.status,
-          assignedGuide: assignment.guides?.name || 'Unknown Guide'
+          status: assignment.assignment_status,
+          assignedGuide: 'Guide Assigned'
         };
         return acc;
       }, {} as Record<string, { status: string; assignedGuide: string }>);
@@ -311,7 +312,7 @@ export const AdminView: React.FC = () => {
         {
           event: '*',
           schema: 'public',
-          table: 'tour_assignments'
+          table: 'activities'
         },
         () => {
           console.log('Tour assignments changed, refreshing...');
@@ -441,16 +442,23 @@ export const AdminView: React.FC = () => {
     }
 
     try {
-      // Create tour assignment in database
+      // Create tour assignment in activities table
       const { data, error } = await supabase
-        .from('tour_assignments')
+        .from('activities')
         .insert([{
           tourist_id: selectedTourist,
-          guide_id: selectedGuide,
+          tour_guide_id: selectedGuide,
           tour_name: tourName,
           start_date: startDate,
           end_date: endDate,
-          status: 'active'
+          assignment_status: 'active',
+          activity_name: 'Tour Assignment',
+          location_name: 'AlUla',
+          category: 'heritage',
+          scheduled_date: startDate,
+          scheduled_time: '09:00:00',
+          duration_minutes: 480,
+          status: 'planned'
         }])
         .select()
         .single();
@@ -687,9 +695,10 @@ export const AdminView: React.FC = () => {
       if (existingAssignment) {
         // Update existing assignment
         const { error } = await supabase
-          .from('tour_assignments')
-          .update({ guide_id: reassignmentNewGuideId })
-          .eq('id', existingAssignment.id);
+          .from('activities')
+          .update({ tour_guide_id: reassignmentNewGuideId })
+          .eq('tourist_id', reassignmentTouristId)
+          .eq('assignment_status', 'active');
 
         if (error) throw error;
 
@@ -702,14 +711,21 @@ export const AdminView: React.FC = () => {
       } else {
         // Create new assignment if none exists
         const { data, error } = await supabase
-          .from('tour_assignments')
+          .from('activities')
           .insert([{
             tourist_id: reassignmentTouristId,
-            guide_id: reassignmentNewGuideId,
+            tour_guide_id: reassignmentNewGuideId,
             tour_name: 'AlUla Heritage Tour',
             start_date: new Date().toISOString().split('T')[0],
             end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-            status: 'active'
+            assignment_status: 'active',
+            activity_name: 'Tour Assignment',
+            location_name: 'AlUla',
+            category: 'heritage',
+            scheduled_date: new Date().toISOString().split('T')[0],
+            scheduled_time: '09:00:00',
+            duration_minutes: 480,
+            status: 'planned'
           }])
           .select()
           .single();
