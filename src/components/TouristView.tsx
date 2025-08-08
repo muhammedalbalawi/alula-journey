@@ -163,8 +163,7 @@ export const TouristView: React.FC = () => {
   // Fetch guide request when user session changes and set up real-time updates
   useEffect(() => {
     if (userSession?.user?.id) {
-    fetchGuideRequest();
-    fetchTourActivities();
+    fetchGuideRequest(); // This will fetch assigned guide and then call fetchTourActivities
     fetchCountries();
     fetchPackages();
     fetchUserGuideRating();
@@ -201,6 +200,9 @@ export const TouristView: React.FC = () => {
         
         // Also fetch tour assignment for activities
         await fetchTourAssignment();
+        
+        // Fetch activities after setting assigned guide
+        setTimeout(() => fetchTourActivities(), 100);
       } else {
         setGuideRequest(null);
         setAssignedGuide(null);
@@ -235,7 +237,17 @@ export const TouristView: React.FC = () => {
   const fetchTourActivities = async () => {
     try {
       // Get activities from assigned guide for this specific tourist
-      if (!assignedGuide || !userSession?.user?.id) return;
+      if (!userSession?.user?.id) {
+        console.log('No user session available');
+        return;
+      }
+      
+      if (!assignedGuide) {
+        console.log('No assigned guide found');
+        return;
+      }
+      
+      console.log('Fetching activities for tourist:', userSession.user.id, 'guide:', assignedGuide.id);
       
       const { data, error } = await supabase
         .from('activities')
@@ -245,6 +257,8 @@ export const TouristView: React.FC = () => {
         .order('scheduled_date', { ascending: true });
 
       if (error) throw error;
+      
+      console.log('Found activities:', data?.length || 0, data);
       setTourActivities(data || []);
     } catch (error: any) {
       console.error('Error fetching tour activities:', error);
