@@ -105,13 +105,6 @@ export type Database = {
             referencedRelation: "guides"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "tour_activities_tour_assignment_id_fkey"
-            columns: ["tour_assignment_id"]
-            isOneToOne: false
-            referencedRelation: "tour_assignments"
-            referencedColumns: ["id"]
-          },
         ]
       }
       admin_users: {
@@ -315,13 +308,6 @@ export type Database = {
             referencedRelation: "guides"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "guide_ratings_tour_assignment_id_fkey"
-            columns: ["tour_assignment_id"]
-            isOneToOne: false
-            referencedRelation: "tour_assignments"
-            referencedColumns: ["id"]
-          },
         ]
       }
       guide_requests: {
@@ -488,13 +474,6 @@ export type Database = {
             columns: ["sender_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "messages_tour_assignment_id_fkey"
-            columns: ["tour_assignment_id"]
-            isOneToOne: false
-            referencedRelation: "tour_assignments"
             referencedColumns: ["id"]
           },
         ]
@@ -723,65 +702,7 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "reschedule_requests_tour_assignment_id_fkey"
-            columns: ["tour_assignment_id"]
-            isOneToOne: false
-            referencedRelation: "tour_assignments"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "reschedule_requests_tourist_id_fkey"
-            columns: ["tourist_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      tour_assignments: {
-        Row: {
-          created_at: string | null
-          end_date: string | null
-          guide_id: string | null
-          id: string
-          start_date: string | null
-          status: string | null
-          tour_name: string
-          tourist_id: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          end_date?: string | null
-          guide_id?: string | null
-          id?: string
-          start_date?: string | null
-          status?: string | null
-          tour_name: string
-          tourist_id?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          end_date?: string | null
-          guide_id?: string | null
-          id?: string
-          start_date?: string | null
-          status?: string | null
-          tour_name?: string
-          tourist_id?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tour_assignments_guide_id_fkey"
-            columns: ["guide_id"]
-            isOneToOne: false
-            referencedRelation: "guides"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tour_assignments_tourist_id_fkey"
             columns: ["tourist_id"]
             isOneToOne: false
             referencedRelation: "profiles"
