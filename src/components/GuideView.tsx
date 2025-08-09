@@ -225,25 +225,18 @@ export const GuideView: React.FC = () => {
       
       // Get only tourists assigned to this guide
       const { data: assignmentsData, error: assignmentsError } = await supabase
-        .from('tour_assignments')
+        .from('activities')
         .select(`
           tourist_id, 
-          status, 
-          guide_id, 
+          assignment_status, 
+          tour_guide_id, 
           tour_name, 
           start_date, 
-          end_date,
-          profiles:tourist_id (
-            id,
-            full_name,
-            contact_info,
-            phone_number,
-            nationality,
-            gender
-          )
+          end_date
         `)
-        .eq('guide_id', currentGuide?.id)
-        .in('status', ['pending', 'active']);
+        .eq('tour_guide_id', currentGuide?.id)
+        .in('assignment_status', ['pending', 'active'])
+        .not('tour_name', 'is', null);
 
       console.log('Assignments query result:', { assignmentsData, assignmentsError });
 
@@ -253,13 +246,21 @@ export const GuideView: React.FC = () => {
         return;
       }
 
+      // Get unique tourist IDs and fetch their profiles
+      const uniqueTouristIds = [...new Set(assignmentsData?.map(a => a.tourist_id) || [])];
+      
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, full_name, contact_info, phone_number, nationality, gender')
+        .in('id', uniqueTouristIds);
+
       // Transform only assigned tourists
       const transformedTourists = (assignmentsData || []).map(assignment => {
-        const tourist = assignment.profiles;
+        const tourist = profilesData?.find(p => p.id === assignment.tourist_id);
         return {
           id: `tourist-${assignment.tourist_id}`,
           tourist_id: assignment.tourist_id,
-          status: assignment.status,
+          status: assignment.assignment_status,
           tour_name: assignment.tour_name,
           start_date: assignment.start_date,
           end_date: assignment.end_date,

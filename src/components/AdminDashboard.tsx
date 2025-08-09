@@ -1,98 +1,50 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { AdminView } from './AdminView';
 import { EnhancedAdminView } from './admin/EnhancedAdminView';
 import { DriverRegistration } from './DriverRegistration';
+import { AdminAuth } from './auth/AdminAuth';
 import { 
   Shield, 
   Users, 
   Car, 
   ClipboardList
 } from 'lucide-react';
+import { User } from '@supabase/supabase-js';
 
 export const AdminDashboard: React.FC = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [adminId, setAdminId] = useState('');
-  const [password, setPassword] = useState('');
+  const [user, setUser] = useState<User | null>(null);
   const { toast } = useToast();
 
-  const handleLogin = async () => {
-    // Simple admin login check - in production, use proper authentication
-    if (adminId === 'admin' && password === 'admin123') {
-      setIsLoggedIn(true);
+  const handleAuthSuccess = (authenticatedUser: User) => {
+    setUser(authenticatedUser);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
       toast({
-        title: 'Login Successful',
-        description: 'Welcome to the admin dashboard'
+        title: 'Logged Out',
+        description: 'You have been successfully logged out'
       });
-    } else {
+    } catch (error) {
+      console.error('Logout error:', error);
       toast({
-        title: 'Login Failed',
-        description: 'Invalid admin credentials',
+        title: 'Logout Error',
+        description: 'Failed to log out properly',
         variant: 'destructive'
       });
     }
   };
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setAdminId('');
-    setPassword('');
-    toast({
-      title: 'Logged Out',
-      description: 'You have been successfully logged out'
-    });
-  };
-
-  // Login form
-  if (!isLoggedIn) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md glass-card animate-bounce-in">
-          <CardHeader className="text-center">
-            <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-500/20 to-indigo-600/30 rounded-full flex items-center justify-center mb-4 backdrop-blur-sm">
-              <Shield className="w-8 h-8 text-blue-600" />
-            </div>
-            <CardTitle className="text-2xl bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              Admin Login
-            </CardTitle>
-            <p className="text-muted-foreground">Access the administration panel</p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Admin ID</label>
-              <Input
-                placeholder="Enter admin ID"
-                value={adminId}
-                onChange={(e) => setAdminId(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Password</label>
-              <Input
-                type="password"
-                placeholder="Enter password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
-              />
-            </div>
-            <Button
-              onClick={handleLogin}
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-            >
-              <Shield className="w-4 h-4 mr-2" />
-              Login
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
+  // Show login form if not authenticated
+  if (!user) {
+    return <AdminAuth onAuthSuccess={handleAuthSuccess} />;
   }
 
   return (

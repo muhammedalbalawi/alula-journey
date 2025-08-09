@@ -19,7 +19,8 @@ import {
   Plus,
   CalendarIcon,
   Package,
-  Car
+  Car,
+  LogOut
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { PackageManagement } from './PackageManagement';
@@ -41,6 +42,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
+import { GuideAuth } from './auth/GuideAuth';
 
 interface RescheduleRequest {
   id: string;
@@ -72,7 +74,7 @@ export function TourGuideView() {
   const { t } = useLanguage();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [guideId, setGuideId] = useState('');
-  const [password, setPassword] = useState('');
+  const [guideName, setGuideName] = useState('');
   const [currentGuideData, setCurrentGuideData] = useState<any>(null);
   const [assignedTourists, setAssignedTourists] = useState<AssignedTourist[]>([]);
   const [notifications, setNotifications] = useState<RescheduleRequest[]>([]);
@@ -427,48 +429,47 @@ export function TourGuideView() {
     };
   };
 
-  const handleLogin = async () => {
+  const handleAuthSuccess = async (authenticatedGuideId: string, authenticatedGuideName: string) => {
     try {
+      // Fetch guide data
       const { data, error } = await supabase
         .from('guides')
         .select('*')
-        .eq('guide_id', guideId)
-        .eq('password', password)
+        .eq('guide_id', authenticatedGuideId)
         .single();
 
       if (error || !data) {
         toast({
-          title: 'Login Failed',
-          description: 'Invalid credentials. Please check your Guide ID and password.',
+          title: 'Error',
+          description: 'Could not load guide data.',
           variant: 'destructive'
         });
         return;
       }
 
-      // Set session variable for RLS policies
-      try {
-        await supabase.rpc('set_guide_session' as any, { 
-          guide_uuid: data.id, 
-          guide_identifier: data.guide_id 
-        });
-      } catch (sessionError) {
-        console.warn('Could not set guide session:', sessionError);
-      }
-
       setCurrentGuideData(data);
       setIsLoggedIn(true);
-      toast({
-        title: 'Login Successful',
-        description: `Welcome back, ${data.name}!`
-      });
+      setGuideId(authenticatedGuideId);
+      setGuideName(authenticatedGuideName);
     } catch (error: any) {
-      console.error('Login error:', error);
+      console.error('Error loading guide data:', error);
       toast({
-        title: 'Login Failed',
-        description: 'An error occurred during login.',
+        title: 'Error',
+        description: 'Failed to load guide information.',
         variant: 'destructive'
       });
     }
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setGuideId('');
+    setGuideName('');
+    setCurrentGuideData(null);
+    toast({
+      title: 'Logged Out',
+      description: 'You have been logged out successfully'
+    });
   };
 
   const handleAddTouristSchedule = async () => {
@@ -595,57 +596,7 @@ export function TourGuideView() {
 
   // Show login form if not logged in
   if (!isLoggedIn) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md glass-card animate-bounce-in">
-          <CardHeader className="text-center">
-            <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary/20 to-heritage-amber/30 rounded-full flex items-center justify-center mb-4 backdrop-blur-sm">
-              <Lock className="w-8 h-8 text-primary" />
-            </div>
-            <CardTitle className="text-2xl bg-gradient-to-r from-primary to-heritage-amber bg-clip-text text-transparent">
-              Tour Guide Login
-            </CardTitle>
-            <p className="text-muted-foreground">Sign in to access your dashboard</p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="guideId">Guide ID</Label>
-              <Input
-                id="guideId"
-                type="text"
-                placeholder="Enter your guide ID"
-                value={guideId}
-                onChange={(e) => setGuideId(e.target.value)}
-                className="glass-effect transition-all duration-200 focus:shadow-glow"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
-                className="glass-effect transition-all duration-200 focus:shadow-glow"
-              />
-            </div>
-            <Button 
-              onClick={handleLogin} 
-              className="w-full hover:shadow-glow transition-all duration-300"
-              disabled={!guideId || !password}
-              variant="desert"
-            >
-              Sign In
-            </Button>
-            <p className="text-xs text-center text-muted-foreground">
-              Use your Guide ID and password from the admin
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <GuideAuth onAuthSuccess={handleAuthSuccess} />;
   }
 
   return (
@@ -655,7 +606,7 @@ export function TourGuideView() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Tour Guide Dashboard</h1>
-            <p className="text-gray-600">Manage your tours and guest requests</p>
+            <p className="text-gray-600">Welcome back, {guideName || currentGuideData?.name}</p>
           </div>
           <div className="flex items-center space-x-4">
             <div className="relative">
@@ -666,6 +617,15 @@ export function TourGuideView() {
                 </span>
               )}
             </div>
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              size="sm"
+              className="border-orange-200 text-orange-600 hover:bg-orange-50"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </Button>
           </div>
         </div>
 

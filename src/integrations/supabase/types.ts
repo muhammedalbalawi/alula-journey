@@ -107,6 +107,36 @@ export type Database = {
           },
         ]
       }
+      admin_audit_log: {
+        Row: {
+          action: string
+          admin_user_id: string | null
+          created_at: string | null
+          details: Json | null
+          id: string
+          target_id: string | null
+          target_table: string | null
+        }
+        Insert: {
+          action: string
+          admin_user_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          target_id?: string | null
+          target_table?: string | null
+        }
+        Update: {
+          action?: string
+          admin_user_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          target_id?: string | null
+          target_table?: string | null
+        }
+        Relationships: []
+      }
       admin_users: {
         Row: {
           admin_role: string
@@ -384,6 +414,7 @@ export type Database = {
           specializations: string[] | null
           status: string | null
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           availability_status?: string | null
@@ -404,6 +435,7 @@ export type Database = {
           specializations?: string[] | null
           status?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           availability_status?: string | null
@@ -424,6 +456,7 @@ export type Database = {
           specializations?: string[] | null
           status?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -866,9 +899,21 @@ export type Database = {
       }
     }
     Functions: {
+      hash_guide_password: {
+        Args: { password: string }
+        Returns: string
+      }
       set_guide_session: {
         Args: { guide_uuid: string; guide_identifier: string }
         Returns: undefined
+      }
+      verify_admin_user: {
+        Args: { user_uuid: string }
+        Returns: boolean
+      }
+      verify_guide_password: {
+        Args: { guide_identifier: string; input_password: string }
+        Returns: boolean
       }
     }
     Enums: {

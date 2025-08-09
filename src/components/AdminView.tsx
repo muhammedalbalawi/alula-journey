@@ -239,17 +239,18 @@ export const AdminView: React.FC = () => {
   const fetchAssignments = async () => {
     try {
       const { data, error } = await supabase
-        .from('tour_assignments')
+        .from('activities')
         .select(`
           id,
           tourist_id,
-          guide_id,
+          tour_guide_id,
           tour_name,
           start_date,
           end_date,
-          status,
+          assignment_status,
           created_at
         `)
+        .not('tour_name', 'is', null)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -257,11 +258,11 @@ export const AdminView: React.FC = () => {
       const formattedAssignments: Assignment[] = (data || []).map(item => ({
         id: item.id,
         touristId: item.tourist_id,
-        guideId: item.guide_id,
-        tourName: item.tour_name,
+        guideId: item.tour_guide_id,
+        tourName: item.tour_name || 'AlUla Heritage Tour',
         startDate: item.start_date,
         endDate: item.end_date,
-        status: item.status as 'pending' | 'active' | 'completed',
+        status: item.assignment_status as 'pending' | 'active' | 'completed',
         createdAt: item.created_at
       }));
       
