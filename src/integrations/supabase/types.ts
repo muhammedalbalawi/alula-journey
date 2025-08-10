@@ -170,6 +170,36 @@ export type Database = {
         }
         Relationships: []
       }
+      auth_rate_limit: {
+        Row: {
+          attempt_type: string
+          attempts: number | null
+          blocked_until: string | null
+          created_at: string | null
+          id: string
+          identifier: string
+          window_start: string | null
+        }
+        Insert: {
+          attempt_type: string
+          attempts?: number | null
+          blocked_until?: string | null
+          created_at?: string | null
+          id?: string
+          identifier: string
+          window_start?: string | null
+        }
+        Update: {
+          attempt_type?: string
+          attempts?: number | null
+          blocked_until?: string | null
+          created_at?: string | null
+          id?: string
+          identifier?: string
+          window_start?: string | null
+        }
+        Relationships: []
+      }
       countries: {
         Row: {
           country_code: string
@@ -899,13 +929,34 @@ export type Database = {
       }
     }
     Functions: {
+      check_rate_limit: {
+        Args: {
+          user_identifier: string
+          attempt_type_param: string
+          max_attempts?: number
+          window_minutes?: number
+        }
+        Returns: boolean
+      }
       hash_guide_password: {
         Args: { password: string }
         Returns: string
       }
+      record_auth_attempt: {
+        Args: {
+          user_identifier: string
+          attempt_type_param: string
+          success?: boolean
+        }
+        Returns: undefined
+      }
       set_guide_session: {
         Args: { guide_uuid: string; guide_identifier: string }
         Returns: undefined
+      }
+      validate_password_strength: {
+        Args: { password: string }
+        Returns: boolean
       }
       verify_admin_user: {
         Args: { user_uuid: string }
