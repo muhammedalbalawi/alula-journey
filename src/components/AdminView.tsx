@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Users, 
   UserCheck, 
@@ -23,8 +24,8 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { DriverRegistration } from './DriverRegistration';
-import { DriverBookingManagement } from './DriverBookingManagement';
+import { GuideManagement } from './admin/GuideManagement';
+import { DriverManagement } from './admin/DriverManagement';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -93,8 +94,7 @@ export const AdminView: React.FC = () => {
 
   const [guides, setGuides] = useState<Guide[]>([]);
   const [guideRequests, setGuideRequests] = useState<GuideRequestAdmin[]>([]);
-  const [drivers, setDrivers] = useState<any[]>([]);
-  const [isDriverDialogOpen, setIsDriverDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
 
   const [assignments, setAssignments] = useState<Assignment[]>([]);
 
@@ -104,19 +104,6 @@ export const AdminView: React.FC = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  // New guide form states
-  const [newGuideName, setNewGuideName] = useState('');
-  const [newGuideEmail, setNewGuideEmail] = useState('');
-  const [newGuidePhone, setNewGuidePhone] = useState('');
-  const [newGuideId, setNewGuideId] = useState('');
-  const [newGuidePassword, setNewGuidePassword] = useState('');
-  const [newGuideSpecializations, setNewGuideSpecializations] = useState('');
-  const [newGuideStatus, setNewGuideStatus] = useState('available');
-  const [isCreatingGuide, setIsCreatingGuide] = useState(false);
-
-  // Edit guide states
-  const [editingGuide, setEditingGuide] = useState<string | null>(null);
-  const [editGuideData, setEditGuideData] = useState<any>(null);
 
   // Reassignment states
   const [reassignmentDialogOpen, setReassignmentDialogOpen] = useState(false);
@@ -134,7 +121,6 @@ export const AdminView: React.FC = () => {
       fetchGuides();
       fetchGuideRequests();
       fetchAssignments();
-      fetchDrivers();
       fetchTourists(); // This will now fetch ALL tourists
       setupRealtimeUpdates();
       
@@ -397,24 +383,6 @@ export const AdminView: React.FC = () => {
     }
   };
 
-  const fetchDrivers = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('drivers')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setDrivers(data || []);
-    } catch (error: any) {
-      console.error('Error fetching drivers:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch drivers',
-        variant: 'destructive'
-      });
-    }
-  };
 
   const handleLogin = () => {
     if (adminId === 'admin' && password === 'admin123') {
@@ -525,114 +493,6 @@ export const AdminView: React.FC = () => {
     });
   };
 
-  const handleCreateGuide = async () => {
-    if (!newGuideName || !newGuideEmail || !newGuidePhone || !newGuideId || !newGuidePassword) {
-      toast({
-        title: 'Error',
-        description: 'Please fill in all required fields',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    setIsCreatingGuide(true);
-
-    try {
-      const specializations = newGuideSpecializations 
-        ? newGuideSpecializations.split(',').map(s => s.trim()).filter(s => s)
-        : [];
-
-      const { data, error } = await supabase
-        .from('guides')
-        .insert([
-          {
-            guide_id: newGuideId,
-            password: newGuidePassword,
-            name: newGuideName,
-            email: newGuideEmail,
-            phone: newGuidePhone,
-            specializations,
-            status: newGuideStatus,
-            rating: 0.0
-          }
-        ]);
-
-      if (error) throw error;
-
-      toast({
-        title: 'Success',
-        description: `Guide created successfully! Guide ID: ${newGuideId}`,
-      });
-
-      // Reset form
-      setNewGuideName('');
-      setNewGuideEmail('');
-      setNewGuidePhone('');
-      setNewGuideId('');
-      setNewGuidePassword('');
-      setNewGuideSpecializations('');
-      setNewGuideStatus('available');
-
-      // Refresh guides list
-      fetchGuides();
-
-    } catch (error: any) {
-      console.error('Error creating guide:', error);
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to create guide',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsCreatingGuide(false);
-    }
-  };
-
-  const handleEditGuide = (guide: Guide) => {
-    setEditingGuide(guide.id);
-    setEditGuideData({ ...guide });
-  };
-
-  const handleSaveEdit = async () => {
-    if (!editGuideData) return;
-
-    try {
-      const { error } = await supabase
-        .from('guides')
-        .update({
-          name: editGuideData.name,
-          email: editGuideData.email,
-          phone: editGuideData.phone,
-          specializations: editGuideData.specializations,
-          status: editGuideData.status
-        })
-        .eq('id', editGuideData.id);
-
-      if (error) throw error;
-
-      toast({
-        title: 'Success',
-        description: 'Guide updated successfully!'
-      });
-
-      setEditingGuide(null);
-      setEditGuideData(null);
-      fetchGuides();
-
-    } catch (error: any) {
-      console.error('Error updating guide:', error);
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to update guide',
-        variant: 'destructive'
-      });
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setEditingGuide(null);
-    setEditGuideData(null);
-  };
 
   const handleRequestResponse = async (requestId: string, status: 'approved' | 'rejected', guideId?: string, response?: string) => {
     try {
@@ -876,67 +736,77 @@ export const AdminView: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4 flex items-center space-x-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Users className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Total Tourists</p>
-                <p className="text-xl font-semibold">{tourists.length}</p>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4 flex items-center space-x-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <UserCheck className="w-5 h-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Available Guides</p>
-                <p className="text-xl font-semibold">{guides.filter(g => g.status === 'available').length}</p>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Navigation Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="guides">Guide Management</TabsTrigger>
+            <TabsTrigger value="drivers">Driver Management</TabsTrigger>
+            <TabsTrigger value="requests">Tourist Requests</TabsTrigger>
+          </TabsList>
 
-          <Card>
-            <CardContent className="p-4 flex items-center space-x-3">
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <Clock className="w-5 h-5 text-orange-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Pending Assignments</p>
-                <p className="text-xl font-semibold">{assignments.filter(a => a.status === 'pending').length}</p>
-              </div>
-            </CardContent>
-          </Card>
+          <TabsContent value="overview" className="space-y-6">
+            {/* Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card>
+                <CardContent className="p-4 flex items-center space-x-3">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Users className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Total Tourists</p>
+                    <p className="text-xl font-semibold">{tourists.length}</p>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-4 flex items-center space-x-3">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <UserCheck className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Available Guides</p>
+                    <p className="text-xl font-semibold">{guides.filter(g => g.status === 'available').length}</p>
+                  </div>
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardContent className="p-4 flex items-center space-x-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <CheckCircle className="w-5 h-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Active Tours</p>
-                <p className="text-xl font-semibold">{assignments.filter(a => a.status === 'active').length}</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              <Card>
+                <CardContent className="p-4 flex items-center space-x-3">
+                  <div className="p-2 bg-orange-100 rounded-lg">
+                    <Clock className="w-5 h-5 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Pending Assignments</p>
+                    <p className="text-xl font-semibold">{assignments.filter(a => a.status === 'pending').length}</p>
+                  </div>
+                </CardContent>
+              </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Assignment Form */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Plus className="w-5 h-5" />
-                <span>Assign Tour Guide</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+              <Card>
+                <CardContent className="p-4 flex items-center space-x-3">
+                  <div className="p-2 bg-purple-100 rounded-lg">
+                    <CheckCircle className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Active Tours</p>
+                    <p className="text-xl font-semibold">{assignments.filter(a => a.status === 'active').length}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Assignment Form */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Plus className="w-5 h-5" />
+                    <span>Assign Tour Guide</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Select Tourist</label>
                 <Select value={selectedTourist} onValueChange={setSelectedTourist}>
@@ -1120,11 +990,21 @@ export const AdminView: React.FC = () => {
                   )}
                 </div>
               ))}
-            </div>
-          </CardContent>
-        </Card>
+              </div>
+            </CardContent>
+          </Card>
+          </TabsContent>
 
-        {/* Create New Guide */}
+          <TabsContent value="guides">
+            <GuideManagement />
+          </TabsContent>
+
+          <TabsContent value="drivers">
+            <DriverManagement />
+          </TabsContent>
+
+          <TabsContent value="requests">
+            {/* Guide Requests Management */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
@@ -1553,8 +1433,8 @@ export const AdminView: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Driver Booking Management */}
-        <DriverBookingManagement />
+          </TabsContent>
+        </Tabs>
 
         {/* Guide Assignment/Reassignment Dialog */}
         <Dialog open={reassignmentDialogOpen} onOpenChange={setReassignmentDialogOpen}>

@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { DriverRegistration } from '../DriverRegistration';
+import { DriverBookingManagement } from '../DriverBookingManagement';
 import { 
   Car, 
   Plus, 
@@ -399,6 +400,9 @@ export const DriverManagement: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Driver Booking Management */}
+      <DriverBookingManagement />
     </div>
   );
 };
