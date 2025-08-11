@@ -1011,6 +1011,31 @@ export const AdminView: React.FC = () => {
                           </Button>
                         </div>
                       )}
+                      
+                      {request.status === 'approved' && request.assigned_guide_id && (
+                        <div className="flex space-x-2">
+                          <Select onValueChange={(guideId) => handleRequestResponse(request.id, 'approved', guideId, 'Guide reassigned by admin')}>
+                            <SelectTrigger className="w-48">
+                              <SelectValue placeholder="Reassign Guide" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {guides.filter(g => g.status === 'available').map((guide) => (
+                                <SelectItem key={guide.id} value={guide.id}>
+                                  {guide.name} - ⭐ {guide.rating}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleRequestResponse(request.id, 'rejected', undefined, 'Request rejected by admin')}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            Reject
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
