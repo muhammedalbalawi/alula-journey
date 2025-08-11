@@ -980,8 +980,8 @@ export const AdminView: React.FC = () => {
                             </div>
                           )}
                           {request.guides && (
-                            <div className="mt-2 p-2 bg-blue-50 rounded text-sm">
-                              <strong>Assigned Guide:</strong> {request.guides.name} ({request.guides.email})
+                            <div className="mt-2 p-2 bg-secondary/50 border border-border rounded text-sm text-foreground">
+                              <strong className="text-primary">Assigned Guide:</strong> {request.guides.name} ({request.guides.email})
                             </div>
                           )}
                         </div>
