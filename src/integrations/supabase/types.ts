@@ -773,6 +773,57 @@ export type Database = {
           },
         ]
       }
+      tour_assignments: {
+        Row: {
+          created_at: string
+          end_date: string | null
+          guide_id: string
+          id: string
+          start_date: string
+          status: string
+          tour_name: string
+          tourist_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_date?: string | null
+          guide_id: string
+          id?: string
+          start_date: string
+          status?: string
+          tour_name: string
+          tourist_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string | null
+          guide_id?: string
+          id?: string
+          start_date?: string
+          status?: string
+          tour_name?: string
+          tourist_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tour_assignments_guide_id_fkey"
+            columns: ["guide_id"]
+            isOneToOne: false
+            referencedRelation: "guides"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tour_assignments_tourist_id_fkey"
+            columns: ["tourist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tourist_experiences: {
         Row: {
           comment: string
