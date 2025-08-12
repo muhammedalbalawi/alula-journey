@@ -23,7 +23,7 @@ const translations = {
     touristLogin: "Tourist Login",
     touristId: "Tourist ID",
     login: "Login",
-    welcomeTourist: "Welcome to Your AlUla Journey",
+    welcomeTourist: "Welcome to Your Journey",
     itinerary: "Your Itinerary",
     contactGuide: "Contact Your Guide",
     contactUs: "Contact Us",
@@ -104,9 +104,9 @@ const translations = {
     },
     
     // About
-    about: "About AlUla Journey",
+    about: "About Journew",
     aboutContent: {
-      vision: "AlUla Journey supports Saudi Vision 2030 by promoting cultural heritage and sustainable tourism.",
+      vision: "Journew supports sustainable tourism by promoting cultural heritage and authentic travel experiences.",
       youth: "We empower local youth and small businesses to participate in the growing tourism sector.",
       industry: "Our platform enhances the tourism industry in the Kingdom of Saudi Arabia through innovative digital solutions."
     },
@@ -231,8 +231,8 @@ const translations = {
     signIn: "Sign In",
     signUp: "Sign Up",
     createTouristAccount: "Create Tourist Account",
-    joinAlUla: "Join AlUla Journey today",
-    welcomeBack: "Welcome back to AlUla Journey",
+    joinAlUla: "Join Journew today",
+    welcomeBack: "Welcome back to Journew",
     emailAddressField: "Email Address",
     enterEmail: "your.email@example.com",
     enterPassword: "Enter your password",
@@ -259,7 +259,7 @@ const translations = {
     confirmEmailMsg: "Please check your email to confirm your account before signing in.",
     unableToCreate: "Unable to create account. Please try again.",
     alreadyAccount: "Already have an account? Sign in",
-    newToAlUla: "New to AlUla Journey? Create account",
+    newToAlUla: "New to Journew? Create account",
     emailVerifyNote: "You may need to verify your email address after signing up.",
     useEmailPassword: "Use your email and password to access your tourist dashboard.",
     phoneComingSoon: "Phone authentication coming soon!",
@@ -414,9 +414,9 @@ const translations = {
     },
     
     // About
-    about: "حول رحلة العُلا",
+    about: "حول رحلة جديدة",
     aboutContent: {
-      vision: "رحلة العُلا تدعم رؤية السعودية 2030 من خلال تعزيز التراث الثقافي والسياحة المستدامة.",
+      vision: "رحلة جديدة تدعم السياحة المستدامة من خلال تعزيز التراث الثقافي وتجارب السفر الأصيلة.",
       youth: "نمكّن الشباب المحلي والشركات الصغيرة للمشاركة في القطاع السياحي المتنامي.",
       industry: "منصتنا تعزز صناعة السياحة في المملكة العربية السعودية من خلال الحلول الرقمية المبتكرة."
     },
@@ -541,8 +541,8 @@ const translations = {
     signIn: "تسجيل دخول",
     signUp: "تسجيل",
     createTouristAccount: "إنشاء حساب سائح",
-    joinAlUla: "انضم إلى رحلة العُلا اليوم",
-    welcomeBack: "مرحباً بعودتك إلى رحلة العُلا",
+    joinAlUla: "انضم إلى رحلة جديدة اليوم",
+    welcomeBack: "مرحباً بعودتك إلى رحلة جديدة",
     emailAddressField: "عنوان البريد الإلكتروني",
     enterEmail: "your.email@example.com",
     enterPassword: "أدخل كلمة المرور",
@@ -569,7 +569,7 @@ const translations = {
     confirmEmailMsg: "يرجى التحقق من بريدك الإلكتروني لتأكيد حسابك قبل تسجيل الدخول.",
     unableToCreate: "غير قادر على إنشاء الحساب. يرجى المحاولة مرة أخرى.",
     alreadyAccount: "لديك حساب بالفعل؟ سجل دخولك",
-    newToAlUla: "جديد في رحلة العُلا؟ أنشئ حساباً",
+    newToAlUla: "جديد في رحلة جديدة؟ أنشئ حساباً",
     emailVerifyNote: "قد تحتاج إلى التحقق من عنوان بريدك الإلكتروني بعد التسجيل.",
     useEmailPassword: "استخدم بريدك الإلكتروني وكلمة المرور للوصول إلى لوحة السائح.",
     phoneComingSoon: "المصادقة عبر الهاتف قريباً!",

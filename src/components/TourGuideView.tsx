@@ -746,7 +746,7 @@ export function TourGuideView() {
                       <Button 
                         size="sm" 
                         variant="outline"
-                        onClick={() => window.open(`https://wa.me/${tourist.profiles?.contact_info?.replace(/[^0-9]/g, '')}?text=Hello! I'm your assigned tour guide from AlUla Journey. I'm ready to help you explore AlUla!`, '_blank')}
+                        onClick={() => window.open(`https://wa.me/${tourist.profiles?.contact_info?.replace(/[^0-9]/g, '')}?text=Hello! I'm your assigned tour guide from Journew. I'm ready to help you explore!`, '_blank')}
                         className="flex items-center space-x-1"
                         disabled={!tourist.profiles?.contact_info}
                       >

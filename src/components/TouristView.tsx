@@ -964,7 +964,7 @@ export const TouristView: React.FC = () => {
                   <Button 
                     variant="desert" 
                     size="sm"
-                    onClick={() => window.open(`https://wa.me/${assignedGuide.phone?.replace(/[^0-9]/g, '')}?text=Hello! I'm your assigned tourist from AlUla Journey. I'd like to discuss our tour plans.`, '_blank')}
+                    onClick={() => window.open(`https://wa.me/${assignedGuide.phone?.replace(/[^0-9]/g, '')}?text=Hello! I'm your assigned tourist from Journew. I'd like to discuss our tour plans.`, '_blank')}
                     className="flex items-center space-x-1 rtl:space-x-reverse"
                   >
                     <MessageCircle className="w-3 h-3" />
@@ -981,7 +981,7 @@ export const TouristView: React.FC = () => {
                       No Tour Guide Assigned Yet
                     </h3>
                     <p className="text-sm text-muted-foreground mb-4">
-                      Request a professional tour guide to enhance your AlUla experience.
+                      Request a professional tour guide to enhance your travel experience.
                     </p>
                     <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-700">
                       Ready to Request

@@ -26,7 +26,7 @@ const Confirmed = () => {
               Email Confirmed!
             </h1>
             <p className="text-muted-foreground">
-              Your email address has been successfully verified. Welcome to AlulaJourney!
+              Your email address has been successfully verified. Welcome to Journew!
             </p>
           </div>
           
@@ -36,7 +36,7 @@ const Confirmed = () => {
               className="w-full"
               size="lg"
             >
-              Start Exploring AlUla
+              Start Your Journey
             </Button>
             
             <p className="text-sm text-muted-foreground">

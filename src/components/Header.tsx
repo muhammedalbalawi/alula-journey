@@ -22,11 +22,13 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onViewChange }) => 
         <div className="flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center space-x-2 sm:space-x-3 rtl:space-x-reverse">
-            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-desert-gold to-heritage-amber flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-xs sm:text-sm">A</span>
-            </div>
+            <img 
+              src="/lovable-uploads/017f454e-2ae2-48c6-9dbe-0d5ff6000d09.png" 
+              alt="Journew Logo" 
+              className="w-6 h-6 sm:w-8 sm:h-8 object-contain"
+            />
             <h1 className="text-sm sm:text-xl font-bold text-foreground truncate">
-              {language === 'ar' ? 'رحلة العُلا' : 'AlulaJourney'}
+              {language === 'ar' ? 'رحلة جديدة' : 'Journew'}
             </h1>
           </div>
 
