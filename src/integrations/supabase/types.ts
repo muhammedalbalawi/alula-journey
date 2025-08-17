@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -956,35 +956,14 @@ export type Database = {
       }
     }
     Views: {
-      tour_assignments_view: {
-        Row: {
-          created_at: string | null
-          end_date: string | null
-          guide_id: string | null
-          id: string | null
-          start_date: string | null
-          status: string | null
-          tour_name: string | null
-          tourist_id: string | null
-          updated_at: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "activities_tour_guide_id_fkey"
-            columns: ["guide_id"]
-            isOneToOne: false
-            referencedRelation: "guides"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Functions: {
       check_rate_limit: {
         Args: {
-          user_identifier: string
           attempt_type_param: string
           max_attempts?: number
+          user_identifier: string
           window_minutes?: number
         }
         Returns: boolean
@@ -993,16 +972,20 @@ export type Database = {
         Args: { password: string }
         Returns: string
       }
+      is_verified_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       record_auth_attempt: {
         Args: {
-          user_identifier: string
           attempt_type_param: string
           success?: boolean
+          user_identifier: string
         }
         Returns: undefined
       }
       set_guide_session: {
-        Args: { guide_uuid: string; guide_identifier: string }
+        Args: { guide_identifier: string; guide_uuid: string }
         Returns: undefined
       }
       validate_password_strength: {
